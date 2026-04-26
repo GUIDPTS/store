@@ -1,6 +1,8 @@
 node_modules
 dist
 .vite
+# MarketPro is reference-only, not part of the build
+marketpro
 .env
 .env.*
 *.log

@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>结算</title>
+  <link rel="stylesheet" href="/marketpro/css/app.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap-grid.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap-utilities.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+  <link rel="shortcut icon" href="/marketpro/images/logo/favicon.png">
+  <script>
+    window.tailwind = { config: {
+      corePlugins: { preflight: false },
+      theme: { extend: {
+        colors: {
+          main: { DEFAULT:'#299e60', 50:'#e7f9ef', 100:'#cef2df', 600:'#299e60', 700:'#258e56', 800:'#207e4c' },
+          danger: { 50:'#FEF2F2', 600:'#DC2626' },
+          warning: { 50:'#FEFCE8', 600:'#FF9F29' },
+          success: { 600:'#27AE60' },
+          'color-one':'#F3FAF2', 'color-three':'#F1F1F1',
+        }
+      }}
+    }};
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    [x-cloak]{display:none!important;}
+    .pt-80{padding-top:48px;} .pb-80{padding-bottom:48px;} .py-80{padding-top:48px;padding-bottom:48px;}
+    .py-120{padding-top:64px;padding-bottom:48px;} .py-26{padding-top:26px;padding-bottom:26px;}
+    .header{padding:8px 0;box-shadow:0 4px 20px rgba(0,0,0,.08)!important;}
+    .header-middle{padding:18px 0;}
+    .nav-menu__link{font-size:14px!important;font-weight:500;color:#333;padding:12px 16px;line-height:1.4;white-space:nowrap;}
+    .nav-menu__link:hover{color:#299e60;}
+    .nav-menu{list-style:none;padding:0;margin:0;}
+    .common-input:focus{box-shadow:none!important;outline:none!important;font-weight:400!important;}
+    .on-hover-dropdown{transition:opacity .2s ease,visibility .2s ease,margin-top .2s ease!important;}
+    .footer h6,.footer-item__title{font-family:Quicksand,sans-serif!important;font-size:1.125rem!important;font-weight:700!important;color:#121535!important;margin-bottom:20px!important;line-height:1.3!important;}
+    .footer-menu{list-style:none;padding:0;margin:0;}
+    .preloader{position:fixed;inset:0;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;}
+    .overlay{position:fixed;inset:0;background:rgba(18,21,53,.6);opacity:0;visibility:hidden;transition:.2s;z-index:80;}
+    .search-box{position:fixed;inset:0;background:rgba(18,21,53,.92);display:none;align-items:center;justify-content:center;z-index:9000;}
+    .search-box.active{display:flex;}
+    .progress-wrap{position:fixed;right:24px;bottom:24px;width:46px;height:46px;border-radius:50%;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,.12);cursor:pointer;opacity:0;visibility:hidden;z-index:90;}
+    .payment-item .payment-item__content{display:none;}
+    input[type=radio]:checked ~ .payment-item__content{display:block;}
+    .payment-item__content{margin-top:0;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .spin{animation:spin 1s linear infinite;}
+    input[type=radio].accent-main-600{accent-color:#299e60;}
+  </style>
+</head>
+<body x-data="checkoutPage()" x-init="init()">
+
+<!-- Preloader -->
+<div class="preloader" x-show="!$store.app.initialized || loading" x-cloak>
+  <img src="/marketpro/images/icon/preloader.gif" alt="">
+</div>
+
+<!-- Toast -->
+<div style="position:fixed;top:20px;right:20px;z-index:9999;" x-cloak>
+  <template x-if="$store.app.toast">
+    <div class="px-16 py-12 rounded-8 text-white text-sm"
+         :class="$store.app.toastType === 'error' ? 'bg-danger-600' : 'bg-main-600'"
+         x-text="$store.app.toast"></div>
+  </template>
+</div>
+
+<!-- Overlays -->
+<div class="overlay"></div>
+<div class="progress-wrap">
+  <svg class="progress-circle svg-content" width="100%" height="100%" viewBox="-1 -1 102 102">
+    <path d="M50,1 a49,49 0 0,1 0,98 a49,49 0 0,1 0,-98" />
+  </svg>
+</div>
+
+<!-- Search Box -->
+<form action="#" class="search-box">
+  <button type="button" class="search-box__close position-absolute inset-block-start-0 inset-inline-end-0 m-16 w-48 h-48 border border-gray-100 rounded-circle flex-center text-white hover-text-gray-800 hover-bg-white text-2xl transition-1">
+    <i class="ph ph-x"></i>
+  </button>
+  <div class="container">
+    <div class="position-relative">
+      <input type="text" class="form-control py-16 px-24 text-xl rounded-pill pe-64" placeholder="搜索商品或商家">
+      <button type="submit" class="w-48 h-48 bg-main-600 rounded-circle flex-center text-xl text-white position-absolute top-50 translate-middle-y inset-inline-end-0 me-8">
+        <i class="ph ph-magnifying-glass"></i>
+      </button>
+    </div>
+  </div>
+</form>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu scroll-sm" :class="$store.app.mobileOpen ? 'active' : ''" x-cloak>
+  <button type="button" class="close-button" @click="$store.app.mobileOpen=false"><i class="ph ph-x"></i></button>
+  <div class="mobile-menu__inner">
+    <a href="/" class="mobile-menu__logo d-block mb-16">
+      <span class="text-xl fw-bold text-main-600" x-text="$store.app.siteName()"></span>
+    </a>
+    <div class="mobile-menu__menu">
+      <ul class="nav-menu">
+        <li class="nav-menu__item"><a href="/" class="nav-menu__link">首页</a></li>
+        <li class="nav-menu__item"><a href="/shops.html" class="nav-menu__link">全部商家</a></li>
+        <template x-for="cat in $store.app.categories" :key="cat.id">
+          <li class="nav-menu__item"><a :href="'/category.html?id=' + cat.id" class="nav-menu__link" x-text="cat.name"></a></li>
+        </template>
+        <li class="nav-menu__item"><a href="/account.html" class="nav-menu__link">我的账户</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Header Top -->
+<div class="header-top bg-main-600 flex-between">
+  <div class="container container-lg">
+    <div class="flex-between flex-wrap gap-8">
+      <span class="text-md fw-medium text-white" x-text="$store.app.settings.announcement || '欢迎光临，自动发货 · 7×24小时服务'"></span>
+      <ul class="header-top__right flex-align flex-wrap gap-16 w-auto">
+        <template x-if="!$store.app.user">
+          <li class="d-flex align-items-center gap-12">
+            <a href="/auth/login" class="text-white text-sm hover-text-decoration-underline">登录</a>
+            <span class="text-white text-sm opacity-50">|</span>
+            <a href="/become-seller.html" class="text-white text-sm hover-text-decoration-underline">申请开店</a>
+          </li>
+        </template>
+        <template x-if="$store.app.user">
+          <li class="d-flex align-items-center gap-12">
+            <span class="text-white text-sm">欢迎，<span x-text="$store.app.user.username" class="fw-bold"></span></span>
+            <a href="/account.html" class="text-white text-sm hover-text-decoration-underline">我的账户</a>
+            <a href="#" @click.prevent="$store.app.logout()" class="text-white text-sm hover-text-decoration-underline">退出</a>
+          </li>
+        </template>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Middle Header -->
+<header class="header-middle bg-color-one border-bottom border-gray-100">
+  <div class="container container-lg">
+    <nav class="header-inner flex-between gap-8">
+      <div class="logo flex-shrink-0">
+        <a href="/" class="link d-flex align-items-center">
+          <template x-if="$store.app.siteLogoUrl()">
+            <img :src="$store.app.siteLogoUrl()" alt="Logo" style="max-height:44px;">
+          </template>
+          <template x-if="!$store.app.siteLogoUrl()">
+            <span class="text-xl fw-bold text-main-600" x-text="$store.app.siteName()">发卡平台</span>
+          </template>
+        </a>
+      </div>
+      <div class="header-right flex-align gap-16 flex-shrink-0">
+        <template x-if="$store.app.user">
+          <a href="/account.html" class="flex-align gap-6 item-hover text-gray-700 hover-text-main-600" style="text-decoration:none;font-size:14px;">
+            <span class="text-2xl d-flex position-relative item-hover__text"><i class="ph ph-user"></i></span>
+            <span class="d-none d-xl-flex item-hover__text" x-text="$store.app.user.username || '我的账户'"></span>
+          </a>
+        </template>
+        <template x-if="!$store.app.user">
+          <a href="/auth/login" class="flex-align gap-6 item-hover text-gray-700" style="text-decoration:none;font-size:14px;">
+            <span class="text-2xl d-flex item-hover__text"><i class="ph ph-user"></i></span>
+            <span class="d-none d-xl-flex item-hover__text">登录 / 注册</span>
+          </a>
+        </template>
+        <a href="/account.html#orders" class="flex-align gap-6 item-hover text-gray-700" style="text-decoration:none;font-size:14px;">
+          <span class="text-2xl d-flex position-relative me-4 item-hover__text"><i class="ph ph-receipt"></i></span>
+          <span class="d-none d-xl-flex item-hover__text">我的订单</span>
+        </a>
+        <a href="/cart.html" class="flex-align gap-6 item-hover text-gray-700 position-relative" style="text-decoration:none;font-size:14px;">
+          <span class="text-2xl d-flex item-hover__text"><i class="ph ph-shopping-cart"></i></span>
+          <template x-if="$store.cart && $store.cart.count() > 0">
+            <span class="position-absolute bg-main-600 text-white rounded-circle d-flex align-items-center justify-content-center"
+                  style="min-width:18px;height:18px;font-size:10px;top:-6px;right:-6px;padding:0 3px;"
+                  x-text="$store.cart.count()"></span>
+          </template>
+          <span class="d-none d-xl-flex item-hover__text">购物车</span>
+        </a>
+        <button type="button" class="toggle-mobileMenu d-lg-none" @click="$store.app.mobileOpen=true" style="background:transparent;border:0;font-size:28px;color:#333;"><i class="ph ph-list"></i></button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<!-- Sticky Nav Header -->
+<header class="header bg-white py-10">
+  <div class="container container-lg">
+    <nav class="header-inner d-flex justify-content-between gap-8">
+      <div class="flex-align menu-category-wrapper">
+        <div class="header-menu d-lg-block d-none">
+          <ul class="nav-menu flex-align">
+            <li class="nav-menu__item"><a href="/" class="nav-menu__link">首页</a></li>
+            <li class="on-hover-item nav-menu__item has-submenu">
+              <a href="/shops.html" class="nav-menu__link">全部商家</a>
+              <ul class="on-hover-dropdown common-dropdown nav-submenu" style="min-width:160px;">
+                <li class="common-dropdown__item"><a href="/shops.html" class="common-dropdown__link">商家列表</a></li>
+                <li class="common-dropdown__item"><a href="/become-seller.html" class="common-dropdown__link">申请开店</a></li>
+              </ul>
+            </li>
+            <li class="on-hover-item nav-menu__item has-submenu">
+              <a href="javascript:void(0)" class="nav-menu__link">商品分类</a>
+              <ul class="on-hover-dropdown common-dropdown nav-submenu scroll-sm" style="min-width:180px;max-height:320px;overflow-y:auto;">
+                <template x-for="cat in $store.app.categories" :key="cat.id">
+                  <li class="common-dropdown__item">
+                    <a :href="'/category.html?id=' + cat.id" class="common-dropdown__link" x-text="cat.name"></a>
+                  </li>
+                </template>
+              </ul>
+            </li>
+            <li class="nav-menu__item"><a href="/account.html" class="nav-menu__link">我的账户</a></li>
+            <li class="nav-menu__item"><a href="/contact.html" class="nav-menu__link">联系我们</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="header-right flex-align gap-20">
+        <template x-if="$store.app.settings.contact_qq">
+          <a href="javascript:void(0)" class="d-sm-flex align-items-center gap-16 d-none">
+            <span>
+              <span class="d-block text-heading fw-medium">客服 QQ</span>
+              <span class="d-block fw-bold text-main-600" x-text="$store.app.settings.contact_qq"></span>
+            </span>
+          </a>
+        </template>
+        <button type="button" class="toggle-mobileMenu d-lg-none" @click="$store.app.mobileOpen=true" style="background:transparent;border:0;font-size:28px;color:#333;"><i class="ph ph-list"></i></button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb mb-0 py-26 bg-main-two-50" style="background:#f5f5f5;">
+  <div class="container container-lg">
+    <div class="breadcrumb-wrapper flex-between flex-wrap gap-16">
+      <h6 class="mb-0">结算</h6>
+      <ul class="flex items-center gap-8 flex-wrap list-unstyled mb-0">
+        <li class="text-sm"><a href="/" class="text-gray-900 flex items-center gap-8 hover-text-main-600"><i class="ph ph-house"></i> 首页</a></li>
+        <li class="flex items-center"><i class="ph ph-caret-right"></i></li>
+        <li class="text-sm text-main-600">结算</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Checkout Section ===== -->
+<section class="checkout py-80" x-show="!loading">
+  <div class="container container-lg">
+
+    <!-- Not logged in -->
+    <template x-if="$store.app.initialized && !$store.app.user">
+      <div class="text-center py-60">
+        <i class="ph ph-lock text-6xl text-gray-200 mb-16 d-block"></i>
+        <p class="text-gray-500 mb-16">请先登录后再结算</p>
+        <a :href="'/auth/login?redirect=' + encodeURIComponent(window.location.href)" class="btn btn-main rounded-pill py-10 px-32">前往登录</a>
+      </div>
+    </template>
+
+    <!-- Product not found -->
+    <template x-if="$store.app.initialized && $store.app.user && !product && !loading">
+      <div class="text-center py-60">
+        <i class="ph ph-warning text-6xl text-gray-200 mb-16 d-block"></i>
+        <p class="text-gray-400">商品不存在或已下架</p>
+        <a href="/" class="btn btn-main rounded-pill py-8 px-24 mt-16">返回首页</a>
+      </div>
+    </template>
+
+    <!-- Checkout form -->
+    <template x-if="$store.app.initialized && $store.app.user && product">
+      <div>
+        <div class="row">
+          <!-- Left: Contact + Notes -->
+          <div class="col-xl-8 col-lg-7">
+            <div class="pe-xl-5">
+              <h5 class="mb-32">联系信息</h5>
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="text-neutral-600 mb-8 d-block fw-medium">联系方式 <span class="text-gray-400 fw-normal">（邮箱 / QQ，选填）</span></label>
+                  <input type="text" x-model="contact" class="common-input border-gray-100" placeholder="填写后可接收订单通知">
+                </div>
+                <div class="col-12 mt-32">
+                  <h5 class="mb-24">支付方式</h5>
+
+                  <!-- NodeLoc payment -->
+                  <div class="payment-item border border-gray-100 rounded-8 mb-16 overflow-hidden">
+                    <div class="form-check common-check common-radio px-24 py-16 mb-0 d-flex align-items-center gap-12" style="cursor:pointer;" @click="payMethod='nodeloc'">
+                      <input class="form-check-input accent-main-600" type="radio" name="payMethod" id="payNodeloc"
+                             :checked="payMethod === 'nodeloc'" x-model="payMethod" value="nodeloc">
+                      <label class="form-check-label fw-semibold text-neutral-600 d-flex align-items-center gap-8" for="payNodeloc" style="cursor:pointer;">
+                        <i class="ph ph-credit-card text-main-600 text-xl"></i>
+                        在线支付（NodeLoc）
+                      </label>
+                    </div>
+                    <div class="px-24 pb-16 pt-0 bg-main-50" x-show="payMethod === 'nodeloc'">
+                      <p class="text-gray-700 text-sm mb-0">点击"立即下单"后，将跳转到安全支付页面完成付款。支付成功后卡密自动发放。</p>
+                    </div>
+                  </div>
+
+                  <!-- Balance payment -->
+                  <div class="payment-item border border-gray-100 rounded-8 mb-16 overflow-hidden">
+                    <div class="form-check common-check common-radio px-24 py-16 mb-0 d-flex align-items-center gap-12" style="cursor:pointer;" @click="payMethod='balance'">
+                      <input class="form-check-input accent-main-600" type="radio" name="payMethod" id="payBalance"
+                             :checked="payMethod === 'balance'" x-model="payMethod" value="balance">
+                      <label class="form-check-label fw-semibold text-neutral-600 d-flex align-items-center gap-8" for="payBalance" style="cursor:pointer;">
+                        <i class="ph ph-wallet text-main-600 text-xl"></i>
+                        余额支付
+                        <span class="badge bg-main-100 text-main-600 fw-normal text-sm px-8 py-2 rounded-pill ms-4" x-text="'当前余额: ¥' + Number(balance || 0).toFixed(2)"></span>
+                      </label>
+                    </div>
+                    <div class="px-24 pb-16 pt-0 bg-main-50" x-show="payMethod === 'balance'">
+                      <p class="text-gray-700 text-sm mb-0">从账户余额扣款，订单立即完成，卡密即时发放。</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="col-12 mt-16">
+                  <label class="text-neutral-600 mb-8 d-block fw-medium">备注 <span class="text-gray-400 fw-normal">（选填）</span></label>
+                  <input type="text" x-model="remark" class="common-input border-gray-100" placeholder="订单备注（如有特殊要求请在此填写）">
+                </div>
+              </div>
+
+              <!-- Privacy note -->
+              <div class="mt-32 pt-32 border-top border-gray-100">
+                <p class="text-gray-500 text-sm">您的个人信息将用于处理本次订单，我们承诺保护您的隐私安全。</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Order Summary -->
+          <div class="col-xl-4 col-lg-5 mt-40 mt-lg-0">
+            <div class="checkout-sidebar">
+              <div class="bg-color-three rounded-8 p-24 text-center mb-0">
+                <span class="text-gray-900 text-xl fw-semibold">订单确认</span>
+              </div>
+              <div class="border border-gray-100 rounded-8 px-24 py-32 mt-0" style="border-top:none;border-radius:0 0 8px 8px;">
+                <!-- Product row -->
+                <div class="flex-between gap-24 py-20 border-bottom border-gray-100">
+                  <div class="d-flex align-items-center gap-12 flex-grow-1">
+                    <!-- Product image -->
+                    <div class="flex-shrink-0 bg-color-one rounded-8 d-flex align-items-center justify-content-center" style="width:52px;height:52px;overflow:hidden;">
+                      <template x-if="product.image">
+                        <img :src="product.image" :alt="product.name" style="width:100%;height:100%;object-fit:contain;">
+                      </template>
+                      <template x-if="!product.image">
+                        <i class="ph ph-package text-main-600" style="font-size:1.5rem;"></i>
+                      </template>
+                    </div>
+                    <div class="flex-grow-1">
+                      <span class="text-gray-900 fw-medium text-sm d-block" x-text="product.name" style="line-height:1.4;"></span>
+                      <span class="text-gray-500 text-xs d-block mt-4">
+                        <i class="ph-bold ph-x text-xs"></i>
+                        <span x-text="qty"></span>
+                      </span>
+                    </div>
+                  </div>
+                  <span class="text-gray-900 fw-bold text-md flex-shrink-0" x-text="'¥' + (product.price * qty).toFixed(2)"></span>
+                </div>
+
+                <!-- Subtotal / Total -->
+                <div class="pt-20 pb-8">
+                  <div class="flex-between gap-8 mb-12">
+                    <span class="text-gray-700 fw-medium">小计</span>
+                    <span class="text-gray-900 fw-semibold" x-text="'¥' + (product.price * qty).toFixed(2)"></span>
+                  </div>
+                  <div class="flex-between gap-8">
+                    <span class="text-gray-900 fw-bold text-xl">合计</span>
+                    <span class="text-main-600 fw-bold text-xl" x-text="'¥' + (product.price * qty).toFixed(2)"></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Balance warning -->
+              <template x-if="payMethod === 'balance' && product && (balance < product.price * qty)">
+                <div class="mt-16 p-16 bg-warning-50 border border-warning-100 rounded-8 d-flex align-items-center gap-8">
+                  <i class="ph ph-warning text-warning-600 flex-shrink-0"></i>
+                  <span class="text-warning-700 text-sm">余额不足，请充值或选择在线支付</span>
+                </div>
+              </template>
+
+              <!-- Place Order Button -->
+              <button type="button" @click="placeOrder()"
+                      :disabled="submitting || (payMethod === 'balance' && product && balance < product.price * qty)"
+                      class="btn btn-main mt-24 py-18 w-100 rounded-8 d-flex align-items-center justify-content-center gap-8"
+                      :class="(submitting || (payMethod === 'balance' && product && balance < product.price * qty)) ? 'opacity-60' : ''">
+                <i class="ph ph-lightning" x-show="!submitting"></i>
+                <i class="ph ph-circle-notch spin" x-show="submitting"></i>
+                <span x-text="submitting ? '处理中...' : '立即下单'"></span>
+              </button>
+
+              <!-- Back link -->
+              <a :href="product ? '/product.html?id=' + product.id : '/'" class="d-block text-center text-gray-500 text-sm mt-16 hover-text-main-600">
+                <i class="ph ph-arrow-left me-4"></i>返回商品页
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+</section>
+
+<!-- ===== Success Modal ===== -->
+<div class="fixed inset-0 z-[9998] flex items-center justify-center bg-black bg-opacity-50 p-16"
+     x-cloak x-show="orderResult">
+  <div class="bg-white rounded-24 p-32" style="max-width:480px;width:100%;">
+    <div class="text-center mb-24">
+      <div class="w-64 h-64 rounded-circle bg-main-50 d-flex align-items-center justify-content-center mx-auto mb-16">
+        <i class="ph ph-check-circle text-main-600 text-4xl"></i>
+      </div>
+      <h5 class="fw-bold text-heading">下单成功！</h5>
+      <p class="text-gray-500 text-sm mt-8">
+        订单号：<span class="font-mono text-gray-800" x-text="orderResult?.order_no"></span>
+      </p>
+    </div>
+
+    <!-- Payment URL (nodeloc) -->
+    <template x-if="orderResult?.payment_url">
+      <div class="mb-16 p-16 bg-warning-50 rounded-12 text-center border border-warning-100">
+        <p class="text-sm text-warning-700 mb-12 fw-medium">请在 15 分钟内完成支付</p>
+        <a :href="orderResult.payment_url" target="_blank"
+           class="btn btn-main rounded-pill py-10 px-32 d-inline-block">前往支付</a>
+      </div>
+    </template>
+
+    <!-- Card keys (balance payment) -->
+    <template x-if="orderResult?.completed && orderResult?.order?.card_keys?.length">
+      <div class="mb-16 p-16 bg-main-50 rounded-12 border border-main-100">
+        <p class="text-sm fw-semibold text-main-600 mb-12">
+          <i class="ph ph-key me-4"></i>卡密已发放：
+        </p>
+        <template x-for="k in orderResult.order.card_keys" :key="k.id">
+          <div class="font-mono text-sm bg-white rounded-8 p-10 mb-8 border border-gray-100 d-flex align-items-center justify-content-between gap-8"
+               style="user-select:all;word-break:break-all;">
+            <span>
+              <span x-text="k.card_no"></span>
+              <template x-if="k.card_pwd">
+                <span> / <span x-text="k.card_pwd"></span></span>
+              </template>
+            </span>
+            <button type="button" class="flex-shrink-0 text-gray-400 hover-text-main-600" style="background:none;border:0;cursor:pointer;"
+                    @click="copyText(k.card_no + (k.card_pwd ? ' / ' + k.card_pwd : ''))">
+              <i class="ph ph-copy"></i>
+            </button>
+          </div>
+        </template>
+      </div>
+    </template>
+
+    <div class="d-flex gap-12">
+      <button type="button" @click="orderResult = null"
+              class="btn btn-outline-main rounded-pill py-10 px-24 flex-1">关闭</button>
+      <a href="/account.html"
+         class="btn btn-main rounded-pill py-10 px-24 flex-1 text-center">查看订单</a>
+    </div>
+  </div>
+</div>
+
+
+<!-- Footer -->
+<footer class="footer py-120">
+  <div class="container container-lg">
+    <div class="footer-item-wrapper d-flex align-items-start flex-wrap">
+      <div class="footer-item">
+        <div class="max-w-340">
+          <div class="footer-item__logo">
+            <a href="/"><span class="text-2xl fw-bold text-main-600" x-text="$store.app.siteName()"></span></a>
+          </div>
+          <p class="mb-28 text-heading mt-12" x-text="$store.app.settings.site_description || '正版软件 · 游戏充值 · 卡密发货平台'"></p>
+          <div class="d-flex flex-column gap-8">
+            <template x-if="$store.app.settings.contact_email">
+              <a :href="'mailto:' + $store.app.settings.contact_email" class="text-heading fw-medium hover-text-main-600">
+                <i class="ph-fill ph-envelope me-4"></i>
+                <span x-text="$store.app.settings.contact_email"></span>
+              </a>
+            </template>
+            <template x-if="$store.app.settings.contact_qq">
+              <span class="text-heading fw-medium">
+                <i class="ph-fill ph-chat-circle-dots me-4"></i>
+                QQ: <span x-text="$store.app.settings.contact_qq"></span>
+              </span>
+            </template>
+          </div>
+        </div>
+      </div>
+      <div class="footer-item">
+        <h6 class="footer-item__title">快速导航</h6>
+        <ul class="footer-menu">
+          <li class="mb-16"><a href="/" class="text-heading hover-text-main-600">首页</a></li>
+          <li class="mb-16"><a href="/shops.html" class="text-heading hover-text-main-600">全部商家</a></li>
+          <li class="mb-16"><a href="/account.html" class="text-heading hover-text-main-600">我的账户</a></li>
+        </ul>
+      </div>
+      <div class="footer-item">
+        <h6 class="footer-item__title">客户服务</h6>
+        <ul class="footer-menu">
+          <li class="mb-16"><a href="/account.html#orders" class="text-heading hover-text-main-600">我的订单</a></li>
+          <li class="mb-16"><a href="/account.html#balance" class="text-heading hover-text-main-600">账户余额</a></li>
+          <li class="mb-16"><a href="javascript:void(0)" class="text-heading hover-text-main-600">使用帮助</a></li>
+        </ul>
+      </div>
+      <div class="footer-item">
+        <h6 class="footer-item__title">热门分类</h6>
+        <ul class="footer-menu">
+          <template x-for="cat in $store.app.categories.slice(0,5)" :key="cat.id">
+            <li class="mb-16"><a :href="'/category.html?id=' + cat.id" class="text-heading hover-text-main-600" x-text="cat.name"></a></li>
+          </template>
+        </ul>
+      </div>
+    </div>
+  </div>
+</footer>
+<div class="bottom-footer py-8">
+  <div class="container container-lg">
+    <div class="bottom-footer__inner flex-between flex-wrap gap-16 py-16 border-top border-neutral-50">
+      <p class="bottom-footer__text text-heading fw-medium">
+        <span x-text="$store.app.siteName()"></span> &copy;
+        <span class="text-success-600 fw-semibold" x-text="new Date().getFullYear()"></span>
+        版权所有
+        <span x-text="$store.app.settings.footer_text || ''"></span>
+      </p>
+    </div>
+  </div>
+</div>
+
+<script src="/marketpro/dist-js/app.bundle.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script src="/js/site.js"></script>
+<script>
+  function qs(k) {
+    return new URLSearchParams(window.location.search).get(k);
+  }
+
+  function checkoutPage() {
+    return {
+      product: null,
+      loading: true,
+      qty: 1,
+      contact: '',
+      remark: '',
+      payMethod: 'nodeloc',
+      balance: 0,
+      submitting: false,
+      orderResult: null,
+
+      async init() {
+        // Wait for Alpine store to initialize
+        await new Promise(resolve => {
+          const check = () => {
+            if (this.$store.app.initialized) return resolve();
+            setTimeout(check, 50);
+          };
+          check();
+        });
+
+        // Must be logged in
+        if (!this.$store.app.user) {
+          window.location.href = '/auth/login?redirect=' + encodeURIComponent(window.location.href);
+          return;
+        }
+
+        const id = qs('id');
+        const qtyParam = parseInt(qs('qty')) || 1;
+        this.qty = qtyParam;
+
+        if (!id) {
+          this.loading = false;
+          return;
+        }
+
+        // Load product
+        try {
+          const r = await fetch('/api/products/' + id);
+          if (r.ok) {
+            this.product = await r.json();
+            // Clamp qty to stock
+            if (this.qty > this.product.stock_count) this.qty = this.product.stock_count;
+            if (this.qty < 1) this.qty = 1;
+          }
+        } catch(e) {}
+
+        // Load balance
+        try {
+          const r = await fetch('/api/balance');
+          if (r.ok) {
+            const d = await r.json();
+            this.balance = d.balance || 0;
+          }
+        } catch(e) {}
+
+        // Pre-fill contact from user if available
+        if (this.$store.app.user?.email) {
+          this.contact = this.$store.app.user.email;
+        }
+
+        this.loading = false;
+      },
+
+      async placeOrder() {
+        if (!this.product || this.submitting) return;
+        if (this.payMethod === 'balance' && this.balance < this.product.price * this.qty) {
+          this.$store.app.showToast('余额不足', 'error');
+          return;
+        }
+
+        this.submitting = true;
+        try {
+          const r = await fetch('/api/orders/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              product_id: this.product.id,
+              quantity: this.qty,
+              contact: this.contact,
+              remark: this.remark,
+              pay_method: this.payMethod,
+            }),
+          });
+          const data = await r.json();
+          if (!r.ok) {
+            this.$store.app.showToast(data.error || '下单失败', 'error');
+            return;
+          }
+          this.orderResult = data;
+          // If nodeloc, auto-open payment URL
+          if (data.payment_url) {
+            window.open(data.payment_url, '_blank');
+          }
+          // Update balance display if balance payment
+          if (data.completed) {
+            try {
+              const rb = await fetch('/api/balance');
+              if (rb.ok) { const db = await rb.json(); this.balance = db.balance || 0; }
+            } catch(e) {}
+          }
+        } catch(e) {
+          this.$store.app.showToast('网络错误，请重试', 'error');
+        } finally {
+          this.submitting = false;
+        }
+      },
+
+      copyText(text) {
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(text).then(() => {
+            this.$store.app.showToast('已复制到剪贴板', 'success');
+          }).catch(() => {
+            this.$store.app.showToast('复制失败，请手动复制', 'error');
+          });
+        }
+      },
+    };
+  }
+</script>
+</body>
+</html>

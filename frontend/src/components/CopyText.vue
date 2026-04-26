@@ -1,29 +1,30 @@
 <template>
-  <span 
-    class="inline-flex items-center space-x-2 copy-click font-mono-data relative group"
-    @click="handleCopy"
-    :title="copied ? '已复制!' : '点击复制'"
+  <span
+    class="copy-text cursor-pointer hover-text-main-600 inline-flex items-center gap-4"
+    :title="copied ? '已复制' : '点击复制'"
+    @click.stop="onCopy"
   >
-    <span>{{ text }}</span>
-    <Check v-if="copied" class="w-4 h-4 text-green-600" />
-    <Copy v-else class="w-4 h-4 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+    <slot>{{ text }}</slot>
+    <i :class="copied ? 'ph ph-check text-main-600' : 'ph ph-copy'" class="text-md"></i>
   </span>
 </template>
 
 <script setup>
-import { Copy, Check } from 'lucide-vue-next'
-import { useCopy } from '@/composables/useCopy'
+import { ref } from 'vue'
+import { copyToClipboard } from '@/utils/helpers'
+import { useToastStore } from '@/stores/toast'
 
 const props = defineProps({
-  text: {
-    type: String,
-    required: true
-  }
+  text: { type: String, default: '' },
 })
 
-const { copied, copy } = useCopy()
+const copied = ref(false)
+const toast = useToastStore()
 
-async function handleCopy() {
-  await copy(props.text)
+async function onCopy() {
+  await copyToClipboard(props.text)
+  copied.value = true
+  toast.success('已复制')
+  setTimeout(() => (copied.value = false), 1500)
 }
 </script>

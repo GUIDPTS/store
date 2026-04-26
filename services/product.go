@@ -39,7 +39,7 @@ func (s *ProductService) Delete(id uint) error {
 // FindByID 根据ID查找商品
 func (s *ProductService) FindByID(id uint) (*models.Product, error) {
 	var product models.Product
-	if err := database.GetDB().Preload("Category").First(&product, id).Error; err != nil {
+	if err := database.GetDB().Preload("Category").Preload("Shop").First(&product, id).Error; err != nil {
 		return nil, err
 	}
 	return &product, nil
@@ -54,25 +54,44 @@ func (s *ProductService) GetAll() ([]models.Product, error) {
 	return products, nil
 }
 
-// GetActive 获取启用的商品
+// GetActive 获取启用的商品（仅来自已批准的店铺）
 func (s *ProductService) GetActive() ([]models.Product, error) {
 	var products []models.Product
-	if err := database.GetDB().Preload("Category").
-		Where("is_active = ?", true).
-		Order("sort asc, id desc").
+	if err := database.GetDB().
+		Preload("Category").
+		Preload("Shop").
+		Joins("JOIN shops ON shops.id = products.shop_id AND shops.status = ?", models.ShopStatusApproved).
+		Where("products.is_active = ?", true).
+		Order("products.sort asc, products.id desc").
 		Find(&products).Error; err != nil {
 		return nil, err
 	}
 	return products, nil
 }
 
-// GetByCategory 根据分类获取商品
+// GetByCategory 根据分类获取商品（仅已批准店铺）
 func (s *ProductService) GetByCategory(categoryID uint) ([]models.Product, error) {
 	var products []models.Product
-	if err := database.GetDB().Preload("Category").
-		Where("category_id = ? AND is_active = ?", categoryID, true).
-		Order("sort asc, id desc").
+	if err := database.GetDB().
+		Preload("Category").
+		Preload("Shop").
+		Joins("JOIN shops ON shops.id = products.shop_id AND shops.status = ?", models.ShopStatusApproved).
+		Where("products.category_id = ? AND products.is_active = ?", categoryID, true).
+		Order("products.sort asc, products.id desc").
 		Find(&products).Error; err != nil {
+		return nil, err
+	}
+	return products, nil
+}
+
+// GetByShop 根据店铺获取商品
+func (s *ProductService) GetByShop(shopID uint, onlyActive bool) ([]models.Product, error) {
+	var products []models.Product
+	db := database.GetDB().Preload("Category").Preload("Shop").Where("shop_id = ?", shopID)
+	if onlyActive {
+		db = db.Where("is_active = ?", true)
+	}
+	if err := db.Order("sort asc, id desc").Find(&products).Error; err != nil {
 		return nil, err
 	}
 	return products, nil

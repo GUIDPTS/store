@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理后台</title>
+  <link rel="shortcut icon" href="/marketpro/images/logo/favicon.png">
+  <link rel="stylesheet" href="/marketpro/css/app.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap-grid.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap-utilities.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+  <script>
+    window.tailwind = { config: {
+      corePlugins: { preflight: false },
+      theme: { extend: { colors: {
+        main: { DEFAULT:'#299e60',50:'#e7f9ef',100:'#cef2df',600:'#299e60',700:'#258e56',800:'#207e4c' },
+        danger: { 50:'#FEF2F2',600:'#DC2626',700:'#B91C1C' },
+        warning: { 50:'#FEFCE8',600:'#FF9F29' },
+        'color-one':'#F3FAF2',
+      }}}
+    }};
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    [x-cloak]{display:none!important}
+    html,body{height:100%;margin:0;font-family:Quicksand,sans-serif;}
+    .admin-sidebar{width:240px;min-height:100vh;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto;}
+    .admin-nav-link{display:flex;align-items:center;gap:10px;padding:10px 20px;color:#4B5563;font-size:0.875rem;font-weight:500;transition:all 0.15s;text-decoration:none;cursor:pointer;border:none;background:none;width:100%;text-align:left;}
+    .admin-nav-link:hover{background:#e7f9ef;color:#299e60;}
+    .admin-nav-link.active{background:#e7f9ef;color:#299e60;font-weight:700;}
+    .admin-nav-link i{font-size:1.1rem;}
+    .admin-table{width:100%;font-size:0.875rem;border-collapse:collapse;}
+    .admin-table th{padding:10px 12px;border-bottom:2px solid #F3F4F6;text-align:left;color:#9CA3AF;font-weight:600;font-size:0.75rem;white-space:nowrap;}
+    .admin-table td{padding:10px 12px;border-bottom:1px solid #F3F4F6;vertical-align:middle;}
+    .admin-table tr:hover td{background:#F9FAFB;}
+    .badge{display:inline-block;padding:2px 10px;border-radius:50px;font-size:0.7rem;font-weight:600;}
+    .badge-success{background:#e7f9ef;color:#299e60;}
+    .badge-warning{background:#FEFCE8;color:#FF9F29;}
+    .badge-danger{background:#FEF2F2;color:#DC2626;}
+    .badge-secondary{background:#F3F4F6;color:#6B7280;}
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;}
+    .modal-box{background:#fff;border-radius:16px;padding:32px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;}
+    .form-label{display:block;margin-bottom:6px;font-size:0.875rem;font-weight:600;color:#374151;}
+    .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+    .stat-card{background:#fff;border:1px solid #F3F4F6;border-radius:12px;padding:20px;transition:border-color 0.2s;}
+    .stat-card:hover{border-color:#299e60;}
+    .paginator{display:flex;align-items:center;gap:8px;margin-top:16px;flex-wrap:wrap;}
+    .paginator button{padding:4px 12px;border:1px solid #E5E7EB;border-radius:6px;font-size:0.8rem;background:#fff;cursor:pointer;}
+    .paginator button:disabled{opacity:0.4;cursor:default;}
+    .filter-bar{background:#fff;border:1px solid #F3F4F6;border-radius:12px;padding:16px;margin-bottom:20px;display:flex;align-items:center;flex-wrap:wrap;gap:12px;}
+    .spin{animation:spin 1s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .text-line-1{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px;}
+    .content-card{background:#fff;border:1px solid #F3F4F6;border-radius:16px;overflow:hidden;}
+    .btn-link-action{background:none;border:none;padding:0;cursor:pointer;font-size:0.875rem;}
+  </style>
+</head>
+<body x-data="adminApp()" x-init="init()" x-cloak>
+
+<!-- Loading overlay -->
+<div x-show="loading" class="fixed inset-0 flex items-center justify-center bg-white" style="z-index:9999;">
+  <div class="text-center">
+    <i class="ph ph-circle-notch spin text-main-600" style="font-size:3rem;"></i>
+    <p class="text-gray-400 mt-16 text-sm">加载中…</p>
+  </div>
+</div>
+
+<!-- Admin layout -->
+<div x-show="!loading && isAdmin" class="flex" style="min-height:100vh;">
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar bg-white border-r border-gray-100 flex flex-col">
+    <!-- Brand -->
+    <div class="p-20 border-b border-gray-100 flex-shrink-0" style="background:linear-gradient(135deg,#299e60,#207e4c);">
+      <div class="flex items-center gap-12">
+        <i class="ph-fill ph-shield-check text-white" style="font-size:1.8rem;"></i>
+        <div class="min-w-0">
+          <h6 class="mb-0 text-white" style="font-size:0.95rem;">管理后台</h6>
+          <p class="mb-0 text-white text-sm text-line-1" style="opacity:0.75;" x-text="user?.username || ''"></p>
+        </div>
+      </div>
+    </div>
+    <!-- Nav -->
+    <nav class="flex-1 py-8">
+      <template x-for="item in menuItems" :key="item.page">
+        <button type="button" @click="nav(item.page)"
+                :class="page === item.page ? 'active' : ''"
+                class="admin-nav-link">
+          <i :class="item.icon"></i>
+          <span x-text="item.label"></span>
+        </button>
+      </template>
+      <div class="border-t border-gray-100 mt-8 pt-8">
+        <a href="/" class="admin-nav-link"><i class="ph ph-arrow-left"></i> 返回前台</a>
+        <a href="/auth/logout" class="admin-nav-link" style="color:#DC2626;"><i class="ph ph-sign-out"></i> 退出登录</a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <div class="flex-1 min-w-0 flex flex-col" style="background:#F3FAF2;">
+    <main class="flex-1 overflow-auto" style="padding:24px;">
+
+      <!-- Toast -->
+      <div x-show="toastMsg" x-transition
+           :class="toastType === 'danger' ? 'bg-danger-600' : 'bg-main-600'"
+           class="fixed top-24 right-24 text-white text-sm px-20 py-12 rounded-12"
+           style="z-index:9998;box-shadow:0 4px 20px rgba(0,0,0,.2);">
+        <span x-text="toastMsg"></span>
+      </div>
+
+      <!-- ========== Dashboard ========== -->
+      <div x-show="page === 'dashboard'">
+        <div class="page-header"><h5 class="mb-0">仪表板</h5></div>
+        <div x-show="dashLoading" class="py-40 text-center text-gray-400"><i class="ph ph-circle-notch spin" style="font-size:2rem;"></i></div>
+        <div x-show="!dashLoading" class="row g-3 mb-24">
+          <div class="col-6 col-xl-3">
+            <div class="stat-card">
+              <div class="d-flex align-items-center justify-content-between mb-8">
+                <span class="text-gray-500 text-sm">商品总数</span><i class="ph ph-package text-main-600 text-xl"></i>
+              </div>
+              <h4 class="mb-0" x-text="dashStats?.products ?? '—'"></h4>
+            </div>
+          </div>
+          <div class="col-6 col-xl-3">
+            <div class="stat-card">
+              <div class="d-flex align-items-center justify-content-between mb-8">
+                <span class="text-gray-500 text-sm">订单总数</span><i class="ph ph-receipt text-main-600 text-xl"></i>
+              </div>
+              <h4 class="mb-0" x-text="dashStats?.orders ?? '—'"></h4>
+            </div>
+          </div>
+          <div class="col-6 col-xl-3">
+            <div class="stat-card">
+              <div class="d-flex align-items-center justify-content-between mb-8">
+                <span class="text-gray-500 text-sm">用户总数</span><i class="ph ph-users text-main-600 text-xl"></i>
+              </div>
+              <h4 class="mb-0" x-text="dashStats?.users ?? '—'"></h4>
+            </div>
+          </div>
+          <div class="col-6 col-xl-3">
+            <div class="stat-card">
+              <div class="d-flex align-items-center justify-content-between mb-8">
+                <span class="text-gray-500 text-sm">分类总数</span><i class="ph ph-tag text-main-600 text-xl"></i>
+              </div>
+              <h4 class="mb-0" x-text="dashStats?.categories ?? '—'"></h4>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== Categories ========== -->
+      <div x-show="page === 'categories'">
+        <div class="page-header">
+          <h5 class="mb-0">分类管理</h5>
+          <button type="button" class="btn btn-main rounded-pill py-8 px-20 d-inline-flex align-items-center gap-8" @click="catOpenNew()">
+            <i class="ph ph-plus"></i> 新建分类
+          </button>
+        </div>
+        <div class="content-card">
+          <div x-show="catLoading" class="py-40 text-center text-gray-400"><i class="ph ph-circle-notch spin" style="font-size:2rem;"></i></div>
+          <div x-show="!catLoading" class="table-responsive">
+            <table class="admin-table">
+              <thead><tr><th>ID</th><th>名称</th><th>图标</th><th>排序</th><th>状态</th><th class="text-end">操作</th></tr></thead>
+              <tbody>
+                <template x-for="c in catList" :key="c.id">
+                  <tr>
+                    <td class="font-mono text-xs" x-text="c.id"></td>
+                    <td x-text="c.name"></td>
+                    <td><i :class="c.icon || 'ph ph-tag'" class="text-main-600 text-xl"></i></td>
+                    <td x-text="c.sort"></td>
+                    <td><span :class="c.is_active ? 'badge-success' : 'badge-secondary'" class="badge" x-text="c.is_active ? '启用' : '禁用'"></span></td>
+                    <td class="text-end">
+                      <button type="button" class="btn-link-action text-main-600 me-12" @click="catOpenEdit(c)"><i class="ph ph-pencil"></i> 编辑</button>
+                      <button type="button" class="btn-link-action text-danger-600" @click="catDel(c)"><i class="ph ph-trash"></i> 删除</button>
+                    </td>
+                  </tr>
+                </template>
+                <tr x-show="catList.length === 0"><td colspan="6" class="text-center text-gray-400 py-32">暂无数据</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== Products ========== -->
+      <div x-show="page === 'products'">
+        <div class="page-header">
+          <h5 class="mb-0">商品管理</h5>
+          <button type="button" class="btn btn-main rounded-pill py-8 px-20 d-inline-flex align-items-center gap-8" @click="prodOpenNew()">
+            <i class="ph ph-plus"></i> 新建商品
+          </button>
+        </div>
+        <div class="content-card">
+          <div x-show="prodLoading" class="py-40 text-center text-gray-400"><i class="ph ph-circle-notch spin" style="font-size:2rem;"></i></div>
+          <div x-show="!prodLoading" class="table-responsive">
+            <table class="admin-table">
+              <thead><tr><th>ID</th><th>商品</th><th>分类</th><th>价格</th><th>库存</th><th>已售</th><th>状态</th><th class="text-end">操作</th></tr></thead>
+              <tbody>
+                <template x-for="p in prodList" :key="p.id">
+                  <tr>
+                    <td class="font-mono text-xs" x-text="p.id"></td>
+                    <td>
+                      <div class="d-flex align-items-center gap-8">
+                        <div class="flex-shrink-0 rounded-8 d-flex align-items-center justify-content-center overflow-hidden" style="width:32px;height:32px;background:#F3FAF2;">
+                          <img x-show="p.image" :src="p.image" alt="" style="width:100%;height:100%;object-fit:cover;">
+                          <i x-show="!p.image" class="ph ph-package text-gray-400"></i>
+                        </div>
+                        <span class="text-line-1" x-text="p.name"></span>
+                      </div>
+                    </td>
+                    <td x-text="catNameById(p.category_id)"></td>
+                    <td x-text="'¥' + Number(p.price || 0).toFixed(2)"></td>
+                    <td x-text="p.stock_count || 0"></td>
+                    <td x-text="p.sales_count || 0"></td>
+                    <td><span :class="p.is_active ? 'badge-success' : 'badge-secondary'" class="badge" x-text="p.is_active ? '上架' : '下架'"></span></td>
+                    <td class="text-end" style="white-space:nowrap;">
+                      <button type="button" class="btn-link-action text-main-600 me-12" @click="prodOpenEdit(p)"><i class="ph ph-pencil"></i></button>
+                      <button type="button" class="btn-link-action text-main-600 me-12" @click="nav('cards', p.id)" title="管理卡密"><i class="ph ph-key"></i></button>
+                      <button type="button" class="btn-link-action text-danger-600" @click="prodDel(p)"><i class="ph ph-trash"></i></button>
+                    </td>
+                  </tr>
+                </template>
+                <tr x-show="prodList.length === 0"><td colspan="8" class="text-center text-gray-400 py-32">暂无数据</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="p-16" x-show="prodTotal > prodPageSize">
+            <div class="paginator">
+              <button @click="prodPage--; loadProds()" :disabled="prodPage <= 1">上一页</button>
+              <span class="text-sm text-gray-500" x-text="`第 ${prodPage} / ${Math.ceil(prodTotal/prodPageSize)} 页 (共${prodTotal}条)`"></span>
+              <button @click="prodPage++; loadProds()" :disabled="prodPage >= Math.ceil(prodTotal/prodPageSize)">下一页</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== Cards ========== -->
+      <div x-show="page === 'cards'">
+        <div class="page-header">
+          <h5 class="mb-0">卡密管理</h5>
+          <button type="button" class="btn btn-main rounded-pill py-8 px-20 d-inline-flex align-items-center gap-8" @click="cardOpenImport()">
+            <i class="ph ph-upload-simple"></i> 批量导入
+          </button>
+        </div>
+        <div class="filter-bar">
+          <label class="text-sm text-gray-500">商品：</label>
+          <select x-model.number="cardFilterProd" @change="cardPage=1; loadCards()" class="common-input flex-1" style="min-width:200px;">
+            <option :value="0">全部商品</option>
+            <template x-for="p in allProducts" :key="p.id"><option :value="p.id" x-text="p.name"></option></template>
+          </select>
+          <select x-model="cardFilterStatus" @change="cardPage=1; loadCards()" class="common-input" style="width:160px;">
+            <option value="">全部状态</option>
+            <option value="unused">未使用</option>
+            <option value="used">已使用</option>
+          </select>
+        </div>
+        <div class="content-card">
+          <div x-show="cardLoading" class="py-40 text-center text-gray-400"><i class="ph ph-circle-notch spin" style="font-size:2rem;"></i></div>
+          <div x-show="!cardLoading" class="table-responsive">
+            <table class="admin-table">
+              <thead><tr><th>ID</th><th>商品</th><th>卡密</th><th>状态</th><th>使用时间</th><th class="text-end">操作</th></tr></thead>
+              <tbody>
+                <template x-for="k in cardList" :key="k.id">
+                  <tr>
+                    <td class="font-mono text-xs" x-text="k.id"></td>
+                    <td class="text-line-1" x-text="prodNameById(k.product_id)"></td>
+                    <td class="font-mono text-xs" x-text="k.content"></td>
+                    <td><span :class="k.status === 'used' ? 'badge-secondary' : 'badge-success'" class="badge" x-text="k.status === 'used' ? '已使用' : '未使用'"></span></td>
+                    <td class="text-xs text-gray-400" x-text="k.used_at ? fmtDate(k.used_at) : '—'"></td>
+                    <td class="text-end">
+                      <button x-show="k.status !== 'used'" type="button" class="btn-link-action text-danger-600" @click="cardDel(k)"><i class="ph ph-trash"></i></button>
+                    </td>
+                  </tr>
+                </template>
+                <tr x-show="cardList.length === 0"><td colspan="6" class="text-center text-gray-400 py-32">暂无数据</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="p-16" x-show="cardTotal > cardPageSize">
+            <div class="paginator">
+              <button @click="cardPage--; loadCards()" :disabled="cardPage <= 1">上一页</button>
+              <span class="text-sm text-gray-500" x-text="`第 ${cardPage} / ${Math.ceil(cardTotal/cardPageSize)} 页 (共${cardTotal}条)`"></span>
+              <button @click="cardPage++; loadCards()" :disabled="cardPage >= Math.ceil(cardTotal/cardPageSize)">下一页</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== Orders ========== -->
+      <div x-show="page === 'orders'">
+        <div class="page-header"><h5 class="mb-0">订单管理</h5></div>
+        <div class="filter-bar">
+          <select x-model.number="orderFilterStatus" @change="orderPage=1; loadOrders()" class="common-input" style="width:180px;">
+            <option :value="-1">全部状态</option>
+            <option :value="0">待支付</option>
+            <option :value="1">已支付</option>
+            <option :value="2">已完成</option>
+            <option :value="3">已取消</option>
+            <option :value="4">已退款</option>
+          </select>
+        </div>
+        <div class="content-card">
+          <div x-show="orderLoading" class="py-40 text-center text-gray-400"><i class="ph ph-circle-notch spin" style="font-size:2rem;"></i></div>
+          <div x-show="!orderLoading" class="table-responsive">
+            <table class="admin-table">
+              <thead><tr><th>订单号</th><th>用户</th><th>商品</th><th>数量</th><th>金额</th><th>状态</th><th>时间</th></tr></thead>
+              <tbody>
+                <template x-for="o in orderList" :key="o.id">
+                  <tr>
+                    <td class="font-mono text-xs">
+                      <a :href="'/order.html?no=' + o.order_no" class="text-main-600" target="_blank" x-text="o.order_no"></a>
+                    </td>
+                    <td x-text="o.username || o.user_id"></td>
+                    <td class="text-line-1" x-text="o.product_name"></td>
+                    <td x-text="o.quantity"></td>
+                    <td class="text-main-600 fw-bold" x-text="'¥' + Number(o.total_amount || 0).toFixed(2)"></td>
+                    <td><span :class="orderStatusBadge(o.status)" class="badge" x-text="orderStatusText(o.status)"></span></td>
+                    <td class="text-xs text-gray-400" x-text="fmtDate(o.created_at)"></td>
+                  </tr>
+                </template>
+                <tr x-show="orderList.length === 0"><td colspan="7" class="text-center text-gray-400 py-32">暂无数据</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="p-16" x-show="orderTotal > orderPageSize">
+            <div class="paginator">
+              <button @click="orderPage--; loadOrders()" :disabled="orderPage <= 1">上一页</button>
+              <span class="text-sm text-gray-500" x-text="`第 ${orderPage} / ${Math.ceil(orderTotal/orderPageSize)} 页 (共${orderTotal}条)`"></span>
+              <button @click="orderPage++; loadOrders()" :disabled="orderPage >= Math.ceil(orderTotal/orderPageSize)">下一页</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== Shops ========== -->
+      <div x-show="page === 'shops'">
+        <div class="page-header"><h5 class="mb-0">店铺审核</h5></div>
+        <div class="filter-bar">
+          <template x-for="s in [{v:0,l:'待审核'},{v:1,l:'已通过'},{v:2,l:'已驳回'},{v:3,l:'已封禁'},{v:-1,l:'全部'}]" :key="s.v">
+            <button type="button"
+                    :class="shopFilterStatus === s.v ? 'btn-main' : 'btn-outline-main'"
+                    class="btn rounded-pill py-6 px-16 text-sm"
+                    @click="shopFilterStatus = s.v; shopPage = 1; loadShops()"
+                    x-text="s.l"></button>
+          </template>
+        </div>
+        <div class="content-card">
+          <div x-show="shopLoading" class="py-40 text-center text-gray-400"><i class="ph ph-circle-notch spin" style="font-size:2rem;"></i></div>
+          <div x-show="!shopLoading" class="table-responsive">
+            <table class="admin-table">
+              <thead><tr><th>ID</th><th>店铺</th><th>店主</th><th>联系方式</th><th>状态</th><th>申请时间</th><th class="text-end">操作</th></tr></thead>
+              <tbody>
+                <template x-for="s in shopList" :key="s.id">
+                  <tr>
+                    <td class="font-mono text-xs" x-text="s.id"></td>
+                    <td>
+                      <div class="d-flex align-items-center gap-8">
+                        <div class="flex-shrink-0 rounded-8 d-flex align-items-center justify-content-center" style="width:32px;height:32px;background:#F3FAF2;">
+                          <img x-show="s.logo" :src="s.logo" alt="" style="width:100%;height:100%;object-fit:cover;">
+                          <i x-show="!s.logo" class="ph-fill ph-storefront text-main-600"></i>
+                        </div>
+                        <span class="text-line-1" x-text="s.name"></span>
+                      </div>
+                    </td>
+                    <td x-text="s.owner_name || s.user_id"></td>
+                    <td class="text-xs" x-text="s.contact || '—'"></td>
+                    <td><span :class="shopStatusBadge(s.status)" class="badge" x-text="shopStatusText(s.status)"></span></td>
+                    <td class="text-xs text-gray-400" x-text="fmtDate(s.created_at)"></td>
+                    <td class="text-end" style="white-space:nowrap;">
+                      <template x-if="s.status === 0">
+                        <span>
+                          <button type="button" class="btn-link-action text-main-600 me-8" @click="shopAct(s, 'approve')"><i class="ph ph-check"></i> 通过</button>
+                          <button type="button" class="btn-link-action text-danger-600" @click="shopAct(s, 'reject')"><i class="ph ph-x"></i> 驳回</button>
+                        </span>
+                      </template>
+                      <template x-if="s.status === 1">
+                        <button type="button" class="btn-link-action text-danger-600" @click="shopAct(s, 'block')"><i class="ph ph-prohibit"></i> 封禁</button>
+                      </template>
+                      <template x-if="s.status === 3">
+                        <button type="button" class="btn-link-action text-main-600" @click="shopAct(s, 'approve')"><i class="ph ph-check-circle"></i> 解封</button>
+                      </template>
+                    </td>
+                  </tr>
+                </template>
+                <tr x-show="shopList.length === 0"><td colspan="7" class="text-center text-gray-400 py-32">暂无数据</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="p-16" x-show="shopTotal > shopPageSize">
+            <div class="paginator">
+              <button @click="shopPage--; loadShops()" :disabled="shopPage <= 1">上一页</button>
+              <span class="text-sm text-gray-500" x-text="`第 ${shopPage} / ${Math.ceil(shopTotal/shopPageSize)} 页`"></span>
+              <button @click="shopPage++; loadShops()" :disabled="shopPage >= Math.ceil(shopTotal/shopPageSize)">下一页</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== Withdrawals ========== -->
+      <div x-show="page === 'withdrawals'">
+        <div class="page-header"><h5 class="mb-0">提现审核</h5></div>
+        <div class="filter-bar">
+          <template x-for="s in [{v:0,l:'待审核'},{v:1,l:'已完成'},{v:2,l:'已驳回'},{v:3,l:'处理中'},{v:-1,l:'全部'}]" :key="s.v">
+            <button type="button"
+                    :class="wdFilterStatus === s.v ? 'btn-main' : 'btn-outline-main'"
+                    class="btn rounded-pill py-6 px-16 text-sm"
+                    @click="wdFilterStatus = s.v; wdPage = 1; loadWd()"
+                    x-text="s.l"></button>
+          </template>
+        </div>
+        <div class="content-card">
+          <div x-show="wdLoading" class="py-40 text-center text-gray-400"><i class="ph ph-circle-notch spin" style="font-size:2rem;"></i></div>
+          <div x-show="!wdLoading" class="table-responsive">
+            <table class="admin-table">
+              <thead><tr><th>ID</th><th>用户</th><th>金额</th><th>收款方式</th><th>收款账号</th><th>状态</th><th>申请时间</th><th class="text-end">操作</th></tr></thead>
+              <tbody>
+                <template x-for="w in wdList" :key="w.id">
+                  <tr>
+                    <td class="font-mono text-xs" x-text="w.id"></td>
+                    <td x-text="w.username || w.user_id"></td>
+                    <td class="text-main-600 fw-bold" x-text="'¥' + Number(w.amount || 0).toFixed(2)"></td>
+                    <td x-text="w.method"></td>
+                    <td class="text-xs" x-text="w.account"></td>
+                    <td><span :class="wdStatusBadge(w.status)" class="badge" x-text="wdStatusText(w.status)"></span></td>
+                    <td class="text-xs text-gray-400" x-text="fmtDate(w.created_at)"></td>
+                    <td class="text-end">
+                      <template x-if="w.status === 0">
+                        <span>
+                          <button type="button" class="btn-link-action text-main-600 me-8" @click="wdAct(w, 'approve')"><i class="ph ph-check"></i> 通过</button>
+                          <button type="button" class="btn-link-action text-danger-600" @click="wdAct(w, 'reject')"><i class="ph ph-x"></i> 驳回</button>
+                        </span>
+                      </template>
+                    </td>
+                  </tr>
+                </template>
+                <tr x-show="wdList.length === 0"><td colspan="8" class="text-center text-gray-400 py-32">暂无数据</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="p-16" x-show="wdTotal > wdPageSize">
+            <div class="paginator">
+              <button @click="wdPage--; loadWd()" :disabled="wdPage <= 1">上一页</button>
+              <span class="text-sm text-gray-500" x-text="`第 ${wdPage} / ${Math.ceil(wdTotal/wdPageSize)} 页`"></span>
+              <button @click="wdPage++; loadWd()" :disabled="wdPage >= Math.ceil(wdTotal/wdPageSize)">下一页</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== Users ========== -->
+      <div x-show="page === 'users'">
+        <div class="page-header"><h5 class="mb-0">用户管理</h5></div>
+        <div class="content-card">
+          <div x-show="userLoading" class="py-40 text-center text-gray-400"><i class="ph ph-circle-notch spin" style="font-size:2rem;"></i></div>
+          <div x-show="!userLoading" class="table-responsive">
+            <table class="admin-table">
+              <thead><tr><th>ID</th><th>头像</th><th>用户名</th><th>邮箱</th><th>角色</th><th>状态</th><th>注册时间</th><th class="text-end">操作</th></tr></thead>
+              <tbody>
+                <template x-for="u in userList" :key="u.id">
+                  <tr>
+                    <td class="font-mono text-xs" x-text="u.id"></td>
+                    <td>
+                      <img x-show="u.avatar_url" :src="u.avatar_url" alt="" class="rounded-circle" style="width:32px;height:32px;object-fit:cover;">
+                      <div x-show="!u.avatar_url" class="rounded-circle d-flex align-items-center justify-content-center" style="width:32px;height:32px;background:#cef2df;color:#299e60;">
+                        <i class="ph ph-user"></i>
+                      </div>
+                    </td>
+                    <td x-text="u.username || u.name"></td>
+                    <td class="text-xs" x-text="u.email || '—'"></td>
+                    <td><span :class="u.is_admin ? 'badge-success' : 'badge-secondary'" class="badge" x-text="u.is_admin ? '管理员' : '用户'"></span></td>
+                    <td><span :class="u.is_blocked ? 'badge-danger' : 'badge-success'" class="badge" x-text="u.is_blocked ? '封禁' : '正常'"></span></td>
+                    <td class="text-xs text-gray-400" x-text="fmtDate(u.created_at)"></td>
+                    <td class="text-end">
+                      <button type="button"
+                              :class="u.is_blocked ? 'text-main-600' : 'text-danger-600'"
+                              class="btn-link-action"
+                              @click="userToggleBlock(u)">
+                        <i :class="u.is_blocked ? 'ph ph-check-circle' : 'ph ph-prohibit'"></i>
+                        <span x-text="u.is_blocked ? ' 解封' : ' 封禁'"></span>
+                      </button>
+                    </td>
+                  </tr>
+                </template>
+                <tr x-show="userList.length === 0"><td colspan="8" class="text-center text-gray-400 py-32">暂无数据</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="p-16" x-show="userTotal > userPageSize">
+            <div class="paginator">
+              <button @click="userPage--; loadUsers()" :disabled="userPage <= 1">上一页</button>
+              <span class="text-sm text-gray-500" x-text="`第 ${userPage} / ${Math.ceil(userTotal/userPageSize)} 页 (共${userTotal}条)`"></span>
+              <button @click="userPage++; loadUsers()" :disabled="userPage >= Math.ceil(userTotal/userPageSize)">下一页</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== Settings ========== -->
+      <div x-show="page === 'settings'">
+        <div class="page-header"><h5 class="mb-0">系统设置</h5></div>
+        <div x-show="settingsLoading" class="py-40 text-center text-gray-400"><i class="ph ph-circle-notch spin" style="font-size:2rem;"></i></div>
+        <form x-show="!settingsLoading" @submit.prevent="saveSettings()" class="row g-3" style="max-width:800px;">
+          <div class="col-12">
+            <div class="content-card" style="padding:24px;">
+              <h6 class="d-flex align-items-center gap-8 mb-16 text-md"><i class="ph ph-storefront text-main-600"></i> 站点信息</h6>
+              <div class="row g-3">
+                <div class="col-md-6"><label class="form-label">站点名称</label><input x-model="settingsForm.site_name" type="text" class="common-input"></div>
+                <div class="col-md-6">
+                  <label class="form-label">Logo URL</label>
+                  <div class="d-flex gap-8">
+                    <input x-model="settingsForm.site_logo" type="text" class="common-input flex-grow-1">
+                    <button type="button" class="btn bg-color-one border border-gray-100 rounded-8 px-12 text-sm flex-shrink-0" @click="pickImage(url => settingsForm.site_logo = url)"><i class="ph ph-upload-simple me-4"></i>上传</button>
+                  </div>
+                  <template x-if="settingsForm.site_logo">
+                    <img :src="settingsForm.site_logo" alt="预览" class="mt-8 rounded-8" style="max-height:44px;object-fit:contain;">
+                  </template>
+                </div>
+                <div class="col-12"><label class="form-label">站点描述</label><textarea x-model="settingsForm.site_description" class="common-input" rows="2"></textarea></div>
+                <div class="col-md-6"><label class="form-label">客服邮箱</label><input x-model="settingsForm.contact_email" type="email" class="common-input"></div>
+                <div class="col-md-6"><label class="form-label">客服 QQ</label><input x-model="settingsForm.contact_qq" type="text" class="common-input"></div>
+                <div class="col-12"><label class="form-label">页脚文字</label><input x-model="settingsForm.footer_text" type="text" class="common-input"></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="content-card" style="padding:24px;">
+              <h6 class="d-flex align-items-center gap-8 mb-16 text-md"><i class="ph ph-credit-card text-main-600"></i> 支付与提现</h6>
+              <div class="row g-3">
+                <div class="col-12">
+                  <p class="text-gray-500 text-sm mb-8">NodeLoc 支付配置（用于在线收款）</p>
+                </div>
+                <div class="col-md-6"><label class="form-label">Payment ID</label><input x-model="settingsForm.payment_id" type="text" class="common-input" placeholder="pay_xxx"></div>
+                <div class="col-md-6"><label class="form-label">Secret Key</label><input x-model="settingsForm.payment_secret" type="password" class="common-input" placeholder="支付密钥"></div>
+                <div class="col-12"><label class="form-label">回调地址</label><input x-model="settingsForm.payment_callback_uri" type="text" class="common-input" placeholder="https://yourdomain.com/api/payment/callback"></div>
+                <div class="col-md-4"><label class="form-label">平台佣金率（%）</label><input x-model="settingsForm.platform_commission" type="number" step="0.01" min="0" max="100" class="common-input"></div>
+                <div class="col-md-4"><label class="form-label">最低提现金额</label><input x-model="settingsForm.withdrawal_min_amount" type="number" step="0.01" min="0" class="common-input"></div>
+                <div class="col-md-4"><label class="form-label">提现手续费率（%）</label><input x-model="settingsForm.withdrawal_fee_rate" type="number" step="0.01" min="0" class="common-input"></div>
+                <div class="col-md-4">
+                  <label class="form-label">支付功能</label>
+                  <select x-model="settingsForm.payment_enabled" class="common-input"><option value="true">启用</option><option value="false">禁用</option></select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">提现功能</label>
+                  <select x-model="settingsForm.withdrawal_enabled" class="common-input"><option value="true">启用</option><option value="false">禁用</option></select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">开店申请</label>
+                  <select x-model="settingsForm.shop_apply_enabled" class="common-input"><option value="true">启用</option><option value="false">禁用</option></select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="content-card" style="padding:24px;">
+              <h6 class="d-flex align-items-center gap-8 mb-16 text-md"><i class="ph ph-megaphone text-main-600"></i> 公告</h6>
+              <textarea x-model="settingsForm.announcement" class="common-input" rows="4" placeholder="首页顶部公告内容（留空则不显示）"></textarea>
+            </div>
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-main rounded-pill py-12 px-32 d-inline-flex align-items-center gap-8" :disabled="settingsSaving">
+              <i class="ph ph-floppy-disk"></i>
+              <span x-text="settingsSaving ? '保存中…' : '保存设置'"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ========== Homepage Config ========== -->
+      <div x-show="page === 'homepage'">
+        <div class="page-header">
+          <h5 class="mb-0">首页配置</h5>
+          <button type="button" class="btn btn-main rounded-pill py-8 px-20 d-inline-flex align-items-center gap-8" @click="saveHomeConfig()" :disabled="homeConfigSaving">
+            <i class="ph ph-floppy-disk"></i>
+            <span x-text="homeConfigSaving ? '保存中…' : '保存配置'"></span>
+          </button>
+        </div>
+        <div x-show="homeConfigLoading" class="py-40 text-center text-gray-400"><i class="ph ph-circle-notch spin" style="font-size:2rem;"></i></div>
+        <div x-show="!homeConfigLoading">
+
+          <!-- Hero Banner Slider -->
+          <div class="content-card mb-16" style="padding:24px;">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+              <h6 class="mb-0 d-flex align-items-center gap-8"><i class="ph ph-images text-main-600"></i> 主轮播 Banner</h6>
+              <button type="button" class="btn btn-main rounded-pill py-6 px-16 text-sm" @click="homeAddBanner()"><i class="ph ph-plus"></i> 添加</button>
+            </div>
+            <p class="text-gray-400 text-sm mb-16">支持多张轮播，自动 5 秒切换。建议图片尺寸 800×400px。</p>
+            <template x-for="(b, idx) in homeBanners" :key="idx">
+              <div class="border border-gray-100 rounded-12 p-16 mb-12">
+                <div class="d-flex align-items-center justify-content-between mb-12">
+                  <span class="fw-semibold text-sm" x-text="'轮播 ' + (idx + 1)"></span>
+                  <button type="button" class="btn-link-action text-danger-600 text-sm" @click="homeRemoveBanner(idx)"><i class="ph ph-trash"></i> 删除</button>
+                </div>
+                <div class="row g-3">
+                  <div class="col-md-6"><label class="form-label">副标题（小字）</label><input x-model="b.subtitle" type="text" class="common-input" placeholder="官方认证 · 安全可靠"></div>
+                  <div class="col-md-6"><label class="form-label">主标题</label><input x-model="b.title" type="text" class="common-input" placeholder="正版软件 · 卡密发货"></div>
+                  <div class="col-md-4"><label class="form-label">按钮文字</label><input x-model="b.btn_text" type="text" class="common-input" placeholder="立即选购"></div>
+                  <div class="col-md-8"><label class="form-label">按钮链接</label><input x-model="b.btn_link" type="text" class="common-input" placeholder="/shops.html"></div>
+                  <div class="col-12">
+                    <label class="form-label">配图 URL</label>
+                    <div class="d-flex gap-8">
+                      <input x-model="b.image" type="text" class="common-input flex-grow-1" placeholder="/marketpro/images/thumbs/banner-img1.png">
+                      <button type="button" class="btn bg-color-one border border-gray-100 rounded-8 px-12 text-sm flex-shrink-0" @click="pickImage(url => b.image = url)"><i class="ph ph-upload-simple me-4"></i>上传</button>
+                    </div>
+                    <template x-if="b.image">
+                      <img :src="b.image" alt="预览" class="mt-8 rounded-8" style="max-height:80px;object-fit:cover;">
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </template>
+            <template x-if="homeBanners.length === 0">
+              <p class="text-gray-400 text-sm text-center py-16">暂无轮播图，点击"添加"创建</p>
+            </template>
+          </div>
+
+          <!-- Promotional Banners (4 items) -->
+          <div class="content-card mb-16" style="padding:24px;">
+            <h6 class="mb-4 d-flex align-items-center gap-8"><i class="ph ph-layout text-main-600"></i> 促销横幅（4 张）</h6>
+            <p class="text-gray-400 text-sm mb-16">首页产品列表上方的 4 张促销图。建议图片尺寸 540×320px。</p>
+            <template x-for="(b, idx) in homePromoBanners" :key="idx">
+              <div class="border border-gray-100 rounded-12 p-16 mb-12">
+                <div class="mb-10 fw-semibold text-sm" x-text="'促销图 ' + (idx + 1)"></div>
+                <div class="row g-3">
+                  <div class="col-md-4"><label class="form-label">标题</label><input x-model="b.title" type="text" class="common-input"></div>
+                  <div class="col-md-4"><label class="form-label">按钮文字</label><input x-model="b.btn_text" type="text" class="common-input"></div>
+                  <div class="col-md-4"><label class="form-label">按钮链接</label><input x-model="b.btn_link" type="text" class="common-input"></div>
+                  <div class="col-12">
+                    <label class="form-label">背景图 URL</label>
+                    <div class="d-flex gap-8">
+                      <input x-model="b.image" type="text" class="common-input flex-grow-1" placeholder="/marketpro/images/thumbs/promotional-banner-img1.png">
+                      <button type="button" class="btn bg-color-one border border-gray-100 rounded-8 px-12 text-sm flex-shrink-0" @click="pickImage(url => b.image = url)"><i class="ph ph-upload-simple me-4"></i>上传</button>
+                    </div>
+                    <template x-if="b.image">
+                      <img :src="b.image" alt="预览" class="mt-8 rounded-8" style="max-height:60px;object-fit:cover;">
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Flash Sale Banners (2 items) -->
+          <div class="content-card mb-16" style="padding:24px;">
+            <h6 class="mb-4 d-flex align-items-center gap-8"><i class="ph ph-lightning text-main-600"></i> 闪购横幅（2 张）</h6>
+            <p class="text-gray-400 text-sm mb-16">首页中部的 2 张活动图。建议图片尺寸 640×220px。</p>
+            <template x-for="(fb, idx) in homeFlashBanners" :key="idx">
+              <div class="border border-gray-100 rounded-12 p-16 mb-12">
+                <div class="mb-10 fw-semibold text-sm" x-text="'活动图 ' + (idx + 1)"></div>
+                <div class="row g-3">
+                  <div class="col-md-6"><label class="form-label">主标题</label><input x-model="fb.title" type="text" class="common-input"></div>
+                  <div class="col-md-6"><label class="form-label">副文字</label><input x-model="fb.subtitle" type="text" class="common-input"></div>
+                  <div class="col-md-4"><label class="form-label">按钮文字</label><input x-model="fb.btn_text" type="text" class="common-input"></div>
+                  <div class="col-md-8"><label class="form-label">按钮链接</label><input x-model="fb.btn_link" type="text" class="common-input"></div>
+                  <div class="col-12">
+                    <label class="form-label">背景图 URL</label>
+                    <div class="d-flex gap-8">
+                      <input x-model="fb.bg_image" type="text" class="common-input flex-grow-1" placeholder="/marketpro/images/bg/flash-sale-bg1.png">
+                      <button type="button" class="btn bg-color-one border border-gray-100 rounded-8 px-12 text-sm flex-shrink-0" @click="pickImage(url => fb.bg_image = url)"><i class="ph ph-upload-simple me-4"></i>上传</button>
+                    </div>
+                    <template x-if="fb.bg_image">
+                      <img :src="fb.bg_image" alt="预览" class="mt-8 rounded-8" style="max-height:60px;object-fit:cover;">
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Offer Cards -->
+          <div class="content-card mb-16" style="padding:24px;">
+            <h6 class="mb-4 d-flex align-items-center gap-8"><i class="ph ph-tag text-main-600"></i> 特惠卡片（2 张）</h6>
+            <p class="text-gray-400 text-sm mb-16">每日精选产品上方的两张大卡片。如"首单立减"、"充值返利"等。</p>
+            <template x-for="(oc, idx) in homeOfferCards" :key="idx">
+              <div class="border border-gray-100 rounded-12 p-16 mb-12">
+                <div class="mb-10 fw-semibold text-sm" x-text="'特惠卡 ' + (idx + 1)"></div>
+                <div class="row g-3">
+                  <div class="col-md-4"><label class="form-label">主标题</label><input x-model="oc.title" type="text" class="common-input"></div>
+                  <div class="col-md-4"><label class="form-label">标签1</label><input x-model="oc.tag1" type="text" class="common-input"></div>
+                  <div class="col-md-4"><label class="form-label">标签2</label><input x-model="oc.tag2" type="text" class="common-input"></div>
+                  <div class="col-md-4"><label class="form-label">按钮文字</label><input x-model="oc.btn_text" type="text" class="common-input"></div>
+                  <div class="col-md-8"><label class="form-label">按钮链接</label><input x-model="oc.btn_link" type="text" class="common-input"></div>
+                  <div class="col-md-6">
+                    <label class="form-label">背景图 URL</label>
+                    <div class="d-flex gap-8">
+                      <input x-model="oc.bg_image" type="text" class="common-input flex-grow-1" placeholder="/marketpro/images/bg/promo-bg-img1.png">
+                      <button type="button" class="btn bg-color-one border border-gray-100 rounded-8 px-12 text-sm flex-shrink-0" @click="pickImage(url => oc.bg_image = url)"><i class="ph ph-upload-simple me-4"></i>上传</button>
+                    </div>
+                    <template x-if="oc.bg_image">
+                      <img :src="oc.bg_image" alt="预览" class="mt-8 rounded-8" style="max-height:60px;object-fit:cover;">
+                    </template>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Logo/图标 URL</label>
+                    <div class="d-flex gap-8">
+                      <input x-model="oc.logo" type="text" class="common-input flex-grow-1" placeholder="/marketpro/images/thumbs/offer-logo.png">
+                      <button type="button" class="btn bg-color-one border border-gray-100 rounded-8 px-12 text-sm flex-shrink-0" @click="pickImage(url => oc.logo = url)"><i class="ph ph-upload-simple me-4"></i>上传</button>
+                    </div>
+                    <template x-if="oc.logo">
+                      <img :src="oc.logo" alt="预览" class="mt-8 rounded-8" style="max-height:40px;object-fit:contain;">
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Best Sells CTA card -->
+          <div class="content-card mb-16" style="padding:24px;">
+            <h6 class="mb-4 d-flex align-items-center gap-8"><i class="ph ph-wallet text-main-600"></i> 精选侧边 CTA 卡片</h6>
+            <p class="text-gray-400 text-sm mb-16">「每日精选」右侧的推广卡片。如"余额充值"引导。</p>
+            <div class="row g-3">
+              <div class="col-md-4"><label class="form-label">主标题</label><input x-model="homeBestsellCTA.title" type="text" class="common-input"></div>
+              <div class="col-md-4"><label class="form-label">标签1</label><input x-model="homeBestsellCTA.tag1" type="text" class="common-input"></div>
+              <div class="col-md-4"><label class="form-label">标签2</label><input x-model="homeBestsellCTA.tag2" type="text" class="common-input"></div>
+              <div class="col-md-4"><label class="form-label">按钮文字</label><input x-model="homeBestsellCTA.btn_text" type="text" class="common-input"></div>
+              <div class="col-md-8"><label class="form-label">按钮链接</label><input x-model="homeBestsellCTA.btn_link" type="text" class="common-input"></div>
+              <div class="col-md-6">
+                <label class="form-label">背景图 URL</label>
+                <div class="d-flex gap-8">
+                  <input x-model="homeBestsellCTA.bg_image" type="text" class="common-input flex-grow-1" placeholder="/marketpro/images/bg/special-snacks.png">
+                  <button type="button" class="btn bg-color-one border border-gray-100 rounded-8 px-12 text-sm flex-shrink-0" @click="pickImage(url => homeBestsellCTA.bg_image = url)"><i class="ph ph-upload-simple me-4"></i>上传</button>
+                </div>
+                <template x-if="homeBestsellCTA.bg_image">
+                  <img :src="homeBestsellCTA.bg_image" alt="预览" class="mt-8 rounded-8" style="max-height:60px;object-fit:cover;">
+                </template>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Logo/图标 URL</label>
+                <div class="d-flex gap-8">
+                  <input x-model="homeBestsellCTA.logo" type="text" class="common-input flex-grow-1" placeholder="/marketpro/images/thumbs/offer-logo.png">
+                  <button type="button" class="btn bg-color-one border border-gray-100 rounded-8 px-12 text-sm flex-shrink-0" @click="pickImage(url => homeBestsellCTA.logo = url)"><i class="ph ph-upload-simple me-4"></i>上传</button>
+                </div>
+                <template x-if="homeBestsellCTA.logo">
+                  <img :src="homeBestsellCTA.logo" alt="预览" class="mt-8 rounded-8" style="max-height:40px;object-fit:contain;">
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- Newsletter image -->
+          <div class="content-card mb-16" style="padding:24px;">
+            <h6 class="mb-4 d-flex align-items-center gap-8"><i class="ph ph-envelope text-main-600"></i> 订阅区右侧图片</h6>
+            <p class="text-gray-400 text-sm mb-16">底部订阅栏右侧的装饰图。建议宽高比 4:3。</p>
+            <div class="d-flex gap-8 align-items-start">
+              <input x-model="homeNewsletterImg" type="text" class="common-input flex-grow-1" placeholder="/marketpro/images/thumbs/newsletter-img.png">
+              <button type="button" class="btn bg-color-one border border-gray-100 rounded-8 px-12 text-sm flex-shrink-0" @click="pickImage(url => homeNewsletterImg = url)"><i class="ph ph-upload-simple me-4"></i>上传</button>
+            </div>
+            <template x-if="homeNewsletterImg">
+              <img :src="homeNewsletterImg" alt="预览" class="mt-8 rounded-8" style="max-height:100px;object-fit:contain;">
+            </template>
+          </div>
+
+          <!-- Save button (bottom) -->
+          <div class="mt-8 mb-24">
+            <button type="button" class="btn btn-main rounded-pill py-12 px-32 d-inline-flex align-items-center gap-8" @click="saveHomeConfig()" :disabled="homeConfigSaving">
+              <i class="ph ph-floppy-disk"></i>
+              <span x-text="homeConfigSaving ? '保存中…' : '保存配置'"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ===== Categories Modal ===== -->
+<div x-show="catModal" class="modal-backdrop" @click.self="catModal = false">
+  <div class="modal-box">
+    <h6 class="mb-16 text-lg" x-text="catForm.id ? '编辑分类' : '新建分类'"></h6>
+    <form @submit.prevent="catSave()">
+      <div class="mb-16"><label class="form-label">名称 <span style="color:#DC2626;">*</span></label>
+        <input x-model="catForm.name" required type="text" class="common-input" placeholder="分类名称"></div>
+      <div class="mb-16"><label class="form-label">图标 (Phosphor class)</label>
+        <input x-model="catForm.icon" type="text" class="common-input" placeholder="ph ph-tag">
+        <div class="mt-8 d-flex align-items-center gap-8 text-gray-500 text-sm">
+          <span>预览：</span><i :class="catForm.icon || 'ph ph-tag'" class="text-main-600 text-xl"></i>
+        </div>
+      </div>
+      <div class="mb-16"><label class="form-label">描述</label>
+        <textarea x-model="catForm.description" class="common-input" rows="2"></textarea></div>
+      <div class="row g-3 mb-16">
+        <div class="col-6"><label class="form-label">排序</label><input x-model.number="catForm.sort" type="number" class="common-input"></div>
+        <div class="col-6"><label class="form-label">状态</label>
+          <select x-model="catForm.is_active" class="common-input"><option :value="true">启用</option><option :value="false">禁用</option></select></div>
+      </div>
+      <div class="d-flex align-items-center gap-12 mt-24">
+        <button type="submit" class="btn btn-main rounded-pill py-10 px-24" :disabled="catSaving" x-text="catSaving ? '保存中…' : '保存'"></button>
+        <button type="button" class="btn rounded-pill py-10 px-24 border border-gray-100" @click="catModal = false">取消</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Products Modal ===== -->
+<div x-show="prodModal" class="modal-backdrop" @click.self="prodModal = false">
+  <div class="modal-box">
+    <h6 class="mb-16 text-lg" x-text="prodForm.id ? '编辑商品' : '新建商品'"></h6>
+    <form @submit.prevent="prodSave()">
+      <div class="mb-16"><label class="form-label">商品名称 <span style="color:#DC2626;">*</span></label>
+        <input x-model="prodForm.name" required type="text" class="common-input"></div>
+      <div class="mb-16"><label class="form-label">分类 <span style="color:#DC2626;">*</span></label>
+        <select x-model.number="prodForm.category_id" required class="common-input">
+          <option :value="0">— 选择分类 —</option>
+          <template x-for="c in catList" :key="c.id"><option :value="c.id" x-text="c.name"></option></template>
+        </select></div>
+      <div class="row g-3 mb-16">
+        <div class="col-6"><label class="form-label">售价 <span style="color:#DC2626;">*</span></label>
+          <input x-model.number="prodForm.price" required type="number" step="0.01" class="common-input"></div>
+        <div class="col-6"><label class="form-label">原价</label>
+          <input x-model.number="prodForm.orig_price" type="number" step="0.01" class="common-input"></div>
+      </div>
+      <div class="mb-16"><label class="form-label">商品图片 URL</label>
+        <input x-model="prodForm.image" type="text" class="common-input" placeholder="https://..."></div>
+      <div class="mb-16"><label class="form-label">商品描述</label>
+        <textarea x-model="prodForm.description" class="common-input" rows="3"></textarea></div>
+      <div class="row g-3 mb-16">
+        <div class="col-6"><label class="form-label">排序</label><input x-model.number="prodForm.sort" type="number" class="common-input"></div>
+        <div class="col-6"><label class="form-label">状态</label>
+          <select x-model="prodForm.is_active" class="common-input"><option :value="true">上架</option><option :value="false">下架</option></select></div>
+      </div>
+      <div class="d-flex align-items-center gap-12 mt-24">
+        <button type="submit" class="btn btn-main rounded-pill py-10 px-24" :disabled="prodSaving" x-text="prodSaving ? '保存中…' : '保存'"></button>
+        <button type="button" class="btn rounded-pill py-10 px-24 border border-gray-100" @click="prodModal = false">取消</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Cards Import Modal ===== -->
+<div x-show="cardModal" class="modal-backdrop" @click.self="cardModal = false">
+  <div class="modal-box">
+    <h6 class="mb-16 text-lg">批量导入卡密</h6>
+    <form @submit.prevent="cardDoImport()">
+      <div class="mb-16"><label class="form-label">商品 <span style="color:#DC2626;">*</span></label>
+        <select x-model.number="cardImportForm.product_id" required class="common-input">
+          <option :value="0">— 选择商品 —</option>
+          <template x-for="p in allProducts" :key="p.id"><option :value="p.id" x-text="p.name"></option></template>
+        </select></div>
+      <div class="mb-16"><label class="form-label">卡密内容（每行一条）<span style="color:#DC2626;">*</span></label>
+        <textarea x-model="cardImportForm.content" required class="common-input" style="font-family:monospace;font-size:0.8rem;" rows="10" placeholder="ABC-DEF-123&#10;XYZ-789-456"></textarea></div>
+      <div class="d-flex align-items-center gap-12 mt-24">
+        <button type="submit" class="btn btn-main rounded-pill py-10 px-24" :disabled="cardSaving" x-text="cardSaving ? '导入中…' : '导入'"></button>
+        <button type="button" class="btn rounded-pill py-10 px-24 border border-gray-100" @click="cardModal = false">取消</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="/js/site.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script>
+function adminApp() {
+  return {
+    loading: true,
+    isAdmin: false,
+    user: null,
+    page: 'dashboard',
+    toastMsg: '',
+    toastType: 'success',
+    _toastTimer: null,
+
+    menuItems: [
+      { page: 'dashboard',   label: '仪表板',   icon: 'ph ph-chart-line-up' },
+      { page: 'categories',  label: '分类管理',  icon: 'ph ph-tag' },
+      { page: 'products',    label: '商品管理',  icon: 'ph ph-package' },
+      { page: 'cards',       label: '卡密管理',  icon: 'ph ph-key' },
+      { page: 'orders',      label: '订单管理',  icon: 'ph ph-receipt' },
+      { page: 'shops',       label: '店铺审核',  icon: 'ph ph-storefront' },
+      { page: 'withdrawals', label: '提现审核',  icon: 'ph ph-arrow-square-out' },
+      { page: 'users',       label: '用户管理',  icon: 'ph ph-users' },
+      { page: 'settings',    label: '系统设置',  icon: 'ph ph-gear' },
+      { page: 'homepage',    label: '首页配置',  icon: 'ph ph-house' },
+    ],
+
+    // Dashboard
+    dashStats: null, dashLoading: false,
+
+    // Categories
+    catList: [], catLoading: false, catModal: false, catSaving: false,
+    catForm: { id:0, name:'', icon:'ph ph-tag', description:'', sort:0, is_active:true },
+
+    // Products
+    prodList: [], prodTotal: 0, prodPage: 1, prodPageSize: 20,
+    prodLoading: false, prodModal: false, prodSaving: false,
+    prodForm: {},
+
+    // Cards
+    cardList: [], cardTotal: 0, cardPage: 1, cardPageSize: 30,
+    cardLoading: false, cardModal: false, cardSaving: false,
+    cardFilterProd: 0, cardFilterStatus: '',
+    cardImportForm: { product_id: 0, content: '' },
+    allProducts: [],
+
+    // Orders
+    orderList: [], orderTotal: 0, orderPage: 1, orderPageSize: 20,
+    orderLoading: false, orderFilterStatus: -1,
+
+    // Shops
+    shopList: [], shopTotal: 0, shopPage: 1, shopPageSize: 20,
+    shopLoading: false, shopFilterStatus: -1,
+
+    // Withdrawals
+    wdList: [], wdTotal: 0, wdPage: 1, wdPageSize: 20,
+    wdLoading: false, wdFilterStatus: -1,
+
+    // Users
+    userList: [], userTotal: 0, userPage: 1, userPageSize: 20,
+    userLoading: false,
+
+    // Settings
+    settingsForm: {}, settingsLoading: false, settingsSaving: false,
+
+    // Homepage config
+    homeConfigLoading: false, homeConfigSaving: false,
+    homeBanners: [], homePromoBanners: [], homeFlashBanners: [],
+    homeOfferCards: [], homeBestsellCTA: {}, homeNewsletterImg: '',
+
+    // ---- Init ----
+    async init() {
+      await new Promise(r => {
+        const check = () => this.$store.app.initialized ? r() : setTimeout(check, 50);
+        check();
+      });
+      this.user = this.$store.app.user;
+      if (!this.user || !this.user.is_admin) {
+        window.location.href = '/auth/login?redirect=' + encodeURIComponent(window.location.pathname);
+        return;
+      }
+      this.isAdmin = true;
+      this.loading = false;
+      this.nav('dashboard');
+    },
+
+    nav(p, productId) {
+      this.page = p;
+      if (p === 'dashboard') this.loadDash();
+      else if (p === 'categories') this.loadCats();
+      else if (p === 'products') { this.loadCats(); this.loadProds(); }
+      else if (p === 'cards') {
+        if (productId) this.cardFilterProd = productId;
+        this.loadAllProducts().then(() => this.loadCards());
+      }
+      else if (p === 'orders') this.loadOrders();
+      else if (p === 'shops') this.loadShops();
+      else if (p === 'withdrawals') this.loadWd();
+      else if (p === 'users') this.loadUsers();
+      else if (p === 'settings') this.loadSettings();
+      else if (p === 'homepage') this.loadHomeConfig();
+    },
+
+    // ---- API helper ----
+    async api(method, url, body) {
+      const opts = { method, headers: { 'Content-Type': 'application/json' } };
+      if (body !== undefined) opts.body = JSON.stringify(body);
+      const r = await fetch(url, opts);
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || '操作失败');
+      return data;
+    },
+
+    toast(msg, type = 'success') {
+      this.toastMsg = msg;
+      this.toastType = type;
+      clearTimeout(this._toastTimer);
+      this._toastTimer = setTimeout(() => { this.toastMsg = ''; }, 3000);
+    },
+
+    fmtDate(s) {
+      if (!s) return '—';
+      return new Date(s).toLocaleString('zh-CN', { hour12: false });
+    },
+
+    catNameById(id) { return this.catList.find(c => c.id === id)?.name || '—'; },
+    prodNameById(id) { return this.allProducts.find(p => p.id === id)?.name || '—'; },
+
+    // ---- Dashboard ----
+    async loadDash() {
+      this.dashLoading = true;
+      try { const d = await this.api('GET', '/api/admin/dashboard'); this.dashStats = d.stats || d; }
+      catch(e) { this.toast(e.message, 'danger'); }
+      finally { this.dashLoading = false; }
+    },
+
+    // ---- Categories ----
+    async loadCats() {
+      this.catLoading = true;
+      try { const d = await this.api('GET', '/api/admin/categories'); this.catList = d.categories || []; }
+      catch(e) { this.toast(e.message, 'danger'); }
+      finally { this.catLoading = false; }
+    },
+    catOpenNew() {
+      this.catForm = { id:0, name:'', icon:'ph ph-tag', description:'', sort:0, is_active:true };
+      this.catModal = true;
+    },
+    catOpenEdit(c) { this.catForm = { ...c }; this.catModal = true; },
+    async catSave() {
+      this.catSaving = true;
+      try {
+        if (this.catForm.id) await this.api('PUT', `/api/admin/categories/${this.catForm.id}`, this.catForm);
+        else await this.api('POST', '/api/admin/categories', this.catForm);
+        this.toast('保存成功'); this.catModal = false; this.loadCats();
+      } catch(e) { this.toast(e.message, 'danger'); }
+      finally { this.catSaving = false; }
+    },
+    async catDel(c) {
+      if (!confirm(`删除分类「${c.name}」？`)) return;
+      try { await this.api('DELETE', `/api/admin/categories/${c.id}`); this.toast('已删除'); this.loadCats(); }
+      catch(e) { this.toast(e.message, 'danger'); }
+    },
+
+    // ---- Products ----
+    async loadProds() {
+      this.prodLoading = true;
+      try {
+        const d = await this.api('GET', `/api/admin/products?page=${this.prodPage}&page_size=${this.prodPageSize}`);
+        this.prodList = d.products || []; this.prodTotal = d.total || 0;
+      } catch(e) { this.toast(e.message, 'danger'); }
+      finally { this.prodLoading = false; }
+    },
+    prodOpenNew() {
+      this.prodForm = { id:0, category_id:0, name:'', description:'', price:0, orig_price:0, image:'', sort:0, is_active:true };
+      this.prodModal = true;
+    },
+    prodOpenEdit(p) { this.prodForm = { ...p }; this.prodModal = true; },
+    async prodSave() {
+      this.prodSaving = true;
+      try {
+        if (this.prodForm.id) await this.api('PUT', `/api/admin/products/${this.prodForm.id}`, this.prodForm);
+        else await this.api('POST', '/api/admin/products', this.prodForm);
+        this.toast('保存成功'); this.prodModal = false; this.loadProds();
+      } catch(e) { this.toast(e.message, 'danger'); }
+      finally { this.prodSaving = false; }
+    },
+    async prodDel(p) {
+      if (!confirm(`删除商品「${p.name}」？`)) return;
+      try { await this.api('DELETE', `/api/admin/products/${p.id}`); this.toast('已删除'); this.loadProds(); }
+      catch(e) { this.toast(e.message, 'danger'); }
+    },
+
+    // ---- Cards ----
+    async loadAllProducts() {
+      if (this.allProducts.length) return;
+      try { const d = await this.api('GET', '/api/admin/products?page=1&page_size=1000'); this.allProducts = d.products || []; }
+      catch(_) {}
+    },
+    async loadCards() {
+      this.cardLoading = true;
+      try {
+        let url = `/api/admin/card-keys?page=${this.cardPage}&page_size=${this.cardPageSize}`;
+        if (this.cardFilterProd) url += `&product_id=${this.cardFilterProd}`;
+        if (this.cardFilterStatus) url += `&status=${this.cardFilterStatus}`;
+        const d = await this.api('GET', url);
+        this.cardList = d.card_keys || d.cards || []; this.cardTotal = d.total || 0;
+      } catch(e) { this.toast(e.message, 'danger'); }
+      finally { this.cardLoading = false; }
+    },
+    cardOpenImport() {
+      this.cardImportForm = { product_id: this.cardFilterProd || 0, content: '' };
+      this.cardModal = true;
+    },
+    async cardDoImport() {
+      this.cardSaving = true;
+      try {
+        const lines = this.cardImportForm.content.split('\n').map(s => s.trim()).filter(Boolean);
+        if (!lines.length) { this.toast('请输入卡密内容', 'danger'); return; }
+        await this.api('POST', '/api/admin/card-keys', { product_id: this.cardImportForm.product_id, cards: lines });
+        this.toast(`已导入 ${lines.length} 条`); this.cardModal = false; this.loadCards();
+      } catch(e) { this.toast(e.message, 'danger'); }
+      finally { this.cardSaving = false; }
+    },
+    async cardDel(k) {
+      if (!confirm('确认删除该卡密？')) return;
+      try { await this.api('DELETE', `/api/admin/card-keys/${k.id}`); this.toast('已删除'); this.loadCards(); }
+      catch(e) { this.toast(e.message, 'danger'); }
+    },
+
+    // ---- Orders ----
+    orderStatusText(s) { return ({0:'待支付',1:'已支付',2:'已完成',3:'已取消',4:'已退款'})[s] ?? String(s); },
+    orderStatusBadge(s) { return ({0:'badge-warning',1:'badge-success',2:'badge-success',3:'badge-secondary',4:'badge-danger'})[s] ?? 'badge-secondary'; },
+    async loadOrders() {
+      this.orderLoading = true;
+      try {
+        let url = `/api/admin/orders?page=${this.orderPage}&page_size=${this.orderPageSize}`;
+        if (this.orderFilterStatus >= 0) url += `&status=${this.orderFilterStatus}`;
+        const d = await this.api('GET', url);
+        this.orderList = d.orders || []; this.orderTotal = d.total || 0;
+      } catch(e) { this.toast(e.message, 'danger'); }
+      finally { this.orderLoading = false; }
+    },
+
+    // ---- Shops ----
+    shopStatusText(s) { return ({0:'审核中',1:'已通过',2:'已驳回',3:'已封禁'})[s] ?? String(s); },
+    shopStatusBadge(s) { return ({0:'badge-warning',1:'badge-success',2:'badge-danger',3:'badge-danger'})[s] ?? 'badge-secondary'; },
+    async loadShops() {
+      this.shopLoading = true;
+      try {
+        let url = `/api/admin/shops?page=${this.shopPage}&page_size=${this.shopPageSize}`;
+        if (this.shopFilterStatus >= 0) url += `&status=${this.shopFilterStatus}`;
+        const d = await this.api('GET', url);
+        this.shopList = d.data || d.shops || []; this.shopTotal = d.total || 0;
+      } catch(e) { this.toast(e.message, 'danger'); }
+      finally { this.shopLoading = false; }
+    },
+    async shopAct(s, action) {
+      if (!confirm('确认操作？')) return;
+      try { await this.api('POST', `/api/admin/shops/${s.id}/${action}`); this.toast('操作成功'); this.loadShops(); }
+      catch(e) { this.toast(e.message, 'danger'); }
+    },
+
+    // ---- Withdrawals ----
+    wdStatusText(s) { return ({0:'审核中',1:'已完成',2:'已驳回',3:'处理中'})[s] ?? String(s); },
+    wdStatusBadge(s) { return ({0:'badge-warning',1:'badge-success',2:'badge-danger',3:'badge-success'})[s] ?? 'badge-secondary'; },
+    async loadWd() {
+      this.wdLoading = true;
+      try {
+        let url = `/api/admin/withdrawals?page=${this.wdPage}&page_size=${this.wdPageSize}`;
+        if (this.wdFilterStatus >= 0) url += `&status=${this.wdFilterStatus}`;
+        const d = await this.api('GET', url);
+        this.wdList = d.data || d.withdrawals || []; this.wdTotal = d.total || 0;
+      } catch(e) { this.toast(e.message, 'danger'); }
+      finally { this.wdLoading = false; }
+    },
+    async wdAct(w, action) {
+      if (!confirm('确认操作？')) return;
+      try { await this.api('POST', `/api/admin/withdrawals/${w.id}/${action}`); this.toast('操作成功'); this.loadWd(); }
+      catch(e) { this.toast(e.message, 'danger'); }
+    },
+
+    // ---- Users ----
+    async loadUsers() {
+      this.userLoading = true;
+      try {
+        const d = await this.api('GET', `/api/admin/users?page=${this.userPage}&page_size=${this.userPageSize}`);
+        this.userList = d.users || []; this.userTotal = d.total || 0;
+      } catch(e) { this.toast(e.message, 'danger'); }
+      finally { this.userLoading = false; }
+    },
+    async userToggleBlock(u) {
+      const action = u.is_blocked ? '解封' : '封禁';
+      if (!confirm(`${action}用户「${u.username || u.name}」？`)) return;
+      try {
+        await this.api('PUT', `/api/admin/users/${u.id}`, { is_blocked: !u.is_blocked });
+        this.toast(action + '成功'); this.loadUsers();
+      } catch(e) { this.toast(e.message, 'danger'); }
+    },
+
+    // ---- Settings ----
+    async loadSettings() {
+      this.settingsLoading = true;
+      try { const d = await this.api('GET', '/api/admin/settings'); this.settingsForm = d.settings || d || {}; }
+      catch(e) { this.toast(e.message, 'danger'); }
+      finally { this.settingsLoading = false; }
+    },
+    async saveSettings() {
+      this.settingsSaving = true;
+      try { await this.api('PUT', '/api/admin/settings', this.settingsForm); this.toast('设置已保存'); }
+      catch(e) { this.toast(e.message, 'danger'); }
+      finally { this.settingsSaving = false; }
+    },
+
+    // ---- Homepage Config ----
+    async loadHomeConfig() {
+      this.homeConfigLoading = true;
+      try {
+        const d = await this.api('GET', '/api/admin/settings');
+        const s = d.settings || d || {};
+        const defBanners = [
+          {subtitle:'官方认证 · 安全可靠', title:'正版软件 · 游戏充值 · 卡密发货', btn_text:'浏览商家', btn_link:'/shops.html', image:'/marketpro/images/thumbs/banner-img3.png'},
+          {subtitle:'海量商品 · 优质商家', title:'一站式购物 · 极速发卡', btn_text:'申请开店', btn_link:'/become-seller.html', image:'/marketpro/images/thumbs/banner-img1.png'}
+        ];
+        const defPromo = [
+          {title:'官方正版授权', btn_text:'立即选购', btn_link:'/shops.html', image:'/marketpro/images/thumbs/promotional-banner-img1.png'},
+          {title:'7×24 自动发货', btn_text:'立即选购', btn_link:'/shops.html', image:'/marketpro/images/thumbs/promotional-banner-img2.png'},
+          {title:'优质商家入驻', btn_text:'申请开店', btn_link:'/become-seller.html', image:'/marketpro/images/thumbs/promotional-banner-img3.png'},
+          {title:'售后保障', btn_text:'我的账户', btn_link:'/account.html', image:'/marketpro/images/thumbs/promotional-banner-img4.png'}
+        ];
+        const defFlash = [
+          {title:'新人专享福利', subtitle:'注册即享首单优惠', btn_text:'立即注册', btn_link:'/auth/login', bg_image:'/marketpro/images/bg/flash-sale-bg1.png'},
+          {title:'商家入驻招募', subtitle:'零门槛开店，多重扶持', btn_text:'申请开店', btn_link:'/become-seller.html', bg_image:'/marketpro/images/bg/flash-sale-bg2.png'}
+        ];
+        const defOffer = [
+          {title:'首单立减', tag1:'即时发货', tag2:'长期有效', btn_text:'立即选购', btn_link:'/shops.html', bg_image:'/marketpro/images/bg/promo-bg-img1.png', logo:'/marketpro/images/thumbs/offer-logo.png'},
+          {title:'充值返利', tag1:'余额充值', tag2:'享专属折扣', btn_text:'前往充值', btn_link:'/account.html#balance', bg_image:'/marketpro/images/bg/promo-bg-img2.png', logo:'/marketpro/images/thumbs/offer-logo.png'}
+        ];
+        const defBestsellCTA = {title:'余额充值', tag1:'支付便捷', tag2:'即时到账', btn_text:'前往充值', btn_link:'/account.html#balance', bg_image:'/marketpro/images/bg/special-snacks.png', logo:'/marketpro/images/thumbs/offer-logo.png'};
+
+        try { this.homeBanners = JSON.parse(s.home_banners || '[]'); } catch(_) { this.homeBanners = []; }
+        if (!this.homeBanners.length) this.homeBanners = JSON.parse(JSON.stringify(defBanners));
+        try { this.homePromoBanners = JSON.parse(s.home_promo_banners || '[]'); } catch(_) { this.homePromoBanners = []; }
+        if (!this.homePromoBanners.length) this.homePromoBanners = JSON.parse(JSON.stringify(defPromo));
+        try { this.homeFlashBanners = JSON.parse(s.home_flash_banners || '[]'); } catch(_) { this.homeFlashBanners = []; }
+        if (!this.homeFlashBanners.length) this.homeFlashBanners = JSON.parse(JSON.stringify(defFlash));
+        try { this.homeOfferCards = JSON.parse(s.home_offer_cards || '[]'); } catch(_) { this.homeOfferCards = []; }
+        if (!this.homeOfferCards.length) this.homeOfferCards = JSON.parse(JSON.stringify(defOffer));
+        try { this.homeBestsellCTA = JSON.parse(s.home_bestsell_cta || '{}'); } catch(_) { this.homeBestsellCTA = {}; }
+        if (!this.homeBestsellCTA.title) this.homeBestsellCTA = JSON.parse(JSON.stringify(defBestsellCTA));
+        this.homeNewsletterImg = s.home_newsletter_img || '';
+      } catch(e) { this.toast(e.message, 'danger'); }
+      finally { this.homeConfigLoading = false; }
+    },
+    homeAddBanner() {
+      this.homeBanners.push({subtitle:'', title:'', btn_text:'', btn_link:'/', image:''});
+    },
+    homeRemoveBanner(idx) {
+      this.homeBanners.splice(idx, 1);
+    },
+    async saveHomeConfig() {
+      this.homeConfigSaving = true;
+      try {
+        await this.api('PUT', '/api/admin/settings', {
+          home_banners:        JSON.stringify(this.homeBanners),
+          home_promo_banners:  JSON.stringify(this.homePromoBanners),
+          home_flash_banners:  JSON.stringify(this.homeFlashBanners),
+          home_offer_cards:    JSON.stringify(this.homeOfferCards),
+          home_bestsell_cta:   JSON.stringify(this.homeBestsellCTA),
+          home_newsletter_img: this.homeNewsletterImg,
+        });
+        this.toast('首页配置已保存');
+      } catch(e) { this.toast(e.message, 'danger'); }
+      finally { this.homeConfigSaving = false; }
+    },
+
+    // ---- Image Upload ----
+    pickImage(callback) {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const form = new FormData();
+        form.append('file', file);
+        try {
+          const r = await fetch('/api/admin/upload/image', { method: 'POST', body: form });
+          const d = await r.json();
+          if (!r.ok) throw new Error(d.error || '上传失败');
+          callback(d.url);
+          this.toast('图片上传成功');
+        } catch(e) { this.toast(e.message, 'danger'); }
+      };
+      input.click();
+    },
+  };
+}
+</script>
+</body>
+</html>

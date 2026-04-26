@@ -1,149 +1,174 @@
 <template>
-  <div class="space-y-6">
-    <!-- Hero Section with Typewriter Effect -->
-    <section class="text-center py-8 space-y-4 fade-in">
-      <div class="space-y-2">
-        <h1 class="text-5xl font-bold text-zinc-900">
-          {{ settings.site_name || 'NodeLoc 社区发卡' }}
-        </h1>
-        <div class="h-8 flex items-center justify-center">
-          <p v-if="showTypewriter" class="text-xl text-zinc-600 typewriter inline-block">
-            {{ typewriterText }}
-          </p>
-          <p v-else class="text-xl text-zinc-600">
-            {{ settings.site_description || '基于 NodeLoc OAuth 的社区发卡系统' }}
-          </p>
-        </div>
-      </div>
-      
-      <!-- Stats -->
-      <div class="flex justify-center space-x-8 pt-2">
-        <div class="text-center slide-up">
-          <div class="text-2xl font-bold text-zinc-900 font-mono-data">{{ totalProducts }}</div>
-          <div class="text-sm text-zinc-500">商品</div>
-        </div>
-        <div class="text-center slide-up" style="animation-delay: 0.1s">
-          <div class="text-2xl font-bold text-zinc-900 font-mono-data">{{ totalCategories }}</div>
-          <div class="text-sm text-zinc-500">分类</div>
-        </div>
-      </div>
-    </section>
-    
-    <!-- Loading -->
-    <div v-if="loading" class="flex justify-center py-16">
-      <Loader2 class="w-8 h-8 animate-spin text-zinc-400" />
-    </div>
-    
-    <!-- Categories with Products -->
-    <template v-else-if="categoriesWithProducts.length > 0">
-      <section v-for="category in categoriesWithProducts" :key="category.id" class="space-y-4 slide-up">
-        <div class="flex items-center justify-between">
-          <div class="space-y-1">
-            <h2 class="text-2xl font-semibold text-zinc-900">{{ category.name }}</h2>
-            <p v-if="category.description" class="text-sm text-zinc-600">{{ category.description }}</p>
+  <!-- Banner -->
+  <div class="banner">
+    <div class="container container-lg">
+      <div class="banner-item rounded-24 overflow-hidden relative bg-main-50">
+        <img src="/marketpro/images/bg/banner-bg.png" alt=""
+             class="banner-img absolute inset-block-start-0 inset-inline-start-0 w-full h-full z-[-1] object-fit-cover rounded-24">
+        <div class="banner-slider__inner flex-between relative px-32 py-64 flex-wrap gap-24">
+          <div class="banner-item__content max-w-[640px]">
+            <h1 class="banner-item__title">{{ siteName }}</h1>
+            <p class="text-lg text-heading mb-32">
+              {{ site.settings?.site_description || '专业、安全、便捷的多商户卡密交易平台 — 即买即用，自动发卡。' }}
+            </p>
+            <router-link
+              :to="{ name: 'shops' }"
+              class="btn btn-main inline-flex items-center rounded-[50rem] gap-8 px-32 py-16"
+            >
+              浏览店铺 <span class="icon text-xl flex"><i class="ph ph-shopping-cart-simple"></i></span>
+            </router-link>
           </div>
-          <router-link :to="`/category/${category.id}`" class="text-sm text-zinc-600 hover:text-zinc-900 flex items-center space-x-1">
-            <span>查看全部</span>
-            <ArrowRight class="w-4 h-4" />
-          </router-link>
+          <div class="banner-item__thumb hidden md:block">
+            <i class="ph-fill ph-storefront text-main-600" style="font-size:200px;opacity:.5"></i>
+          </div>
         </div>
-        
-        <!-- Products Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <router-link
-            v-for="product in category.products"
-            :key="product.id"
-            :to="`/product/${product.id}`"
-            class="group block bg-white border border-zinc-100 rounded-lg hover:border-zinc-900 hover:shadow-lg transition-all duration-300"
-          >
-            <div class="p-4 space-y-3">
-              <!-- Product Icon -->
-              <div class="flex items-center justify-center w-12 h-12 bg-zinc-50 rounded-lg group-hover:bg-zinc-900 transition-colors duration-300">
-                <Package class="w-6 h-6 text-zinc-600 group-hover:text-white transition-colors duration-300" />
-              </div>
-              
-              <!-- Product Info -->
-              <div class="space-y-2">
-                <h3 class="text-lg font-semibold text-zinc-900">{{ product.name }}</h3>
-                <p v-if="product.description" class="text-sm text-zinc-600 line-clamp-2">{{ product.description }}</p>
-              </div>
-              
-              <!-- Product Footer -->
-              <div class="flex items-center justify-between pt-4 border-t border-zinc-100">
-                <div class="space-y-1">
-                  <div class="text-2xl font-bold text-zinc-900">{{ formatPrice(product.price) }}</div>
-                  <div class="text-xs text-zinc-500 font-mono-data">库存: {{ product.stock_count }}</div>
-                </div>
-                <div class="flex items-center space-x-1 text-sm text-zinc-600 group-hover:text-zinc-900 transition">
-                  <span>购买</span>
-                  <ChevronRight class="w-4 h-4" />
-                </div>
-              </div>
-            </div>
-          </router-link>
-        </div>
-      </section>
-    </template>
-    
-    <!-- Empty State -->
-    <div v-else class="text-center py-16 space-y-4">
-      <Package class="w-16 h-16 text-zinc-300 mx-auto" />
-      <div class="space-y-2">
-        <p class="text-lg text-zinc-600">暂无商品</p>
-        <p class="text-sm text-zinc-500">管理员可以在后台添加商品</p>
       </div>
     </div>
   </div>
+
+  <!-- Categories -->
+  <section class="category py-80" id="featureSection">
+    <div class="container container-lg">
+      <div class="section-heading mb-32 text-center">
+        <h5 class="mb-8">商品分类</h5>
+        <p class="text-gray-500">浏览所有可用分类</p>
+      </div>
+      <div v-if="categories.length" class="flex flex-wrap gap-16 justify-center">
+        <router-link
+          v-for="c in categories"
+          :key="c.id"
+          :to="{ name: 'category', params: { id: c.id } }"
+          class="category-item border border-gray-100 hover-border-main-600 rounded-16 p-24 text-center transition-2 bg-white block"
+          style="width:160px"
+        >
+          <span class="w-64 h-64 mx-auto rounded-[50%] bg-main-50 text-main-600 flex items-center justify-center text-4xl mb-12">
+            <i :class="c.icon || 'ph ph-tag'"></i>
+          </span>
+          <h6 class="text-md mb-4 text-line-1">{{ c.name }}</h6>
+          <span class="text-xs text-gray-500">{{ (c.products || []).length }} 件商品</span>
+        </router-link>
+      </div>
+      <EmptyState v-else icon="ph ph-tag" title="暂无分类" />
+    </div>
+  </section>
+
+  <!-- Featured products by category -->
+  <section
+    v-for="cat in categoriesWithProducts"
+    :key="cat.id"
+    class="popular-products py-40"
+  >
+    <div class="container container-lg">
+      <div class="section-heading flex-between flex-wrap gap-16 mb-24">
+        <div>
+          <h5 class="mb-4 flex items-center gap-12">
+            <i :class="cat.icon || 'ph ph-tag'" class="text-main-600"></i>
+            {{ cat.name }}
+          </h5>
+          <p class="text-gray-500 mb-0 text-sm">{{ cat.description || '热销商品' }}</p>
+        </div>
+        <router-link
+          :to="{ name: 'category', params: { id: cat.id } }"
+          class="btn btn-outline-main rounded-pill py-8 px-20 inline-flex items-center gap-8"
+        >
+          查看全部 <i class="ph ph-arrow-right"></i>
+        </router-link>
+      </div>
+      <div class="grid gap-16" style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))">
+        <ProductCard v-for="p in (cat.products || []).slice(0, 10)" :key="p.id" :product="p" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Top vendors -->
+  <section v-if="topShops.length" class="top-vendors py-80 bg-color-one">
+    <div class="container container-lg">
+      <div class="section-heading flex-between flex-wrap gap-16 mb-32">
+        <div>
+          <h5 class="mb-4">热门店铺</h5>
+          <p class="text-gray-500 mb-0 text-sm">优质卖家精选</p>
+        </div>
+        <router-link
+          :to="{ name: 'shops' }"
+          class="btn btn-outline-main rounded-pill py-8 px-20 inline-flex items-center gap-8"
+        >
+          全部店铺 <i class="ph ph-arrow-right"></i>
+        </router-link>
+      </div>
+      <div class="grid gap-16" style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr))">
+        <ShopCard v-for="s in topShops" :key="s.id" :shop="s" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust / Shipping section -->
+  <section class="shipping py-60">
+    <div class="container container-lg">
+      <div class="grid gap-16" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr))">
+        <div class="flex items-center gap-16 p-24 border border-gray-100 rounded-16 bg-white">
+          <span class="w-56 h-56 flex-shrink-0 rounded-[50%] bg-main-50 text-main-600 flex items-center justify-center text-3xl">
+            <i class="ph-fill ph-lightning"></i>
+          </span>
+          <div>
+            <h6 class="text-md mb-4">即时发卡</h6>
+            <p class="text-sm text-gray-500 mb-0">支付完成自动交付</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-16 p-24 border border-gray-100 rounded-16 bg-white">
+          <span class="w-56 h-56 flex-shrink-0 rounded-[50%] bg-main-50 text-main-600 flex items-center justify-center text-3xl">
+            <i class="ph-fill ph-shield-check"></i>
+          </span>
+          <div>
+            <h6 class="text-md mb-4">安全保障</h6>
+            <p class="text-sm text-gray-500 mb-0">商家审核 资金托管</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-16 p-24 border border-gray-100 rounded-16 bg-white">
+          <span class="w-56 h-56 flex-shrink-0 rounded-[50%] bg-main-50 text-main-600 flex items-center justify-center text-3xl">
+            <i class="ph-fill ph-headset"></i>
+          </span>
+          <div>
+            <h6 class="text-md mb-4">7×24 客服</h6>
+            <p class="text-sm text-gray-500 mb-0">订单问题随时响应</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-16 p-24 border border-gray-100 rounded-16 bg-white">
+          <span class="w-56 h-56 flex-shrink-0 rounded-[50%] bg-main-50 text-main-600 flex items-center justify-center text-3xl">
+            <i class="ph-fill ph-credit-card"></i>
+          </span>
+          <div>
+            <h6 class="text-md mb-4">多种支付</h6>
+            <p class="text-sm text-gray-500 mb-0">主流支付方式支持</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Package, ArrowRight, ChevronRight, Loader2 } from 'lucide-vue-next'
 import api from '@/utils/api'
-import { formatPrice } from '@/utils/helpers'
+import { useSiteStore } from '@/stores/site'
+import ProductCard from '@/components/ProductCard.vue'
+import ShopCard from '@/components/ShopCard.vue'
+import EmptyState from '@/components/EmptyState.vue'
 
-const settings = ref({})
-const categoriesWithProducts = ref([])
-const loading = ref(true)
-const showTypewriter = ref(true)
-const typewriterText = ref('')
+const site = useSiteStore()
+const topShops = ref([])
 
-const totalProducts = computed(() => {
-  return categoriesWithProducts.value.reduce((sum, cat) => sum + (cat.products?.length || 0), 0)
-})
-
-const totalCategories = computed(() => categoriesWithProducts.value.length)
+const siteName = computed(() => site.settings?.site_name || '社区发卡')
+const categories = computed(() => site.categories || [])
+const categoriesWithProducts = computed(() =>
+  categories.value.filter(c => (c.products || []).length > 0).slice(0, 5)
+)
 
 onMounted(async () => {
+  await site.ensureLoaded()
   try {
-    // Fetch settings
-    const settingsRes = await api.get('/api/settings')
-    settings.value = settingsRes.data
-    
-    // Start typewriter effect
-    const fullText = settings.value.site_description || '基于 NodeLoc OAuth 的社区发卡系统'
-    let index = 0
-    const typeSpeed = 80
-    
-    const typeInterval = setInterval(() => {
-      if (index < fullText.length) {
-        typewriterText.value = fullText.substring(0, index + 1)
-        index++
-      } else {
-        clearInterval(typeInterval)
-        setTimeout(() => {
-          showTypewriter.value = false
-        }, 1000)
-      }
-    }, typeSpeed)
-    
-    // Fetch categories with products
-    const categoriesRes = await api.get('/api/categories/with-products')
-    categoriesWithProducts.value = categoriesRes.data
-  } catch (error) {
-    console.error('Failed to load data', error)
-  } finally {
-    loading.value = false
-  }
+    const r = await api.get('/api/shops')
+    const list = r.data?.data || []
+    topShops.value = list.slice(0, 8)
+  } catch (_) { /* tolerate */ }
 })
 </script>

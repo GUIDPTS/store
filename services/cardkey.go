@@ -6,6 +6,7 @@ import (
 
 	"github.com/nodeloc-faka/database"
 	"github.com/nodeloc-faka/models"
+	"gorm.io/gorm"
 )
 
 // CardKeyService 卡密服务
@@ -138,8 +139,13 @@ func (s *CardKeyService) GetAvailableByProduct(productID uint, limit int) ([]mod
 
 // MarkAsSold 标记卡密为已售出
 func (s *CardKeyService) MarkAsSold(ids []uint, orderID uint) error {
+	return s.MarkAsSoldTx(database.GetDB(), ids, orderID)
+}
+
+// MarkAsSoldTx 在指定事务中标记卡密为已售出
+func (s *CardKeyService) MarkAsSoldTx(tx *gorm.DB, ids []uint, orderID uint) error {
 	now := time.Now()
-	return database.GetDB().Model(&models.CardKey{}).
+	return tx.Model(&models.CardKey{}).
 		Where("id IN ?", ids).
 		Updates(map[string]interface{}{
 			"status":   models.CardKeyStatusSold,

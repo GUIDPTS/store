@@ -47,6 +47,9 @@ func main() {
 	// 初始化系统（简化版 - 只初始化基础设置）
 	initSystemSimple()
 
+	// 插入演示数据（仅在数据库为空时）
+	services.SeedDemoData()
+
 	// 创建 OAuth 客户端
 	oauthClient := oauth.NewClient(
 		cfg.NodeLocURL,
@@ -63,6 +66,8 @@ func main() {
 	paymentHandler := handler.NewPaymentHandler()
 	apiHandler := api.NewAPIHandler()
 	adminHandler := admin.NewAdminHandler()
+	shopHandler := api.NewShopHandler()
+	shopAdminHandler := admin.NewShopAdminHandler()
 	uploadHandler := handler.NewUploadHandler()
 
 	// 设置 Gin
@@ -84,6 +89,10 @@ func main() {
 		apiGroup.GET("/categories/:id", apiHandler.GetCategory)
 		apiGroup.GET("/products", apiHandler.GetProducts)
 		apiGroup.GET("/products/:id", apiHandler.GetProduct)
+		apiGroup.GET("/products/:id/reviews", apiHandler.GetProductReviews)
+		apiGroup.GET("/shops", shopHandler.ListShops)
+		apiGroup.GET("/shops/:id", shopHandler.GetShop)
+		apiGroup.GET("/shops/:id/products", shopHandler.GetShopProducts)
 		apiGroup.GET("/health", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"status": "ok"})
 		})
@@ -97,6 +106,21 @@ func main() {
 		apiAuthGroup.GET("/orders/:orderNo", apiHandler.GetOrder)
 		apiAuthGroup.POST("/orders/:orderNo/repay", apiHandler.RepayOrder)
 		apiAuthGroup.POST("/orders/create", apiHandler.CreateOrder)
+
+		// 评价
+		apiAuthGroup.POST("/products/:id/reviews", apiHandler.CreateProductReview)
+
+		// 店铺：申请 / 管理自己的店铺
+		apiAuthGroup.POST("/shop/apply", shopHandler.Apply)
+		apiAuthGroup.GET("/shop/me", shopHandler.MyShop)
+		apiAuthGroup.PUT("/shop/me", shopHandler.UpdateMyShop)
+		apiAuthGroup.GET("/shop/me/products", shopHandler.MyShopProducts)
+
+		// 余额 & 提现
+		apiAuthGroup.GET("/balance", shopHandler.Balance)
+		apiAuthGroup.GET("/balance/txs", shopHandler.BalanceTxs)
+		apiAuthGroup.POST("/withdrawals/apply", shopHandler.ApplyWithdrawal)
+		apiAuthGroup.GET("/withdrawals", shopHandler.MyWithdrawals)
 	}
 
 	// 管理员 API
@@ -140,6 +164,17 @@ func main() {
 		// 系统设置
 		adminAPIGroup.GET("/settings", adminHandler.GetSettings)
 		adminAPIGroup.PUT("/settings", adminHandler.UpdateSettings)
+
+		// 店铺审核
+		adminAPIGroup.GET("/shops", shopAdminHandler.ListShops)
+		adminAPIGroup.POST("/shops/:id/approve", shopAdminHandler.ApproveShop)
+		adminAPIGroup.POST("/shops/:id/reject", shopAdminHandler.RejectShop)
+		adminAPIGroup.POST("/shops/:id/block", shopAdminHandler.BlockShop)
+
+		// 提现审核
+		adminAPIGroup.GET("/withdrawals", shopAdminHandler.ListWithdrawals)
+		adminAPIGroup.POST("/withdrawals/:id/approve", shopAdminHandler.ApproveWithdrawal)
+		adminAPIGroup.POST("/withdrawals/:id/reject", shopAdminHandler.RejectWithdrawal)
 	}
 
 	// ========================================
@@ -186,12 +221,17 @@ func main() {
 // initSystemSimple 简化的系统初始化（前后端分离版本）
 func initSystemSimple() {
 	settingService := services.NewSettingService()
+	shopService := services.NewShopService()
 
 	// 检查是否已初始化
 	initialized := settingService.Get(services.SettingInitialized)
 	if initialized == "true" {
 		// 已初始化，但需要确保支付配置同步到数据库
 		syncPaymentConfig(settingService)
+		// 确保官方店铺存在
+		if _, err := shopService.EnsureOfficialShop(); err != nil {
+			log.Printf("⚠️  确保官方店铺失败: %v", err)
+		}
 		return
 	}
 
@@ -199,10 +239,15 @@ func initSystemSimple() {
 
 	// 保存基础设置
 	err := settingService.SetMultiple(map[string]string{
-		services.SettingSiteName:        "NodeLoc 社区发卡",
-		services.SettingSiteDescription: "基于 NodeLoc OAuth 的社区发卡系统",
-		services.SettingFooterText:      "© 2026 NodeLoc 社区发卡系统",
-		services.SettingInitialized:     "true",
+		services.SettingSiteName:               "NodeLoc 社区发卡",
+		services.SettingSiteDescription:        "基于 NodeLoc OAuth 的社区发卡系统",
+		services.SettingFooterText:             "© 2026 NodeLoc 社区发卡系统",
+		services.SettingInitialized:            "true",
+		services.SettingShopApplyEnabled:       "true",
+		services.SettingWithdrawalEnabled:      "true",
+		services.SettingWithdrawalFeeRate:      "2",
+		services.SettingWithdrawalMinAmount:    "10",
+		services.SettingWithdrawalAutoMode:     "false",
 	})
 	if err != nil {
 		log.Fatalf("保存系统设置失败: %v", err)
@@ -210,6 +255,13 @@ func initSystemSimple() {
 
 	// 同步支付配置
 	syncPaymentConfig(settingService)
+
+	// 创建官方店铺并迁移现有商品
+	if _, err := shopService.EnsureOfficialShop(); err != nil {
+		log.Printf("⚠️  创建官方店铺失败: %v", err)
+	} else {
+		log.Println("✓ 官方店铺已就绪")
+	}
 
 	log.Println("✓ 系统初始化完成")
 	log.Println("提示: 首个登录的 NodeLoc 用户将自动成为管理员")

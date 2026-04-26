@@ -19,6 +19,7 @@ type APIHandler struct {
 	orderService    *services.OrderService
 	userService     *services.UserService
 	paymentService  *services.PaymentService
+	reviewService   *services.ReviewService
 }
 
 // NewAPIHandler 创建API处理器
@@ -30,6 +31,7 @@ func NewAPIHandler() *APIHandler {
 		orderService:    services.NewOrderService(),
 		userService:     services.NewUserService(),
 		paymentService:  services.NewPaymentService(),
+		reviewService:   services.NewReviewService(),
 	}
 }
 
@@ -224,6 +226,7 @@ func (h *APIHandler) CreateOrder(c *gin.Context) {
 		Quantity  int    `json:"quantity" binding:"required,min=1"`
 		Contact   string `json:"contact"`
 		Remark    string `json:"remark"`
+		PayMethod string `json:"pay_method"` // nodeloc / balance；默认 nodeloc
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -240,6 +243,22 @@ func (h *APIHandler) CreateOrder(c *gin.Context) {
 
 	if !product.IsActive {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "商品已下架"})
+		return
+	}
+
+	// 余额支付分支
+	if req.PayMethod == models.PayMethodBalance {
+		order, err := h.orderService.CreateAndProcessByBalance(u.ID, req.ProductID, req.Quantity, req.Contact, req.Remark)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"success":   true,
+			"order_no":  order.OrderNo,
+			"order":     order,
+			"completed": true,
+		})
 		return
 	}
 
@@ -282,6 +301,64 @@ func (h *APIHandler) CreateOrder(c *gin.Context) {
 		"payment_url": paymentResp.PaymentURL, // 前端需要跳转到这个URL
 		"order":       order,
 	})
+}
+
+// GetProductReviews 获取商品评价列表
+func (h *APIHandler) GetProductReviews(c *gin.Context) {
+	id := c.Param("id")
+	resp, err := h.reviewService.GetByProduct(ParseUint(id))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取评价失败"})
+		return
+	}
+	c.JSON(http.StatusOK, resp)
+}
+
+// CreateProductReview 提交商品评价
+func (h *APIHandler) CreateProductReview(c *gin.Context) {
+	userInterface, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "请先登录"})
+		return
+	}
+	u := userInterface.(*models.User)
+
+	productID := ParseUint(c.Param("id"))
+
+	// 检查是否已评价
+	if h.reviewService.HasReviewed(u.ID, productID) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "您已评价过该商品"})
+		return
+	}
+
+	// 检查是否有权评价
+	if !h.reviewService.CanReview(u.ID, productID) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "只有购买并完成订单的用户才能评价"})
+		return
+	}
+
+	var body struct {
+		Rating  int    `json:"rating" binding:"required,min=1,max=5"`
+		Title   string `json:"title"`
+		Content string `json:"content"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误：评分须在 1-5 之间"})
+		return
+	}
+
+	review := &models.ProductReview{
+		ProductID: productID,
+		UserID:    u.ID,
+		Rating:    body.Rating,
+		Title:     body.Title,
+		Content:   body.Content,
+	}
+	if err := h.reviewService.Create(review); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "提交评价失败"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "评价已提交"})
 }
 
 // ParseUint 解析 uint

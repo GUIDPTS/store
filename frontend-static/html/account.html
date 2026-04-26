@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>我的账户</title>
+  <link rel="stylesheet" href="/marketpro/css/app.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap-grid.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap-utilities.min.css">
+  <!-- Phosphor Icons (icon font for ph/ph-fill classes) -->
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+  <!-- Tailwind JIT CDN: provides utilities not included in purged app.min.css -->
+  <script>
+    window.tailwind = { config: {
+      corePlugins: { preflight: false },
+      theme: { extend: {
+        colors: {
+          main: { DEFAULT:'#299e60', 50:'#e7f9ef', 100:'#cef2df', 200:'#b6eccf', 300:'#9ee6bf', 400:'#85e0af', 500:'#6dd9a0', 600:'#299e60', 700:'#258e56', 800:'#207e4c', 900:'#1c6d42' },
+          danger: { 50:'#FEF2F2', 100:'#FEE2E2', 200:'#FECACA', 300:'#FCA5A5', 400:'#F87171', 500:'#EF4444', 600:'#DC2626', 700:'#B91C1C', 800:'#991B1B' },
+          warning: { 50:'#FEFCE8', 100:'#FEF9C3', 200:'#FEF08A', 300:'#FDE047', 400:'#FACC15', 500:'#EAB308', 600:'#FF9F29', 700:'#f39016' },
+          success: { 50:'#F0FDF4', 100:'#DCFCE7', 200:'#BBF7D0', 600:'#27AE60', 700:'#15803D' },
+          'color-one':'#F3FAF2', 'color-two':'#FFFBF4', 'color-three':'#F1F1F1',
+        }
+      }}
+    }};
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/marketpro/css/animate.css">
+  <style>
+    [x-cloak]{display:none!important}
+    .tab-btn { cursor: pointer; padding: 10px 20px; border-radius: 50px; transition: all 0.2s; font-size: 0.875rem; font-weight: 500; color: #6b7280; }
+    .tab-btn.active { background: #167547; color: #fff; }
+    .tab-btn:hover:not(.active) { background: #f0fdf4; color: #167547; }
+    .progress-wrap { position: fixed; right: 1.5rem; bottom: 1.5rem; width: 46px; height: 46px; cursor: pointer; border-radius: 50px; box-shadow: inset 0 0 0 2px rgba(130,130,130,0.2); z-index: 10000; opacity: 0; visibility: hidden; transform: translateY(12px); transition: all 200ms linear; }
+  </style>
+</head>
+<body x-data="accountPage()" x-init="init()">
+
+
+
+<!-- Preloader -->
+<div class="preloader" x-show="!$store.app.initialized" x-cloak>
+    <img src="/marketpro/images/icon/preloader.gif" alt="">
+</div>
+
+<!-- Toast -->
+<div style="position:fixed;top:20px;right:20px;z-index:9999;" x-cloak>
+    <template x-if="$store.app.toast">
+        <div class="px-16 py-12 rounded-8 text-white text-sm"
+             :class="$store.app.toastType === 'error' ? 'bg-danger-600' : 'bg-main-600'"
+             x-text="$store.app.toast"></div>
+    </template>
+</div>
+
+<!-- Overlays -->
+<div class="overlay"></div>
+
+<!-- Scroll to Top -->
+<div class="progress-wrap">
+    <svg class="progress-circle svg-content" width="100%" height="100%" viewBox="-1 -1 102 102">
+        <path d="M50,1 a49,49 0 0,1 0,98 a49,49 0 0,1 0,-98" />
+    </svg>
+</div>
+
+<!-- Search Box -->
+<form action="#" class="search-box">
+    <button type="button" class="search-box__close position-absolute inset-block-start-0 inset-inline-end-0 m-16 w-48 h-48 border border-gray-100 rounded-circle flex-center text-white hover-text-gray-800 hover-bg-white text-2xl transition-1">
+        <i class="ph ph-x"></i>
+    </button>
+    <div class="container">
+        <div class="position-relative">
+            <input type="text" class="form-control py-16 px-24 text-xl rounded-pill pe-64" placeholder="搜索商品或商家">
+            <button type="submit" class="w-48 h-48 bg-main-600 rounded-circle flex-center text-xl text-white position-absolute top-50 translate-middle-y inset-inline-end-0 me-8">
+                <i class="ph ph-magnifying-glass"></i>
+            </button>
+        </div>
+    </div>
+</form>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu scroll-sm" :class="$store.app.mobileOpen ? 'active' : ''" x-cloak>
+    <button type="button" class="close-button" @click="$store.app.mobileOpen=false"><i class="ph ph-x"></i></button>
+    <div class="mobile-menu__inner">
+        <a href="/" class="mobile-menu__logo d-block mb-16">
+            <span class="text-xl fw-bold text-main-600" x-text="$store.app.siteName()"></span>
+        </a>
+        <div class="mobile-menu__menu">
+            <ul class="nav-menu">
+                <li class="nav-menu__item"><a href="/" class="nav-menu__link">首页</a></li>
+                <li class="nav-menu__item"><a href="/shops.html" class="nav-menu__link">全部商家</a></li>
+                <template x-for="cat in $store.app.categories" :key="cat.id">
+                    <li class="nav-menu__item"><a :href="'/category.html?id=' + cat.id" class="nav-menu__link" x-text="cat.name"></a></li>
+                </template>
+                <li class="nav-menu__item activePage"><a href="/account.html" class="nav-menu__link">我的账户</a></li>
+                <li class="nav-menu__item"><a href="/become-seller.html" class="nav-menu__link">申请开店</a></li>
+                <li class="nav-menu__item"><a href="/contact.html" class="nav-menu__link">联系我们</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ======================= Header Top ========================= -->
+<div class="header-top bg-main-600 flex-between">
+    <div class="container container-lg">
+        <div class="flex-between flex-wrap gap-8">
+            <div class="d-flex align-items-center gap-10">
+                <span class="text-md fw-medium text-white" x-text="$store.app.settings.announcement || '欢迎光临，自动发货 · 7×24小时服务'"></span>
+            </div>
+            <ul class="header-top__right flex-align flex-wrap gap-16 w-auto">
+                <template x-if="!$store.app.user">
+                    <li class="d-flex align-items-center gap-12">
+                        <a href="/auth/login" class="text-white text-sm hover-text-decoration-underline">登录</a>
+                        <span class="text-white text-sm opacity-50">|</span>
+                        <a href="/become-seller.html" class="text-white text-sm hover-text-decoration-underline">申请开店</a>
+                    </li>
+                </template>
+                <template x-if="$store.app.user">
+                    <li class="d-flex align-items-center gap-12">
+                        <span class="text-white text-sm">欢迎，<span x-text="$store.app.user.username" class="fw-bold"></span></span>
+                        <a href="/account.html" class="text-white text-sm hover-text-decoration-underline">我的账户</a>
+                        <template x-if="$store.app.user.is_admin">
+                            <a href="/admin/" class="text-white text-sm hover-text-decoration-underline">管理后台</a>
+                        </template>
+                        <a href="#" @click.prevent="$store.app.logout()" class="text-white text-sm hover-text-decoration-underline">退出</a>
+                    </li>
+                </template>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ======================= Middle Header ========================= -->
+<header class="header-middle bg-color-one border-bottom border-gray-100">
+    <div class="container container-lg">
+        <nav class="header-inner flex-between gap-8">
+            <div class="logo flex-shrink-0">
+                <a href="/" class="link d-flex align-items-center">
+                    <template x-if="$store.app.siteLogoUrl()">
+                        <img :src="$store.app.siteLogoUrl()" alt="Logo" style="max-height:44px;">
+                    </template>
+                    <template x-if="!$store.app.siteLogoUrl()">
+                        <span class="text-xl fw-bold text-main-600" x-text="$store.app.siteName()">发卡平台</span>
+                    </template>
+                </a>
+            </div>
+            <form action="#" class="flex-grow-1 d-none d-md-block" style="max-width:500px;margin:0 24px;">
+                <div class="search-form__wrapper position-relative">
+                    <input type="text"
+                        class="common-input py-13 ps-16 pe-52 rounded-pill border border-gray-200"
+                        style="font-weight:400;box-shadow:none;outline:none;"
+                        onfocus="this.style.borderColor='#299e60';this.style.boxShadow='none'"
+                        onblur="this.style.borderColor=''"
+                        placeholder="搜索商品、商家...">
+                    <button type="submit"
+                        class="w-32 h-32 bg-main-600 hover-bg-main-800 rounded-circle flex-center text-white position-absolute top-50 translate-middle-y inset-inline-end-0 me-8"
+                        style="border:0;font-size:15px;">
+                        <i class="ph ph-magnifying-glass"></i>
+                    </button>
+                </div>
+            </form>
+            <div class="header-right flex-align gap-16 flex-shrink-0">
+                <button type="button" class="search-icon flex-align d-md-none gap-4 item-hover">
+                    <span class="text-2xl text-gray-700 d-flex item-hover__text"><i class="ph ph-magnifying-glass"></i></span>
+                </button>
+                <template x-if="$store.app.user">
+                    <a href="/account.html" class="flex-align gap-6 item-hover text-gray-700 hover-text-main-600" style="text-decoration:none;font-size:14px;">
+                        <span class="text-2xl d-flex position-relative item-hover__text"><i class="ph ph-user"></i></span>
+                        <span class="d-none d-xl-flex item-hover__text" x-text="$store.app.user.username || '我的账户'"></span>
+                    </a>
+                </template>
+                <template x-if="!$store.app.user">
+                    <a href="/auth/login" class="flex-align gap-6 item-hover text-gray-700" style="text-decoration:none;font-size:14px;">
+                        <span class="text-2xl d-flex item-hover__text"><i class="ph ph-user"></i></span>
+                        <span class="d-none d-xl-flex item-hover__text">登录 / 注册</span>
+                    </a>
+                </template>
+                <a href="/account.html#orders" class="flex-align gap-6 item-hover text-gray-700" style="text-decoration:none;font-size:14px;">
+                    <span class="text-2xl d-flex position-relative me-4 item-hover__text"><i class="ph ph-receipt"></i></span>
+                    <span class="d-none d-xl-flex item-hover__text">我的订单</span>
+                </a>
+                <a href="/account.html#balance" class="flex-align gap-6 item-hover text-gray-700" style="text-decoration:none;font-size:14px;">
+                    <span class="text-2xl d-flex position-relative me-4 item-hover__text"><i class="ph ph-wallet"></i></span>
+                    <span class="d-none d-xl-flex item-hover__text">我的余额</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<!-- ==================== Sticky Header ==================== -->
+<header class="header bg-white py-10">
+    <div class="container container-lg">
+        <nav class="header-inner d-flex justify-content-between gap-8">
+            <div class="flex-align menu-category-wrapper">
+                <div class="on-hover-item">
+                    <button type="button" class="category-button d-flex align-items-center gap-8 text-white bg-main-600 px-16 py-12 rounded-6 hover-bg-main-800 transition-2" style="font-size:14px;font-weight:500;border:0;">
+                        <span class="text-lg line-height-1"><i class="ph ph-squares-four"></i></span>
+                        <span class="d-md-inline d-none">全部分类</span>
+                        <span class="line-height-1"><i class="ph-bold ph-caret-down"></i></span>
+                    </button>
+                    <div class="on-hover-dropdown common-dropdown category-big-dropdown p-16" style="box-shadow:0 8px 32px rgba(0,0,0,.12);border-radius:12px;">
+                        <div class="d-grid gap-4" style="grid-template-columns:repeat(3,1fr);max-height:350px;overflow-y:auto;">
+                            <template x-for="(cat, i) in $store.app.categories" :key="cat.id">
+                                <a :href="'/category.html?id=' + cat.id"
+                                    class="d-flex flex-column align-items-center text-center py-16 px-8 rounded-8 hover-bg-main-50 border border-white hover-border-main-100"
+                                    style="text-decoration:none;">
+                                    <img :src="'/marketpro/images/icon/category-' + ((i % 9) + 1) + '.png'" alt="" style="width:40px;height:40px;object-fit:contain;">
+                                    <span class="fw-semibold text-heading mt-8" style="font-size:13px;line-height:1.3;" x-text="cat.name"></span>
+                                </a>
+                            </template>
+                            <template x-if="$store.app.categories.length === 0">
+                                <span class="text-gray-400 text-sm p-16">暂无分类</span>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-menu d-lg-block d-none ms-8">
+                    <ul class="nav-menu flex-align">
+                        <li class="nav-menu__item">
+                            <a href="/" class="nav-menu__link">首页</a>
+                        </li>
+                        <li class="on-hover-item nav-menu__item has-submenu">
+                            <a href="/shops.html" class="nav-menu__link">全部商家</a>
+                            <ul class="on-hover-dropdown common-dropdown nav-submenu" style="min-width:160px;">
+                                <li class="common-dropdown__item"><a href="/shops.html" class="common-dropdown__link">商家列表</a></li>
+                                <li class="common-dropdown__item"><a href="/become-seller.html" class="common-dropdown__link">申请开店</a></li>
+                            </ul>
+                        </li>
+                        <li class="on-hover-item nav-menu__item has-submenu">
+                            <a href="javascript:void(0)" class="nav-menu__link">商品分类</a>
+                            <ul class="on-hover-dropdown common-dropdown nav-submenu scroll-sm" style="min-width:180px;max-height:320px;overflow-y:auto;">
+                                <template x-for="cat in $store.app.categories" :key="cat.id">
+                                    <li class="common-dropdown__item">
+                                        <a :href="'/category.html?id=' + cat.id" class="common-dropdown__link" x-text="cat.name"></a>
+                                    </li>
+                                </template>
+                            </ul>
+                        </li>
+                        <li class="nav-menu__item activePage">
+                            <a href="/account.html" class="nav-menu__link">我的账户</a>
+                        </li>
+                        <li class="nav-menu__item">
+                            <a href="/become-seller.html" class="nav-menu__link">申请开店</a>
+                        </li>
+                        <li class="nav-menu__item">
+                            <a href="/contact.html" class="nav-menu__link">联系我们</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="header-right flex-align gap-20">
+                <template x-if="$store.app.settings.contact_qq">
+                    <a href="javascript:void(0)" class="d-sm-flex align-items-center gap-16 d-none">
+                        <span class="d-flex text-32"><img src="/marketpro/images/icon/mobile.png" alt=""></span>
+                        <span>
+                            <span class="d-block text-heading fw-medium">客服 QQ</span>
+                            <span class="d-block fw-bold text-main-600" x-text="$store.app.settings.contact_qq"></span>
+                        </span>
+                    </a>
+                </template>
+                <button type="button" class="toggle-mobileMenu d-lg-none" @click="$store.app.mobileOpen=true" style="background:transparent;border:0;font-size:28px;color:#333;"><i class="ph ph-list"></i></button>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb mb-0 py-26 bg-main-two-50">
+    <div class="container container-lg">
+        <div class="breadcrumb-wrapper flex-between flex-wrap gap-16">
+            <h6 class="mb-0">我的账户</h6>
+            <ul class="flex items-center gap-8 flex-wrap list-unstyled mb-0">
+                <li class="text-sm">
+                    <a href="/" class="text-gray-900 flex items-center gap-8 hover-text-main-600">
+                        <i class="ph ph-house"></i> 首页
+                    </a>
+                </li>
+                <li class="flex items-center"><i class="ph ph-caret-right"></i></li>
+                <li class="text-sm text-main-600">我的账户</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<section class="account py-80">
+    <div class="container container-lg">
+
+        <!-- Loading -->
+        <div class="text-center py-60" x-show="loading">
+            <div class="w-48 h-48 border border-main-600 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-16 animate-spin"
+                 style="border-top-color:transparent !important;"></div>
+            <p class="text-gray-400 text-sm">加载中...</p>
+        </div>
+
+        <!-- ==================== Not Logged In ==================== -->
+        <div x-show="!loading && !$store.app.user">
+            <div class="row g-4 justify-content-center">
+                <div class="col-xl-5 col-lg-7">
+                    <div class="border border-gray-100 hover-border-main-600 transition-1 rounded-16 px-24 py-40 h-full text-center">
+                        <div class="w-80 h-80 rounded-circle bg-main-50 d-flex align-items-center justify-content-center mx-auto mb-24">
+                            <i class="ph ph-user text-main-600" style="font-size:2.5rem;"></i>
+                        </div>
+                        <h6 class="text-xl mb-8">欢迎登录</h6>
+                        <p class="text-gray-500 mb-32">登录后可查看订单、账户余额和店铺管理</p>
+                        <a href="/auth/login" class="btn btn-main py-18 px-40">立即登录</a>
+                    </div>
+                </div>
+                <div class="col-xl-5 col-lg-7 mt-4 mt-xl-0">
+                    <div class="border border-gray-100 hover-border-main-600 transition-1 rounded-16 px-24 py-40 h-full">
+                        <h6 class="text-xl mb-32">为什么注册？</h6>
+                        <ul class="list-unstyled mb-0">
+                            <li class="d-flex align-items-start gap-16 mb-24">
+                                <span class="w-44 h-44 bg-main-50 text-main-600 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="font-size:1.25rem;">
+                                    <i class="ph-fill ph-lightning"></i>
+                                </span>
+                                <div>
+                                    <h6 class="text-sm fw-semibold mb-4">自动发货</h6>
+                                    <p class="text-gray-500 text-sm mb-0">购买后立即收到卡密，无需等待</p>
+                                </div>
+                            </li>
+                            <li class="d-flex align-items-start gap-16 mb-24">
+                                <span class="w-44 h-44 bg-main-50 text-main-600 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="font-size:1.25rem;">
+                                    <i class="ph-fill ph-wallet"></i>
+                                </span>
+                                <div>
+                                    <h6 class="text-sm fw-semibold mb-4">账户余额</h6>
+                                    <p class="text-gray-500 text-sm mb-0">充值余额，更方便的支付方式</p>
+                                </div>
+                            </li>
+                            <li class="d-flex align-items-start gap-16">
+                                <span class="w-44 h-44 bg-main-50 text-main-600 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="font-size:1.25rem;">
+                                    <i class="ph-fill ph-storefront"></i>
+                                </span>
+                                <div>
+                                    <h6 class="text-sm fw-semibold mb-4">申请开店</h6>
+                                    <p class="text-gray-500 text-sm mb-0">成为商家，自动发卡轻松赚钱</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== Logged In Dashboard ==================== -->
+        <div x-show="!loading && $store.app.user">
+            <div class="row g-4">
+
+                <!-- Sidebar -->
+                <div class="col-xl-3">
+                    <!-- User card -->
+                    <div class="border border-gray-100 rounded-16 px-24 py-40 text-center mb-24 hover-border-main-600 transition-1">
+                        <div class="w-80 h-80 rounded-circle bg-main-50 d-flex align-items-center justify-content-center mx-auto mb-16">
+                            <i class="ph ph-user text-main-600" style="font-size:2rem;"></i>
+                        </div>
+                        <h6 class="fw-semibold mb-4" x-text="$store.app.user?.username"></h6>
+                        <p class="text-gray-500 text-sm mb-12" x-text="$store.app.user?.email || ''"></p>
+                        <template x-if="$store.app.user?.is_admin">
+                            <span class="d-inline-block bg-warning-50 text-warning-600 text-xs px-10 py-4 rounded-pill mb-12">
+                                <i class="ph ph-crown me-4"></i>管理员
+                            </span>
+                        </template>
+                        <!-- Balance mini -->
+                        <div class="bg-main-600 rounded-12 p-16 text-center">
+                            <p class="text-xs text-white mb-4" style="opacity:.8;">账户余额</p>
+                            <p class="fw-bold text-white mb-0" style="font-size:1.5rem;"
+                               x-text="'¥' + Number(balance?.balance || 0).toFixed(2)"></p>
+                        </div>
+                    </div>
+
+                    <!-- Nav tabs -->
+                    <div class="border border-gray-100 rounded-16 overflow-hidden">
+                        <button @click="tab = 'orders'"
+                                :class="tab === 'orders' ? 'bg-main-600 text-white' : 'text-gray-900 hover-bg-main-50'"
+                                class="d-flex align-items-center gap-12 w-100 text-start px-24 py-16 border-0 border-bottom border-gray-100 transition-1">
+                            <i class="ph ph-shopping-bag" style="font-size:1.1rem;"></i>
+                            <span class="text-sm fw-medium">我的订单</span>
+                        </button>
+                        <button @click="tab = 'balance'; loadBalance()"
+                                :class="tab === 'balance' ? 'bg-main-600 text-white' : 'text-gray-900 hover-bg-main-50'"
+                                class="d-flex align-items-center gap-12 w-100 text-start px-24 py-16 border-0 border-bottom border-gray-100 transition-1">
+                            <i class="ph ph-wallet" style="font-size:1.1rem;"></i>
+                            <span class="text-sm fw-medium">账户余额</span>
+                        </button>
+                        <button @click="tab = 'shop'; loadShop()"
+                                :class="tab === 'shop' ? 'bg-main-600 text-white' : 'text-gray-900 hover-bg-main-50'"
+                                class="d-flex align-items-center gap-12 w-100 text-start px-24 py-16 border-0 border-bottom border-gray-100 transition-1">
+                            <i class="ph ph-storefront" style="font-size:1.1rem;"></i>
+                            <span class="text-sm fw-medium">我的店铺</span>
+                        </button>
+                        <button @click="tab = 'profile'"
+                                :class="tab === 'profile' ? 'bg-main-600 text-white' : 'text-gray-900 hover-bg-main-50'"
+                                class="d-flex align-items-center gap-12 w-100 text-start px-24 py-16 border-0 transition-1">
+                            <i class="ph ph-user" style="font-size:1.1rem;"></i>
+                            <span class="text-sm fw-medium">个人资料</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Main panel -->
+                <div class="col-xl-9">
+
+                    <!-- ===== ORDERS ===== -->
+                    <div x-show="tab === 'orders'">
+                        <div class="flex-between flex-wrap gap-16 mb-24">
+                            <h5 class="fw-semibold mb-0">我的订单</h5>
+                            <span class="text-sm text-gray-500" x-text="orders.length + ' 条记录'"></span>
+                        </div>
+
+                        <div class="text-center py-40" x-show="ordersLoading">
+                            <div class="spinner-border text-main" role="status"
+                                 style="width:2rem;height:2rem;border-color:#299e60;border-right-color:transparent;"></div>
+                        </div>
+
+                        <div class="text-center py-60" x-show="!ordersLoading && orders.length === 0">
+                            <i class="ph ph-shopping-bag d-block mb-12 text-gray-200" style="font-size:4rem;"></i>
+                            <p class="text-gray-400 mb-16">暂无订单记录</p>
+                            <a href="/" class="btn btn-main rounded-pill py-8 px-24 text-sm">去购物</a>
+                        </div>
+
+                        <div x-show="!ordersLoading && orders.length > 0">
+                            <template x-for="o in orders" :key="o.order_no">
+                                <div class="border border-gray-100 hover-border-main-600 transition-1 rounded-16 p-20 mb-12">
+                                    <div class="flex-between flex-wrap gap-12 mb-12">
+                                        <div>
+                                            <span class="font-mono text-sm text-gray-600" x-text="o.order_no"></span>
+                                            <span class="ms-12 text-xs text-gray-400" x-text="fmtDate(o.created_at)"></span>
+                                        </div>
+                                        <span class="text-sm fw-medium px-10 py-4 rounded-pill"
+                                              :class="{
+                                                'bg-warning-50 text-warning-600': o.status === 0,
+                                                'bg-main-50 text-main-600': o.status === 1 || o.status === 2,
+                                                'bg-gray-100 text-gray-400': o.status === 3,
+                                                'bg-danger-50 text-danger-600': o.status === 4,
+                                              }"
+                                              x-text="ORDER_STATUS[o.status]?.text || o.status"></span>
+                                    </div>
+                                    <div class="flex-between flex-wrap gap-8">
+                                        <div>
+                                            <p class="fw-medium text-gray-800 mb-4"
+                                               x-text="o.product?.name || ('商品 #' + o.product_id)"></p>
+                                            <p class="text-sm text-gray-500 mb-0"
+                                               x-text="'数量 ' + o.quantity + ' | 金额 ¥' + Number(o.total_amount || 0).toFixed(2)"></p>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-8">
+                                            <template x-if="o.status === 0 && o.payment_url">
+                                                <a :href="o.payment_url" target="_blank"
+                                                   class="btn btn-main rounded-pill py-6 px-16 text-sm">前往支付</a>
+                                            </template>
+                                            <a :href="'/order.html?no=' + o.order_no"
+                                               class="btn btn-outline-main rounded-pill py-6 px-16 text-sm">查看详情</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- ===== BALANCE ===== -->
+                    <div x-show="tab === 'balance'">
+                        <h5 class="fw-semibold mb-24">账户余额</h5>
+
+                        <div class="row g-4 mb-32">
+                            <div class="col-md-4">
+                                <div class="bg-main-600 text-white rounded-16 p-24">
+                                    <p class="text-sm mb-8" style="opacity:.8;">可用余额</p>
+                                    <p class="fw-bold mb-0" style="font-size:1.75rem;"
+                                       x-text="'¥' + Number(balance?.balance || 0).toFixed(2)"></p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border border-gray-100 rounded-16 p-24 hover-border-main-600 transition-1">
+                                    <p class="text-sm text-gray-500 mb-8">提现手续费率</p>
+                                    <p class="fw-bold text-gray-800 mb-0" style="font-size:1.5rem;"
+                                       x-text="(balance?.fee_rate || 0) + '%'"></p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border border-gray-100 rounded-16 p-24 hover-border-main-600 transition-1">
+                                    <p class="text-sm text-gray-500 mb-8">最低提现</p>
+                                    <p class="fw-bold text-gray-800 mb-0" style="font-size:1.5rem;"
+                                       x-text="'¥' + Number(balance?.min_amount || 0).toFixed(2)"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Withdraw form -->
+                        <div class="border border-gray-100 rounded-16 px-24 py-40 hover-border-main-600 transition-1 mb-24"
+                             x-show="balance?.withdrawal_enabled">
+                            <h6 class="text-xl mb-32">申请提现</h6>
+                            <div class="row g-4 align-items-end">
+                                <div class="col-md-5">
+                                    <label class="text-neutral-900 mb-8 fw-medium d-block">提现金额</label>
+                                    <input type="number" x-model.number="withdrawAmount"
+                                           :min="balance?.min_amount || 1" :max="balance?.balance || 0" step="0.01"
+                                           class="common-input" placeholder="输入金额">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="text-neutral-900 mb-8 fw-medium d-block">提现账号</label>
+                                    <input type="text" x-model="withdrawAccount"
+                                           class="common-input" placeholder="支付账号">
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="button" @click="submitWithdraw()" :disabled="withdrawing"
+                                            class="btn btn-main py-18 px-24 w-100">
+                                        <span x-show="!withdrawing">申请提现</span>
+                                        <span x-show="withdrawing">处理中...</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-warning-50 rounded-12 p-16 mb-24 text-sm text-warning-700"
+                             x-show="balance && !balance.withdrawal_enabled">
+                            <i class="ph ph-warning me-8"></i>提现功能暂未开启
+                        </div>
+
+                        <!-- Transactions table -->
+                        <h6 class="fw-semibold mb-16">余额明细</h6>
+                        <div class="text-center py-24" x-show="txsLoading">
+                            <div class="spinner-border" role="status"
+                                 style="width:1.5rem;height:1.5rem;border-color:#299e60;border-right-color:transparent;"></div>
+                        </div>
+                        <div class="text-center py-24 text-gray-400 text-sm"
+                             x-show="!txsLoading && txs.length === 0">暂无余额记录</div>
+                        <div class="border border-gray-100 rounded-16 overflow-hidden" x-show="txs.length > 0">
+                            <table class="w-100 text-sm">
+                                <thead class="bg-color-two">
+                                    <tr>
+                                        <th class="py-12 px-16 text-start text-gray-500 fw-medium">类型</th>
+                                        <th class="py-12 px-16 text-start text-gray-500 fw-medium">金额</th>
+                                        <th class="py-12 px-16 text-start text-gray-500 fw-medium">备注</th>
+                                        <th class="py-12 px-16 text-start text-gray-500 fw-medium">时间</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="tx in txs" :key="tx.id">
+                                        <tr class="border-top border-gray-100">
+                                            <td class="py-10 px-16">
+                                                <span class="text-xs px-8 py-4 rounded-pill fw-medium"
+                                                      :class="tx.amount > 0 ? 'bg-main-50 text-main-600' : 'bg-danger-50 text-danger-600'"
+                                                      x-text="tx.type || (tx.amount > 0 ? '收入' : '支出')"></span>
+                                            </td>
+                                            <td class="py-10 px-16 fw-semibold"
+                                                :class="tx.amount > 0 ? 'text-main-600' : 'text-danger-600'"
+                                                x-text="(tx.amount > 0 ? '+' : '') + '¥' + Number(tx.amount || 0).toFixed(2)"></td>
+                                            <td class="py-10 px-16 text-gray-500"
+                                                x-text="tx.remark || tx.description || '—'"></td>
+                                            <td class="py-10 px-16 text-gray-400 text-xs"
+                                                x-text="fmtDate(tx.created_at)"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- ===== SHOP ===== -->
+                    <div x-show="tab === 'shop'">
+                        <h5 class="fw-semibold mb-24">我的店铺</h5>
+
+                        <div class="text-center py-40" x-show="shopLoading">
+                            <div class="spinner-border" role="status"
+                                 style="width:1.5rem;height:1.5rem;border-color:#299e60;border-right-color:transparent;"></div>
+                        </div>
+
+                        <template x-if="!myShop && !shopLoading">
+                            <div class="border border-gray-100 hover-border-main-600 transition-1 rounded-16 px-24 py-40 text-center">
+                                <i class="ph ph-storefront d-block mb-16 text-gray-200" style="font-size:4rem;"></i>
+                                <h6 class="text-xl mb-8">您还没有店铺</h6>
+                                <p class="text-gray-500 mb-32">申请开店，开始销售您的产品</p>
+                                <a href="/become-seller.html" class="btn btn-main py-18 px-40">申请开店</a>
+                            </div>
+                        </template>
+
+                        <template x-if="myShop">
+                            <div>
+                                <!-- Shop info card -->
+                                <div class="border border-gray-100 hover-border-main-600 transition-1 rounded-16 px-24 py-40 mb-24">
+                                    <div class="d-flex align-items-start gap-20 flex-wrap">
+                                        <template x-if="myShop.logo">
+                                            <img :src="myShop.logo" :alt="myShop.name"
+                                                 class="rounded-12 flex-shrink-0"
+                                                 style="width:80px;height:80px;object-fit:cover;">
+                                        </template>
+                                        <template x-if="!myShop.logo">
+                                            <div class="rounded-12 bg-main-50 d-flex align-items-center justify-content-center flex-shrink-0"
+                                                 style="width:80px;height:80px;">
+                                                <i class="ph ph-storefront text-main-600" style="font-size:2rem;"></i>
+                                            </div>
+                                        </template>
+                                        <div class="flex-1">
+                                            <div class="d-flex align-items-center gap-12 flex-wrap mb-8">
+                                                <h5 class="fw-bold mb-0" x-text="myShop.name"></h5>
+                                                <span class="text-sm px-10 py-4 rounded-pill fw-medium"
+                                                      :class="{
+                                                        'bg-warning-50 text-warning-600': myShop.status === 0,
+                                                        'bg-main-50 text-main-600': myShop.status === 1,
+                                                        'bg-danger-50 text-danger-600': myShop.status === 2 || myShop.status === 3,
+                                                      }"
+                                                      x-text="['审核中','已批准','已拒绝','已封禁'][myShop.status] || myShop.status"></span>
+                                            </div>
+                                            <p class="text-gray-500 text-sm mb-0"
+                                               x-text="myShop.description || '暂无简介'"></p>
+                                            <template x-if="myShop.reject_reason && myShop.status === 2">
+                                                <p class="text-danger-600 text-sm bg-danger-50 rounded-8 p-10 mt-8 mb-0">
+                                                    拒绝原因：<span x-text="myShop.reject_reason"></span>
+                                                </p>
+                                            </template>
+                                        </div>
+                                        <template x-if="myShop.status === 1">
+                                            <a :href="'/shop.html?id=' + myShop.id"
+                                               class="btn btn-outline-main rounded-pill py-8 px-20 text-sm flex-shrink-0">
+                                                访问店铺 <i class="ph ph-arrow-square-out ms-4"></i>
+                                            </a>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Shop products -->
+                                <div class="flex-between flex-wrap gap-16 mb-16">
+                                    <h6 class="fw-semibold mb-0">店铺商品</h6>
+                                    <span class="text-sm text-gray-500" x-text="shopProducts.length + ' 件'"></span>
+                                </div>
+                                <div class="text-center py-24 text-gray-400 text-sm"
+                                     x-show="shopProducts.length === 0">
+                                    暂无商品，请在管理后台添加
+                                </div>
+                                <div class="row g-4" x-show="shopProducts.length > 0">
+                                    <template x-for="p in shopProducts.slice(0,6)" :key="p.id">
+                                        <div class="col-md-6">
+                                            <div class="border border-gray-100 hover-border-main-600 transition-1 rounded-12 p-12 d-flex align-items-center gap-12">
+                                                <div class="rounded-8 bg-main-50 d-flex align-items-center justify-content-center flex-shrink-0"
+                                                     style="width:48px;height:48px;">
+                                                    <template x-if="p.image">
+                                                        <img :src="p.image" :alt="p.name"
+                                                             style="width:40px;height:40px;object-fit:contain;">
+                                                    </template>
+                                                    <template x-if="!p.image">
+                                                        <i class="ph ph-package text-main-600"></i>
+                                                    </template>
+                                                </div>
+                                                <div class="flex-1 overflow-hidden">
+                                                    <p class="fw-medium text-sm text-line-1 mb-4"
+                                                       x-text="p.name"></p>
+                                                    <p class="text-main-600 text-sm fw-semibold mb-0"
+                                                       x-text="'¥' + Number(p.price).toFixed(2)"></p>
+                                                </div>
+                                                <span class="text-xs text-gray-400 flex-shrink-0"
+                                                      x-text="'库存 ' + p.stock_count"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- ===== PROFILE ===== -->
+                    <div x-show="tab === 'profile'">
+                        <h5 class="fw-semibold mb-24">个人资料</h5>
+                        <div class="border border-gray-100 hover-border-main-600 transition-1 rounded-16 px-24 py-40">
+                            <div class="row g-4" style="max-width:600px;">
+                                <div class="col-12">
+                                    <label class="text-neutral-900 mb-8 fw-medium d-block">用户名</label>
+                                    <input type="text" :value="$store.app.user?.username" readonly
+                                           class="common-input" style="background:#f4f6e6;cursor:not-allowed;">
+                                </div>
+                                <div class="col-12">
+                                    <label class="text-neutral-900 mb-8 fw-medium d-block">邮箱</label>
+                                    <input type="text" :value="$store.app.user?.email || '未绑定'" readonly
+                                           class="common-input" style="background:#f4f6e6;cursor:not-allowed;">
+                                </div>
+                                <div class="col-12">
+                                    <label class="text-neutral-900 mb-8 fw-medium d-block">用户 ID</label>
+                                    <input type="text" :value="'#' + $store.app.user?.id" readonly
+                                           class="common-input font-mono"
+                                           style="background:#f4f6e6;cursor:not-allowed;font-family:monospace;">
+                                </div>
+                                <div class="col-12 mt-32">
+                                    <p class="text-gray-500 text-sm mb-0">
+                                        账户信息通过第三方 OAuth 登录管理，如需修改请联系管理员。
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ==================== Footer ==================== -->
+<footer class="footer py-120">
+    <div class="container container-lg">
+        <div class="footer-item-wrapper d-flex align-items-start flex-wrap">
+            <div class="footer-item" data-aos="fade-up">
+                <div class="max-w-340">
+                    <div class="footer-item__logo">
+                        <a href="/">
+                            <span class="text-2xl fw-bold text-main-600" x-text="$store.app.siteName()"></span>
+                        </a>
+                    </div>
+                    <p class="mb-28 text-heading mt-12" x-text="$store.app.settings.site_description || '正版软件 · 游戏充值 · 卡密发货平台'"></p>
+                    <div class="d-flex flex-column gap-8">
+                        <template x-if="$store.app.settings.contact_email">
+                            <a :href="'mailto:' + $store.app.settings.contact_email" class="text-heading fw-medium hover-text-main-600">
+                                <i class="ph-fill ph-envelope me-4"></i>
+                                <span x-text="$store.app.settings.contact_email"></span>
+                            </a>
+                        </template>
+                        <template x-if="$store.app.settings.contact_qq">
+                            <span class="text-heading fw-medium">
+                                <i class="ph-fill ph-chat-circle-dots me-4"></i>
+                                QQ: <span x-text="$store.app.settings.contact_qq"></span>
+                            </span>
+                        </template>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-item" data-aos="fade-up">
+                <h6 class="footer-item__title">快速导航</h6>
+                <ul class="footer-menu">
+                    <li class="mb-16"><a href="/" class="text-heading hover-text-main-600">首页</a></li>
+                    <li class="mb-16"><a href="/shops.html" class="text-heading hover-text-main-600">全部商家</a></li>
+                    <li class="mb-16"><a href="/become-seller.html" class="text-heading hover-text-main-600">申请开店</a></li>
+                    <li class="mb-16"><a href="/account.html" class="text-heading hover-text-main-600">我的账户</a></li>
+                </ul>
+            </div>
+            <div class="footer-item" data-aos="fade-up">
+                <h6 class="footer-item__title">客户服务</h6>
+                <ul class="footer-menu">
+                    <li class="mb-16"><a href="/account.html#orders" class="text-heading hover-text-main-600">我的订单</a></li>
+                    <li class="mb-16"><a href="/account.html#balance" class="text-heading hover-text-main-600">账户余额</a></li>
+                    <li class="mb-16"><a href="javascript:void(0)" class="text-heading hover-text-main-600">使用帮助</a></li>
+                    <li class="mb-16"><a href="javascript:void(0)" class="text-heading hover-text-main-600">隐私政策</a></li>
+                </ul>
+            </div>
+            <div class="footer-item" data-aos="fade-up">
+                <h6 class="footer-item__title">热门分类</h6>
+                <ul class="footer-menu">
+                    <template x-for="cat in $store.app.categories.slice(0, 6)" :key="cat.id">
+                        <li class="mb-16">
+                            <a :href="'/category.html?id=' + cat.id" class="text-heading hover-text-main-600" x-text="cat.name"></a>
+                        </li>
+                    </template>
+                    <template x-if="$store.app.categories.length === 0">
+                        <li class="mb-16"><span class="text-gray-400">暂无分类</span></li>
+                    </template>
+                </ul>
+            </div>
+            <div class="footer-item" data-aos="fade-up">
+                <h6 class="footer-item__title">移动端访问</h6>
+                <p class="mb-16">扫码访问，便捷购物</p>
+                <div class="my-32">
+                    <div class="flex-align gap-8">
+                        <div class="bg-white rounded-10 p-1 box-shadow-5xl">
+                            <img src="/marketpro/images/thumbs/qr-code.png" alt="QR Code">
+                        </div>
+                    </div>
+                    <div class="mt-24">
+                        <img src="/marketpro/images/thumbs/method.png" alt="支付方式">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Bottom Footer -->
+
+<!-- ==================== Footer ==================== -->
+<footer class="footer py-120">
+    <div class="container container-lg">
+        <div class="footer-item-wrapper d-flex align-items-start flex-wrap">
+            <div class="footer-item" data-aos="fade-up">
+                <div class="max-w-340">
+                    <div class="footer-item__logo">
+                        <a href="/">
+                            <span class="text-2xl fw-bold text-main-600" x-text="$store.app.siteName()"></span>
+                        </a>
+                    </div>
+                    <p class="mb-28 text-heading mt-12" x-text="$store.app.settings.site_description || '正版软件 · 游戏充值 · 卡密发货平台'"></p>
+                    <div class="d-flex flex-column gap-8">
+                        <template x-if="$store.app.settings.contact_email">
+                            <a :href="'mailto:' + $store.app.settings.contact_email" class="text-heading fw-medium hover-text-main-600">
+                                <i class="ph-fill ph-envelope me-4"></i>
+                                <span x-text="$store.app.settings.contact_email"></span>
+                            </a>
+                        </template>
+                        <template x-if="$store.app.settings.contact_qq">
+                            <span class="text-heading fw-medium">
+                                <i class="ph-fill ph-chat-circle-dots me-4"></i>
+                                QQ: <span x-text="$store.app.settings.contact_qq"></span>
+                            </span>
+                        </template>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-item" data-aos="fade-up">
+                <h6 class="footer-item__title">快速导航</h6>
+                <ul class="footer-menu">
+                    <li class="mb-16"><a href="/" class="text-heading hover-text-main-600">首页</a></li>
+                    <li class="mb-16"><a href="/shops.html" class="text-heading hover-text-main-600">全部商家</a></li>
+                    <li class="mb-16"><a href="/become-seller.html" class="text-heading hover-text-main-600">申请开店</a></li>
+                    <li class="mb-16"><a href="/account.html" class="text-heading hover-text-main-600">我的账户</a></li>
+                </ul>
+            </div>
+            <div class="footer-item" data-aos="fade-up">
+                <h6 class="footer-item__title">客户服务</h6>
+                <ul class="footer-menu">
+                    <li class="mb-16"><a href="/account.html#orders" class="text-heading hover-text-main-600">我的订单</a></li>
+                    <li class="mb-16"><a href="/account.html#balance" class="text-heading hover-text-main-600">账户余额</a></li>
+                    <li class="mb-16"><a href="javascript:void(0)" class="text-heading hover-text-main-600">使用帮助</a></li>
+                    <li class="mb-16"><a href="javascript:void(0)" class="text-heading hover-text-main-600">隐私政策</a></li>
+                </ul>
+            </div>
+            <div class="footer-item" data-aos="fade-up">
+                <h6 class="footer-item__title">热门分类</h6>
+                <ul class="footer-menu">
+                    <template x-for="cat in $store.app.categories.slice(0, 6)" :key="cat.id">
+                        <li class="mb-16">
+                            <a :href="'/category.html?id=' + cat.id" class="text-heading hover-text-main-600" x-text="cat.name"></a>
+                        </li>
+                    </template>
+                    <template x-if="$store.app.categories.length === 0">
+                        <li class="mb-16"><span class="text-gray-400">暂无分类</span></li>
+                    </template>
+                </ul>
+            </div>
+            <div class="footer-item" data-aos="fade-up">
+                <h6 class="footer-item__title">移动端访问</h6>
+                <p class="mb-16">扫码访问，便捷购物</p>
+                <div class="my-32">
+                    <div class="flex-align gap-8">
+                        <div class="bg-white rounded-10 p-1 box-shadow-5xl">
+                            <img src="/marketpro/images/thumbs/qr-code.png" alt="QR Code">
+                        </div>
+                    </div>
+                    <div class="mt-24">
+                        <img src="/marketpro/images/thumbs/method.png" alt="支付方式">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Bottom Footer -->
+<div class="bottom-footer py-8">
+    <div class="container container-lg">
+        <div class="bottom-footer__inner flex-between flex-wrap gap-16 py-16 border-top border-neutral-50">
+            <p class="bottom-footer__text text-heading fw-medium">
+                <span x-text="$store.app.siteName()"></span> &copy;
+                <span class="text-success-600 fw-semibold" x-text="new Date().getFullYear()"></span>
+                版权所有
+                <span x-text="$store.app.settings.footer_text || ''"></span>
+            </p>
+            <div class="flex-align gap-8 flex-wrap">
+                <ul class="flex-align gap-16">
+                    <li><a href="javascript:void(0)" class="w-44 h-44 flex-center bg-white shadow-sm text-main-600 text-xl rounded-circle hover-bg-main-600 hover-text-white"><i class="ph-fill ph-wechat-logo"></i></a></li>
+                    <li><a href="javascript:void(0)" class="w-44 h-44 flex-center bg-white shadow-sm text-main-600 text-xl rounded-circle hover-bg-main-600 hover-text-white"><i class="ph-fill ph-chat-circle-dots"></i></a></li>
+                    <li><a href="javascript:void(0)" class="w-44 h-44 flex-center bg-white shadow-sm text-main-600 text-xl rounded-circle hover-bg-main-600 hover-text-white"><i class="ph-fill ph-envelope"></i></a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="/marketpro/dist-js/app.bundle.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script src="/js/site.js"></script>
+<script>
+    function accountPage() {
+      return {
+        loading: true,
+        tab: 'orders',
+        orders: [],
+        ordersLoading: true,
+        balance: null,
+        txs: [],
+        txsLoading: false,
+        myShop: null,
+        shopProducts: [],
+        shopLoading: false,
+        withdrawAmount: null,
+        withdrawAccount: '',
+        withdrawing: false,
+
+        async init() {
+          await new Promise(r => {
+            const check = () => this.$store.app.initialized ? r() : setTimeout(check, 50);
+            check();
+          });
+          this.loading = false;
+          if (!this.$store.app.user) return;
+
+          // Load initial data
+          this.loadOrders();
+          this.loadBalance();
+        },
+
+        async loadOrders() {
+          this.ordersLoading = true;
+          const r = await fetch('/api/orders').catch(() => null);
+          if (r && r.ok) {
+            const data = await r.json();
+            this.orders = Array.isArray(data) ? data : (data.orders || []);
+          }
+          this.ordersLoading = false;
+        },
+
+        async loadBalance() {
+          const [br, tr] = await Promise.allSettled([
+            fetch('/api/balance').then(r => r.ok ? r.json() : null),
+            fetch('/api/balance/txs').then(r => r.ok ? r.json() : null),
+          ]);
+          this.balance = br.status === 'fulfilled' ? br.value : null;
+          const txData = tr.status === 'fulfilled' ? tr.value : null;
+          this.txs = txData ? (Array.isArray(txData) ? txData : (txData.data || [])) : [];
+        },
+
+        async loadShop() {
+          if (this.myShop !== null) return;
+          this.shopLoading = true;
+          const r = await fetch('/api/shop/me').catch(() => null);
+          if (r && r.ok) {
+            const data = await r.json();
+            this.myShop = data.shop || null;
+            if (this.myShop) {
+              const pr = await fetch('/api/shop/me/products').catch(() => null);
+              if (pr && pr.ok) {
+                const pd = await pr.json();
+                this.shopProducts = Array.isArray(pd) ? pd : (pd.products || []);
+              }
+            }
+          }
+          this.shopLoading = false;
+        },
+
+        async submitWithdraw() {
+          if (!this.withdrawAmount || this.withdrawing) return;
+          this.withdrawing = true;
+          try {
+            const r = await fetch('/api/withdrawals', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ amount: this.withdrawAmount, account: this.withdrawAccount }),
+            });
+            const data = await r.json();
+            if (!r.ok) {
+              this.$store.app.showToast(data.error || '申请失败', 'error');
+              return;
+            }
+            this.$store.app.showToast('提现申请已提交');
+            this.withdrawAmount = null;
+            this.withdrawAccount = '';
+            await this.loadBalance();
+          } catch (e) {
+            this.$store.app.showToast('网络错误', 'error');
+          } finally {
+            this.withdrawing = false;
+          }
+        },
+      };
+    }
+  </script>
+</body>
+</html>

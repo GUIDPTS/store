@@ -84,6 +84,24 @@ const (
 	SettingPaymentSecret   = "payment_secret"
 	SettingPaymentEnabled  = "payment_enabled"
 	SettingPaymentCallback = "payment_callback"
+
+	// 店铺/提现相关设置
+	SettingOfficialShopID       = "official_shop_id"        // 平台官方店铺 ID
+	SettingShopApplyEnabled     = "shop_apply_enabled"      // 是否开放申请开店（true/false）
+	SettingPlatformCommission   = "platform_commission"     // 平台抽成比例（%），暂未启用，预留
+	SettingWithdrawalEnabled    = "withdrawal_enabled"      // 是否允许提现
+	SettingWithdrawalFeeRate    = "withdrawal_fee_rate"     // 提现手续费率（%），如 "2"
+	SettingWithdrawalMinAmount  = "withdrawal_min_amount"   // 最低提现金额
+	SettingWithdrawalAutoMode   = "withdrawal_auto_mode"    // 提现处理模式：auto / manual（默认 manual）
+	SettingNodelocTransferAPI   = "nodeloc_transfer_api"    // NodeLoc 转账 API 地址（预留）
+
+	// 首页配置
+	SettingHomeBanners      = "home_banners"       // 首页主轮播（JSON 数组字符串）
+	SettingHomePromoBanners = "home_promo_banners" // 首页促销横幅（JSON 数组字符串）
+	SettingHomeFlashBanners = "home_flash_banners" // 首页闪购横幅（JSON 数组字符串）
+	SettingHomeOfferCards   = "home_offer_cards"   // 首页特惠卡片（JSON 数组字符串，2张）
+	SettingHomeBestsellCTA  = "home_bestsell_cta"  // 每日精选侧边 CTA（JSON 对象字符串）
+	SettingHomeNewsletterImg = "home_newsletter_img" // 订阅区右侧图片 URL
 )
 
 // GetSiteSettings 获取网站设置
@@ -97,6 +115,12 @@ func (s *SettingService) GetSiteSettings() map[string]string {
 		SettingContactQQ,
 		SettingAnnouncement,
 		SettingFooterText,
+		SettingHomeBanners,
+		SettingHomePromoBanners,
+		SettingHomeFlashBanners,
+		SettingHomeOfferCards,
+		SettingHomeBestsellCTA,
+		SettingHomeNewsletterImg,
 	}
 	
 	result := make(map[string]string)

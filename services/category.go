@@ -3,6 +3,7 @@ package services
 import (
 	"github.com/nodeloc-faka/database"
 	"github.com/nodeloc-faka/models"
+	"gorm.io/gorm"
 )
 
 // CategoryService 分类服务
@@ -61,10 +62,17 @@ func (s *CategoryService) GetActive() ([]models.Category, error) {
 	return categories, nil
 }
 
-// GetWithProducts 获取分类及其商品
+// GetWithProducts 获取分类及其商品（仅来自已批准店铺的上架商品）
 func (s *CategoryService) GetWithProducts() ([]models.Category, error) {
 	var categories []models.Category
-	if err := database.GetDB().Preload("Products", "is_active = ?", true).
+	db := database.GetDB()
+	if err := db.
+		Preload("Products", func(tx *gorm.DB) *gorm.DB {
+			return tx.
+				Joins("JOIN shops ON shops.id = products.shop_id AND shops.status = ?", models.ShopStatusApproved).
+				Where("products.is_active = ?", true).
+				Preload("Shop")
+		}).
 		Where("is_active = ?", true).
 		Order("sort asc, id asc").
 		Find(&categories).Error; err != nil {

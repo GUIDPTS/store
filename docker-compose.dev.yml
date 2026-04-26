@@ -1,0 +1,96 @@
+version: '3.8'
+
+# ╔════════════════════════════════════════════════════════════╗
+# ║        NodeLoc 社区发卡系统 - 本地开发测试环境                ║
+# ║  使用：docker compose -f docker-compose.dev.yml up -d      ║
+# ╚════════════════════════════════════════════════════════════╝
+
+services:
+  # MySQL 数据库（本地开发专用）
+  mysql:
+    image: mysql:8.0
+    container_name: nodeloc-faka-mysql-dev
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-devroot123}
+      - MYSQL_DATABASE=${DB_NAME:-faka}
+      - MYSQL_USER=${DB_USER:-faka}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-devpass123}
+      - TZ=Asia/Shanghai
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+      - ./docker/mysql:/docker-entrypoint-initdb.d:ro
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    networks:
+      - faka-dev-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-devroot123}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Backend API - 从源码构建
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nodeloc-faka-backend-dev
+    restart: unless-stopped
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=${DB_USER:-faka}
+      - DB_PASSWORD=${DB_PASSWORD:-devpass123}
+      - DB_NAME=${DB_NAME:-faka}
+      - NODELOC_URL=${NODELOC_URL:-https://www.nodeloc.com}
+      - NODELOC_CLIENT_ID=${NODELOC_CLIENT_ID:-dev_client_id}
+      - NODELOC_CLIENT_SECRET=${NODELOC_CLIENT_SECRET:-dev_client_secret}
+      - NODELOC_REDIRECT_URI=${NODELOC_REDIRECT_URI:-http://localhost:3000/auth/callback}
+      - SESSION_SECRET=${SESSION_SECRET:-dev_session_secret_change_in_prod_!!}
+      - PAYMENT_ID=${PAYMENT_ID:-}
+      - PAYMENT_SECRET=${PAYMENT_SECRET:-}
+      - PAYMENT_CALLBACK_URI=${PAYMENT_CALLBACK_URI:-}
+      - SERVER_PORT=8080
+      - GIN_MODE=${GIN_MODE:-debug}
+      - TZ=Asia/Shanghai
+    volumes:
+      - uploads_dev:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - faka-dev-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Frontend - 静态 HTML + MarketPro + Alpine.js
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend-static/Dockerfile
+    container_name: nodeloc-faka-frontend-dev
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:80"
+    depends_on:
+      - backend
+    networks:
+      - faka-dev-network
+
+networks:
+  faka-dev-network:
+    driver: bridge
+
+volumes:
+  mysql_dev_data:
+  uploads_dev:

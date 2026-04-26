@@ -1,172 +1,137 @@
 <template>
-  <div class="space-y-6">
-    <!-- Header -->
-    <div class="flex justify-between items-center">
-      <div>
-        <h2 class="text-xl font-semibold text-zinc-900">商品分类</h2>
-        <p class="text-sm text-zinc-600 mt-1">管理商品分类</p>
-      </div>
-      <button @click="showCreateModal = true" class="inline-flex items-center space-x-2 px-4 py-2 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800 transition">
-        <Plus class="w-4 h-4" />
-        <span>新建分类</span>
-      </button>
-    </div>
-    
-    <!-- Categories List -->
-    <div class="bg-white rounded-lg border border-zinc-100">
-      <div v-if="loading" class="p-12 text-center">
-        <Loader2 class="w-8 h-8 animate-spin text-zinc-400 mx-auto" />
-      </div>
-      
-      <div v-else-if="categories.length === 0" class="p-12 text-center">
-        <Folder class="w-12 h-12 text-zinc-300 mx-auto mb-4" />
-        <p class="text-zinc-600">暂无分类</p>
-      </div>
-      
-      <table v-else class="w-full">
-        <thead class="bg-zinc-50 border-b border-zinc-100">
-          <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase">名称</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase">描述</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase">排序</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase">状态</th>
-            <th class="px-6 py-3 text-right text-xs font-medium text-zinc-500 uppercase">操作</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-zinc-100">
-          <tr v-for="category in categories" :key="category.id" class="hover:bg-zinc-50">
-            <td class="px-6 py-4 text-sm text-zinc-900 font-medium">{{ category.name }}</td>
-            <td class="px-6 py-4 text-sm text-zinc-600">{{ category.description || '-' }}</td>
-            <td class="px-6 py-4 text-sm text-zinc-600">{{ category.sort }}</td>
-            <td class="px-6 py-4">
-              <span :class="category.is_active ? 'bg-green-100 text-green-800' : 'bg-zinc-100 text-zinc-800'" class="px-2 py-1 text-xs font-medium rounded">
-                {{ category.is_active ? '启用' : '禁用' }}
-              </span>
-            </td>
-            <td class="px-6 py-4 text-right space-x-2">
-              <button @click="editCategory(category)" class="text-zinc-600 hover:text-zinc-900">
-                <Edit2 class="w-4 h-4" />
-              </button>
-              <button @click="deleteCategory(category.id)" class="text-red-600 hover:text-red-900">
-                <Trash2 class="w-4 h-4" />
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    
-    <!-- Create/Edit Modal -->
-    <div v-if="showCreateModal || editingCategory" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="closeModal">
-      <div class="bg-white rounded-lg w-full max-w-md p-6">
-        <h3 class="text-lg font-semibold text-zinc-900 mb-4">{{ editingCategory ? '编辑分类' : '新建分类' }}</h3>
-        
-        <form @submit.prevent="saveCategory" class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-zinc-700 mb-1">分类名称</label>
-            <input v-model="form.name" type="text" required class="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900">
+  <div class="flex-between flex-wrap gap-12 mb-24">
+    <h5 class="mb-0">分类管理</h5>
+    <button type="button" class="btn btn-main rounded-pill py-8 px-20 inline-flex items-center gap-8" @click="openNew">
+      <i class="ph ph-plus"></i> 新建分类
+    </button>
+  </div>
+
+  <div v-if="loading" class="py-40 text-center text-gray-400">
+    <i class="ph ph-circle-notch text-3xl animate-spin"></i>
+  </div>
+
+  <table v-else class="w-full text-sm">
+    <thead>
+      <tr class="border-b border-gray-100 text-left text-gray-500">
+        <th class="py-12 px-8">ID</th>
+        <th class="py-12 px-8">名称</th>
+        <th class="py-12 px-8">图标</th>
+        <th class="py-12 px-8">排序</th>
+        <th class="py-12 px-8">状态</th>
+        <th class="py-12 px-8 text-right">操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="c in list" :key="c.id" class="border-b border-gray-100 hover-bg-color-one">
+        <td class="py-12 px-8 font-mono text-xs">{{ c.id }}</td>
+        <td class="py-12 px-8">{{ c.name }}</td>
+        <td class="py-12 px-8"><i :class="c.icon || 'ph ph-tag'" class="text-main-600 text-xl"></i></td>
+        <td class="py-12 px-8">{{ c.sort }}</td>
+        <td class="py-12 px-8">
+          <span :class="c.is_active ? 'bg-main-50 text-main-600' : 'bg-gray-100 text-gray-500'"
+                class="text-xs py-2 px-8 rounded-pill">{{ c.is_active ? '启用' : '禁用' }}</span>
+        </td>
+        <td class="py-12 px-8 text-right">
+          <button type="button" class="text-main-600 hover-text-main-800 me-12" @click="openEdit(c)"><i class="ph ph-pencil"></i> 编辑</button>
+          <button type="button" class="text-danger-600 hover-text-danger-800" @click="del(c)"><i class="ph ph-trash"></i> 删除</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Modal -->
+  <Transition name="page">
+    <div v-if="modal" class="fixed inset-0 z-[10000] flex items-center justify-center" style="background:rgba(0,0,0,.4)" @click.self="modal = false">
+      <div class="bg-white rounded-16 p-32 w-full max-w-[480px]">
+        <h6 class="text-lg mb-16">{{ form.id ? '编辑分类' : '新建分类' }}</h6>
+        <form @submit.prevent="save">
+          <div class="mb-16">
+            <label class="text-md mb-8 font-[500] block">名称 <span class="text-danger">*</span></label>
+            <input v-model="form.name" required type="text" class="common-input">
           </div>
-          
-          <div>
-            <label class="block text-sm font-medium text-zinc-700 mb-1">描述</label>
-            <textarea v-model="form.description" rows="3" class="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"></textarea>
+          <div class="mb-16">
+            <label class="text-md mb-8 font-[500] block">图标 (Phosphor class)</label>
+            <input v-model="form.icon" type="text" class="common-input" placeholder="ph ph-tag">
           </div>
-          
-          <div>
-            <label class="block text-sm font-medium text-zinc-700 mb-1">排序</label>
-            <input v-model.number="form.sort" type="number" class="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900">
+          <div class="mb-16">
+            <label class="text-md mb-8 font-[500] block">描述</label>
+            <textarea v-model="form.description" class="common-input" rows="2"></textarea>
           </div>
-          
-          <div class="flex items-center">
-            <input v-model="form.is_active" type="checkbox" class="w-4 h-4 text-zinc-900 border-zinc-300 rounded focus:ring-zinc-900">
-            <label class="ml-2 text-sm text-zinc-700">启用</label>
+          <div class="flex gap-16 mb-16">
+            <div class="flex-1">
+              <label class="text-md mb-8 font-[500] block">排序</label>
+              <input v-model.number="form.sort" type="number" class="common-input">
+            </div>
+            <div class="flex-1">
+              <label class="text-md mb-8 font-[500] block">状态</label>
+              <select v-model="form.is_active" class="common-input">
+                <option :value="true">启用</option>
+                <option :value="false">禁用</option>
+              </select>
+            </div>
           </div>
-          
-          <div class="flex justify-end space-x-3 pt-4">
-            <button type="button" @click="closeModal" class="px-4 py-2 text-sm font-medium text-zinc-700 hover:text-zinc-900">取消</button>
-            <button type="submit" class="px-4 py-2 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800">保存</button>
+          <div class="flex items-center gap-12 mt-24">
+            <button type="submit" class="btn btn-main rounded-pill py-10 px-24" :disabled="saving">{{ saving ? '保存中…' : '保存' }}</button>
+            <button type="button" class="btn rounded-pill py-10 px-24 border border-gray-100" @click="modal = false">取消</button>
           </div>
         </form>
       </div>
     </div>
-  </div>
+  </Transition>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Plus, Edit2, Trash2, Folder, Loader2 } from 'lucide-vue-next'
 import api from '@/utils/api'
-import { useToast } from '@/stores/toast'
+import { useToastStore } from '@/stores/toast'
 
-const toast = useToast()
-const categories = ref([])
-const loading = ref(false)
-const showCreateModal = ref(false)
-const editingCategory = ref(null)
-const form = ref({
-  name: '',
-  description: '',
-  sort: 0,
-  is_active: true
-})
+const toast = useToastStore()
+const list = ref([])
+const loading = ref(true)
+const modal = ref(false)
+const saving = ref(false)
+const form = ref({ id: 0, name: '', icon: '', description: '', sort: 0, is_active: true })
 
-onMounted(() => {
-  fetchCategories()
-})
-
-async function fetchCategories() {
+async function load() {
+  loading.value = true
   try {
-    loading.value = true
-    const response = await api.get('/api/admin/categories')
-    categories.value = response.data.categories || []
-  } catch (error) {
-    toast.error('加载分类失败')
-  } finally {
-    loading.value = false
-  }
+    const r = await api.get('/api/admin/categories')
+    list.value = r.data?.categories || []
+  } finally { loading.value = false }
 }
 
-function editCategory(category) {
-  editingCategory.value = category
-  form.value = { ...category }
+function openNew() {
+  form.value = { id: 0, name: '', icon: 'ph ph-tag', description: '', sort: 0, is_active: true }
+  modal.value = true
+}
+function openEdit(c) {
+  form.value = { ...c }
+  modal.value = true
 }
 
-function closeModal() {
-  showCreateModal.value = false
-  editingCategory.value = null
-  form.value = {
-    name: '',
-    description: '',
-    sort: 0,
-    is_active: true
-  }
-}
-
-async function saveCategory() {
+async function save() {
+  saving.value = true
   try {
-    if (editingCategory.value) {
-      await api.put(`/api/admin/categories/${editingCategory.value.id}`, form.value)
-      toast.success('更新成功')
+    if (form.value.id) {
+      await api.put(`/api/admin/categories/${form.value.id}`, form.value)
     } else {
       await api.post('/api/admin/categories', form.value)
-      toast.success('创建成功')
     }
-    closeModal()
-    fetchCategories()
-  } catch (error) {
-    toast.error('保存失败')
-  }
+    toast.success('保存成功')
+    modal.value = false
+    load()
+  } catch (e) { toast.error(e.response?.data?.error || '保存失败') }
+  finally { saving.value = false }
 }
 
-async function deleteCategory(id) {
-  if (!confirm('确定要删除此分类吗？')) return
-  
+async function del(c) {
+  if (!confirm(`删除分类 ${c.name}？`)) return
   try {
-    await api.delete(`/api/admin/categories/${id}`)
-    toast.success('删除成功')
-    fetchCategories()
-  } catch (error) {
-    toast.error('删除失败')
-  }
+    await api.delete(`/api/admin/categories/${c.id}`)
+    toast.success('已删除')
+    load()
+  } catch (e) { toast.error(e.response?.data?.error || '删除失败') }
 }
+
+onMounted(load)
 </script>

@@ -1,111 +1,115 @@
 <template>
-  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-    <!-- Loading -->
-    <div v-if="loading" class="flex flex-col items-center justify-center py-20 gap-3">
-      <Loader2 class="w-8 h-8 animate-spin text-brand-green" />
-      <span class="text-sm text-zinc-400">加载中...</span>
-    </div>
-    
-    <template v-else-if="product">
-      <!-- Back Button -->
-      <router-link to="/" class="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-brand-green transition-colors">
-        <ArrowLeft class="w-4 h-4" />
-        <span>返回首页</span>
-      </router-link>
-      
-      <!-- Product Detail Card -->
-      <div class="bg-white rounded-2xl border border-zinc-100 overflow-hidden shadow-card">
-        <!-- Product Image -->
-        <div v-if="product.image" class="aspect-video bg-zinc-50 overflow-hidden">
-          <img :src="product.image" :alt="product.name" class="w-full h-full object-cover" />
-        </div>
+  <div v-if="loading" class="py-80 text-center text-gray-400">
+    <i class="ph ph-circle-notch text-3xl animate-spin"></i>
+  </div>
 
-        <div class="p-5 sm:p-8 space-y-6">
-          <!-- Product Header -->
-          <div class="flex items-start gap-5">
-            <div v-if="!product.image" class="flex-shrink-0 w-16 h-16 rounded-2xl bg-brand-gradient-subtle flex items-center justify-center">
-              <Package class="w-8 h-8 text-brand-green/60" />
-            </div>
-            <div class="flex-1 space-y-2">
-              <h1 class="text-2xl sm:text-3xl font-bold text-zinc-900">{{ product.name }}</h1>
-              <p v-if="product.description" class="text-zinc-500 leading-relaxed">{{ product.description }}</p>
+  <template v-else-if="product">
+    <section class="py-40 bg-color-one">
+      <div class="container container-lg">
+        <ul class="flex items-center gap-8 text-sm text-gray-500 flex-wrap">
+          <li><router-link :to="{ name: 'home' }" class="hover-text-main-600">首页</router-link></li>
+          <li><i class="ph ph-caret-right text-xs"></i></li>
+          <li v-if="product.category">
+            <router-link :to="{ name: 'category', params: { id: product.category_id } }" class="hover-text-main-600">
+              {{ product.category.name }}
+            </router-link>
+          </li>
+          <li v-if="product.category"><i class="ph ph-caret-right text-xs"></i></li>
+          <li class="text-heading">{{ product.name }}</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="product-details py-40">
+      <div class="container container-lg">
+        <div class="flex flex-wrap gap-32">
+          <div class="w-full lg:w-[420px] flex-shrink-0">
+            <div class="border border-gray-100 rounded-16 p-24 bg-white flex items-center justify-center" style="min-height:360px">
+              <img v-if="product.image" :src="product.image" :alt="product.name" class="max-w-full max-h-[400px] object-contain">
+              <i v-else class="ph ph-package text-gray-300" style="font-size:160px"></i>
             </div>
           </div>
-          
-          <!-- Product Details -->
-          <div class="grid grid-cols-2 gap-6 py-5 border-t border-b border-zinc-100">
-            <div class="space-y-1.5">
-              <div class="text-xs font-medium text-zinc-400 uppercase tracking-wider">商品价格</div>
-              <div class="text-3xl font-bold text-zinc-900 font-mono tracking-tight">{{ formatPrice(product.price) }}</div>
-              <div v-if="product.orig_price && product.orig_price > product.price" class="text-sm text-zinc-400 line-through font-mono">
-                {{ formatPrice(product.orig_price) }}
-              </div>
+
+          <div class="flex-1 min-w-0">
+            <h3 class="mb-12">{{ product.name }}</h3>
+            <div v-if="product.shop" class="flex items-center gap-8 mb-16">
+              <span class="text-main-600 flex"><i class="ph-fill ph-storefront"></i></span>
+              <router-link :to="{ name: 'shop', params: { id: product.shop_id } }" class="text-gray-700 hover-text-main-600">
+                {{ product.shop.name }}
+              </router-link>
             </div>
-            <div class="space-y-1.5">
-              <div class="text-xs font-medium text-zinc-400 uppercase tracking-wider">可用库存</div>
-              <div class="text-3xl font-bold font-mono tracking-tight" :class="[
-                product.stock_count > 10 ? 'text-zinc-900' : product.stock_count > 0 ? 'text-amber-600' : 'text-red-500'
-              ]">
-                {{ product.stock_count }}
-              </div>
-              <div
-                :class="[
-                  'inline-flex items-center gap-1 text-xs font-medium',
-                  product.stock_count > 10 ? 'text-emerald-600' : product.stock_count > 0 ? 'text-amber-600' : 'text-red-500'
-                ]"
+
+            <div class="flex items-center gap-16 mb-24 flex-wrap">
+              <span class="text-3xl fw-bold text-main-600">¥{{ Number(product.price).toFixed(2) }}</span>
+              <span v-if="product.orig_price && product.orig_price > product.price"
+                    class="text-lg text-gray-400 text-decoration-line-through">¥{{ Number(product.orig_price).toFixed(2) }}</span>
+            </div>
+
+            <ul class="border border-gray-100 rounded-12 p-16 mb-24 flex flex-wrap gap-24">
+              <li class="flex items-center gap-8">
+                <i class="ph ph-package text-main-600"></i>
+                <span class="text-sm text-gray-700">库存：<b>{{ product.stock_count || 0 }}</b></span>
+              </li>
+              <li class="flex items-center gap-8">
+                <i class="ph ph-fire text-main-600"></i>
+                <span class="text-sm text-gray-700">已售：<b>{{ product.sales_count || 0 }}</b></span>
+              </li>
+              <li class="flex items-center gap-8">
+                <i class="ph ph-lightning text-main-600"></i>
+                <span class="text-sm text-gray-700">即时发卡</span>
+              </li>
+            </ul>
+
+            <div class="flex items-center gap-12 flex-wrap mb-32">
+              <router-link
+                v-if="(product.stock_count || 0) > 0 && product.is_active"
+                :to="{ name: 'purchase', params: { id: product.id } }"
+                class="btn btn-main rounded-pill px-32 py-14 inline-flex items-center gap-8"
               >
-                <span class="w-1.5 h-1.5 rounded-full" :class="[
-                  product.stock_count > 10 ? 'bg-emerald-500' : product.stock_count > 0 ? 'bg-amber-500' : 'bg-red-500'
-                ]"></span>
-                {{ product.stock_count > 10 ? '库存充足' : product.stock_count > 0 ? '库存紧张' : '已售罄' }}
-              </div>
+                立即购买 <i class="ph ph-arrow-right"></i>
+              </router-link>
+              <button v-else type="button" class="btn rounded-pill px-32 py-14 bg-gray-200 text-gray-500 cursor-not-allowed" disabled>
+                {{ product.is_active ? '暂时缺货' : '已下架' }}
+              </button>
+            </div>
+
+            <div v-if="product.description" class="border-t border-gray-100 pt-24">
+              <h6 class="text-md mb-12">商品描述</h6>
+              <div class="text-gray-700 leading-relaxed whitespace-pre-line">{{ product.description }}</div>
             </div>
           </div>
-          
-          <!-- Action Button -->
-          <router-link
-            v-if="product.stock_count > 0"
-            :to="`/purchase/${product.id}`"
-            class="flex items-center justify-center gap-2 w-full px-6 py-3.5 bg-brand-gradient text-white font-medium rounded-xl hover:shadow-glow transition-all duration-300 hover:scale-[1.01]"
-          >
-            <ShoppingCart class="w-5 h-5" />
-            <span>立即购买</span>
-          </router-link>
-          <button
-            v-else
-            disabled
-            class="flex items-center justify-center gap-2 w-full px-6 py-3.5 bg-zinc-100 text-zinc-400 font-medium rounded-xl cursor-not-allowed"
-          >
-            <PackageX class="w-5 h-5" />
-            <span>暂无库存</span>
-          </button>
         </div>
       </div>
-    </template>
-  </div>
+    </section>
+  </template>
+
+  <EmptyState v-else icon="ph ph-warning-circle" title="商品不存在" description="该商品可能已被下架或删除">
+    <router-link :to="{ name: 'home' }" class="btn btn-main rounded-pill px-24 py-10">返回首页</router-link>
+  </EmptyState>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { Package, PackageX, ShoppingCart, ArrowLeft, Loader2 } from 'lucide-vue-next'
+import { ref, watch, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import api from '@/utils/api'
-import { formatPrice } from '@/utils/helpers'
+import EmptyState from '@/components/EmptyState.vue'
 
 const route = useRoute()
-const router = useRouter()
-const loading = ref(true)
 const product = ref(null)
+const loading = ref(true)
 
-onMounted(async () => {
+async function load(id) {
+  loading.value = true
   try {
-    const response = await api.get(`/api/products/${route.params.id}`)
-    product.value = response.data
-  } catch (error) {
-    console.error('Failed to load product', error)
-    router.push({ name: 'NotFound' })
+    const r = await api.get(`/api/products/${id}`)
+    product.value = r.data
+  } catch (_) {
+    product.value = null
   } finally {
     loading.value = false
   }
-})
+}
+
+watch(() => route.params.id, id => id && load(id))
+onMounted(() => load(route.params.id))
 </script>

@@ -6,6 +6,7 @@ import (
 
 	"github.com/nodeloc-faka/database"
 	"github.com/nodeloc-faka/models"
+	"gorm.io/gorm"
 )
 
 // OrderService 订单服务
@@ -192,10 +193,11 @@ func (s *OrderService) CreatePendingOrder(userID, productID uint, quantity int, 
 	order := &models.Order{
 		UserID:      userID,
 		ProductID:   productID,
+		ShopID:      product.ShopID,
 		Quantity:    quantity,
 		TotalAmount: product.Price * float64(quantity),
 		Status:      models.OrderStatusPending,
-		PayMethod:   "nodeloc",
+		PayMethod:   models.PayMethodNodeLoc,
 		Contact:     contact,
 		Remark:      remark,
 		ExpiredAt:   &expiredAt,
@@ -232,7 +234,7 @@ func (s *OrderService) FindByTransactionID(transactionID string) (*models.Order,
 	return &order, nil
 }
 
-// ProcessPaymentCallback 处理支付回调
+// ProcessPaymentCallback 处理支付回调（NodeLoc 支付完成后调用）
 func (s *OrderService) ProcessPaymentCallback(transactionID string, amount, platformFee, merchantPoints int) (*models.Order, error) {
 	// 查找订单
 	order, err := s.FindByTransactionID(transactionID)
@@ -262,30 +264,19 @@ func (s *OrderService) ProcessPaymentCallback(transactionID string, amount, plat
 		return nil, ErrInsufficientStock
 	}
 
-	// 更新订单状态
+	// 完成订单（含店主结算）
 	now := time.Now()
 	order.Status = models.OrderStatusCompleted
 	order.PaidAt = &now
 	order.PlatformFee = platformFee
 	order.MerchantPoints = merchantPoints
+	if order.PayMethod == "" {
+		order.PayMethod = models.PayMethodNodeLoc
+	}
 
-	if err := database.GetDB().Save(order).Error; err != nil {
+	if err := s.completeOrderTx(order, availableCards); err != nil {
 		return nil, err
 	}
-
-	// 分配卡密
-	cardIDs := make([]uint, len(availableCards))
-	for i, card := range availableCards {
-		cardIDs[i] = card.ID
-	}
-	if err := cardKeyService.MarkAsSold(cardIDs, order.ID); err != nil {
-		return nil, err
-	}
-
-	// 更新商品库存和销量
-	productService := NewProductService()
-	productService.UpdateStock(order.ProductID)
-	productService.IncrementSales(order.ProductID, order.Quantity)
 
 	// 重新加载订单（包含卡密）
 	return s.FindByID(order.ID)
@@ -311,21 +302,109 @@ func (s *OrderService) CreateAndProcess(userID, productID uint, quantity int, co
 	}
 
 	// 创建订单
+	now := time.Now()
 	order := &models.Order{
 		UserID:      userID,
 		ProductID:   productID,
+		ShopID:      product.ShopID,
 		Quantity:    quantity,
 		TotalAmount: product.Price * float64(quantity),
-		Status:      models.OrderStatusCompleted, // 直接标记为已完成（免费发卡）
-		PayMethod:   "free",
+		Status:      models.OrderStatusCompleted,
+		PayMethod:   models.PayMethodFree,
 		Contact:     contact,
 		Remark:      remark,
+		PaidAt:      &now,
 	}
-	now := time.Now()
-	order.PaidAt = &now
 
 	if err := s.Create(order); err != nil {
 		return nil, err
+	}
+
+	if err := s.completeOrderTx(order, availableCards); err != nil {
+		return nil, err
+	}
+
+	return s.FindByID(order.ID)
+}
+
+// CreateAndProcessByBalance 使用买家余额支付下单（直接完成订单）
+// 注：买家余额仅来自销售收入。这里在事务里扣买家余额、加店主余额、发卡。
+func (s *OrderService) CreateAndProcessByBalance(userID, productID uint, quantity int, contact, remark string) (*models.Order, error) {
+	productService := NewProductService()
+	product, err := productService.FindByID(productID)
+	if err != nil {
+		return nil, ErrProductNotFound
+	}
+
+	cardKeyService := NewCardKeyService()
+	availableCards, err := cardKeyService.GetAvailableByProduct(productID, quantity)
+	if err != nil {
+		return nil, err
+	}
+	if len(availableCards) < quantity {
+		return nil, ErrInsufficientStock
+	}
+
+	totalAmount := product.Price * float64(quantity)
+	balanceService := NewBalanceService()
+
+	now := time.Now()
+	order := &models.Order{
+		UserID:      userID,
+		ProductID:   productID,
+		ShopID:      product.ShopID,
+		Quantity:    quantity,
+		TotalAmount: totalAmount,
+		Status:      models.OrderStatusPending,
+		PayMethod:   models.PayMethodBalance,
+		Contact:     contact,
+		Remark:      remark,
+	}
+	if err := s.Create(order); err != nil {
+		return nil, err
+	}
+
+	// 在事务中：扣买家余额 → 完成订单（加店主余额 + 发卡）
+	if err := database.GetDB().Transaction(func(tx *gorm.DB) error {
+		if err := balanceService.DeductBalance(tx, userID, totalAmount,
+			models.BalanceTxPurchase,
+			fmt.Sprintf("余额支付订单 %s", order.OrderNo),
+			"order", order.ID,
+		); err != nil {
+			return err
+		}
+		// 完成订单（在同事务中）
+		order.Status = models.OrderStatusCompleted
+		order.PaidAt = &now
+		if err := s.completeOrderTxWithDB(tx, order, availableCards); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		// 失败：撤销订单
+		s.Cancel(order.ID)
+		return nil, err
+	}
+
+	return s.FindByID(order.ID)
+}
+
+// completeOrderTx 完成订单：开启事务 → 发卡 + 库存 + 销量 + 店主余额结算
+func (s *OrderService) completeOrderTx(order *models.Order, availableCards []models.CardKey) error {
+	return database.GetDB().Transaction(func(tx *gorm.DB) error {
+		return s.completeOrderTxWithDB(tx, order, availableCards)
+	})
+}
+
+// completeOrderTxWithDB 在指定事务中完成订单
+func (s *OrderService) completeOrderTxWithDB(tx *gorm.DB, order *models.Order, availableCards []models.CardKey) error {
+	productService := NewProductService()
+	cardKeyService := NewCardKeyService()
+	balanceService := NewBalanceService()
+
+	// 保存订单
+	if err := tx.Save(order).Error; err != nil {
+		return err
 	}
 
 	// 分配卡密
@@ -333,16 +412,43 @@ func (s *OrderService) CreateAndProcess(userID, productID uint, quantity int, co
 	for i, card := range availableCards {
 		cardIDs[i] = card.ID
 	}
-	if err := cardKeyService.MarkAsSold(cardIDs, order.ID); err != nil {
-		return nil, err
+	if err := cardKeyService.MarkAsSoldTx(tx, cardIDs, order.ID); err != nil {
+		return err
 	}
 
-	// 更新商品库存和销量
-	productService.UpdateStock(productID)
-	productService.IncrementSales(productID, quantity)
+	// 更新商品库存和销量（直接 SQL，无需重新查询）
+	if err := tx.Model(&models.Product{}).Where("id = ?", order.ProductID).
+		UpdateColumn("sales_count", gorm.Expr("sales_count + ?", order.Quantity)).Error; err != nil {
+		return err
+	}
+	// 重新计算库存
+	productService.UpdateStock(order.ProductID)
 
-	// 重新加载订单（包含卡密）
-	return s.FindByID(order.ID)
+	// 店主结算
+	if order.ShopID > 0 {
+		var shop models.Shop
+		if err := tx.First(&shop, order.ShopID).Error; err != nil {
+			return err
+		}
+		// 平台官方店或没有 user_id 的店铺不结算到余额
+		if !shop.IsOfficial && shop.UserID > 0 {
+			income := order.TotalAmount // 当前不抽成，后续若启用 commission，按比例
+			if err := balanceService.AddBalance(tx, shop.UserID, income,
+				models.BalanceTxSaleIncome,
+				fmt.Sprintf("订单 %s 销售收入", order.OrderNo),
+				"order", order.ID,
+			); err != nil {
+				return err
+			}
+			if err := tx.Model(&models.Order{}).Where("id = ?", order.ID).Updates(map[string]interface{}{
+				"shop_settled": true,
+				"shop_income":  income,
+			}).Error; err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // CancelExpiredOrders 取消过期订单

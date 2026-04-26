@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>全部商家</title>
+  <link rel="stylesheet" href="/marketpro/css/app.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap-grid.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap-utilities.min.css">
+  <!-- Phosphor Icons (icon font for ph/ph-fill classes) -->
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+  <!-- Tailwind JIT CDN: provides utilities not included in purged app.min.css -->
+  <script>
+    window.tailwind = { config: {
+      corePlugins: { preflight: false },
+      theme: { extend: {
+        colors: {
+          main: { DEFAULT:'#299e60', 50:'#e7f9ef', 100:'#cef2df', 200:'#b6eccf', 300:'#9ee6bf', 400:'#85e0af', 500:'#6dd9a0', 600:'#299e60', 700:'#258e56', 800:'#207e4c', 900:'#1c6d42' },
+          danger: { 50:'#FEF2F2', 100:'#FEE2E2', 200:'#FECACA', 300:'#FCA5A5', 400:'#F87171', 500:'#EF4444', 600:'#DC2626', 700:'#B91C1C', 800:'#991B1B' },
+          warning: { 50:'#FEFCE8', 100:'#FEF9C3', 200:'#FEF08A', 300:'#FDE047', 400:'#FACC15', 500:'#EAB308', 600:'#FF9F29', 700:'#f39016' },
+          success: { 50:'#F0FDF4', 100:'#DCFCE7', 200:'#BBF7D0', 600:'#27AE60', 700:'#15803D' },
+          'color-one':'#F3FAF2', 'color-two':'#FFFBF4', 'color-three':'#F1F1F1',
+        }
+      }}
+    }};
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="shortcut icon" href="/marketpro/images/logo/favicon.png">
+    <link rel="stylesheet" href="/marketpro/css/slick.css">
+    <link rel="stylesheet" href="/marketpro/css/animate.css">
+    <style>
+    .progress-wrap { position: fixed; right: 1.5rem; bottom: 1.5rem; width: 46px; height: 46px; cursor: pointer; border-radius: 50px; box-shadow: inset 0 0 0 2px rgba(130,130,130,0.2); z-index: 10000; opacity: 0; visibility: hidden; transform: translateY(12px); transition: all 200ms linear; }
+      [x-cloak]{display:none !important;}
+      .nav-menu__link{font-size:14px !important;font-weight:500;color:#333;padding:12px 16px;line-height:1.4;white-space:nowrap;}
+      .nav-menu__link:hover{color:#299e60;}
+      .nav-menu{list-style:none;padding:0;margin:0;}
+      .nav-menu__item{position:relative;}
+      .nav-menu__item.activePage > .nav-menu__link{color:#299e60;}
+      .header-inner{min-height:64px;}
+      .category-dropdown{display:none;}
+      .category-dropdown.show{display:block;}
+      @media (min-width: 992px){.mobile-menu{display:none !important;}.toggle-mobileMenu{display:none !important;}}
+      .header-middle{padding:18px 0;}
+      .common-input:focus { box-shadow: none !important; outline: none !important; font-weight: 400 !important; }
+      .header { box-shadow: 0 4px 20px rgba(0,0,0,.08) !important; }
+      .on-hover-dropdown { transition: opacity .2s ease, visibility .2s ease, margin-top .2s ease !important; }
+      .header .category-big-dropdown { min-width: 480px; }
+      .header{padding:8px 0;}
+      .section-heading{margin-bottom:24px;}
+      .pt-80{padding-top:48px;}
+      .pt-60{padding-top:40px;}
+      .pb-80{padding-bottom:48px;}
+      .py-80{padding-top:48px;padding-bottom:48px;}
+      .py-120{padding-top:64px;padding-bottom:48px;}
+      .footer h6, .footer-item__title {
+        font-family: Quicksand, sans-serif !important;
+        font-size: 1.125rem !important;
+        font-weight: 700 !important;
+        color: #121535 !important;
+        margin-bottom: 20px !important;
+        line-height: 1.3 !important;
+      }
+      .footer-menu { list-style: none; padding: 0; margin: 0; }
+      .product-card { position: relative; }
+      .product-card__badge {
+        position: absolute; top: 0; left: 0; z-index: 2;
+        border-radius: 16px 0 16px 0; line-height: 1.2; font-size: 12px; padding: 4px 10px !important;
+      }
+      .wishlist-btn, .wishlist-btn-two {
+        position: absolute; top: 12px; right: 12px; z-index: 3;
+        width: 32px; height: 32px;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: #fff; border: 1px solid #e6e6e6; border-radius: 50%;
+        color: #4b5563; font-size: 16px; transition: all .2s ease; cursor: pointer;
+      }
+      .wishlist-btn:hover, .wishlist-btn-two:hover { color: #299e60; border-color: #299e60; }
+      [data-aos] { opacity: 1 !important; transform: none !important; }
+      .preloader{position:fixed;inset:0;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;}
+      .progress-wrap{position:fixed;right:24px;bottom:24px;width:46px;height:46px;border-radius:50%;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,.12);cursor:pointer;opacity:0;visibility:hidden;transform:translateY(20px);transition:all .2s ease;z-index:90;}
+      .progress-wrap.active-progress{opacity:1 !important;visibility:visible !important;transform:translateY(0) !important;}
+      .progress-wrap svg{display:block;width:100%;height:100%;}
+      .search-box{position:fixed;inset:0;background:rgba(18,21,53,.92);display:none;align-items:center;justify-content:center;z-index:9000;}
+      .search-box.active{display:flex;}
+      .overlay{position:fixed;inset:0;background:rgba(18,21,53,.6);opacity:0;visibility:hidden;transition:.2s;z-index:80;}
+      .overlay.show-overlay{opacity:1;visibility:visible;}
+    </style>
+</head>
+<body x-data="shopsPage()" x-init="init()">
+
+
+
+<!-- Preloader -->
+<div class="preloader" x-show="!$store.app.initialized" x-cloak>
+    <img src="/marketpro/images/icon/preloader.gif" alt="">
+</div>
+
+<!-- Toast -->
+<div style="position:fixed;top:20px;right:20px;z-index:9999;" x-cloak>
+    <template x-if="$store.app.toast">
+        <div class="px-16 py-12 rounded-8 text-white text-sm"
+             :class="$store.app.toastType === 'error' ? 'bg-danger-600' : 'bg-main-600'"
+             x-text="$store.app.toast"></div>
+    </template>
+</div>
+
+<!-- Overlays -->
+<div class="overlay"></div>
+
+<!-- Scroll to Top -->
+<div class="progress-wrap">
+    <svg class="progress-circle svg-content" width="100%" height="100%" viewBox="-1 -1 102 102">
+        <path d="M50,1 a49,49 0 0,1 0,98 a49,49 0 0,1 0,-98" />
+    </svg>
+</div>
+
+<!-- Search Box -->
+<form action="#" class="search-box">
+    <button type="button" class="search-box__close position-absolute inset-block-start-0 inset-inline-end-0 m-16 w-48 h-48 border border-gray-100 rounded-circle flex-center text-white hover-text-gray-800 hover-bg-white text-2xl transition-1">
+        <i class="ph ph-x"></i>
+    </button>
+    <div class="container">
+        <div class="position-relative">
+            <input type="text" class="form-control py-16 px-24 text-xl rounded-pill pe-64" placeholder="搜索商品或商家">
+            <button type="submit" class="w-48 h-48 bg-main-600 rounded-circle flex-center text-xl text-white position-absolute top-50 translate-middle-y inset-inline-end-0 me-8">
+                <i class="ph ph-magnifying-glass"></i>
+            </button>
+        </div>
+    </div>
+</form>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu scroll-sm" :class="$store.app.mobileOpen ? 'active' : ''" x-cloak>
+    <button type="button" class="close-button" @click="$store.app.mobileOpen=false"><i class="ph ph-x"></i></button>
+    <div class="mobile-menu__inner">
+        <a href="/" class="mobile-menu__logo d-block mb-16">
+            <span class="text-xl fw-bold text-main-600" x-text="$store.app.siteName()"></span>
+        </a>
+        <div class="mobile-menu__menu">
+            <ul class="nav-menu">
+                <li class="nav-menu__item"><a href="/" class="nav-menu__link">首页</a></li>
+                <li class="nav-menu__item activePage"><a href="/shops.html" class="nav-menu__link">全部商家</a></li>
+                <template x-for="cat in $store.app.categories" :key="cat.id">
+                    <li class="nav-menu__item"><a :href="'/category.html?id=' + cat.id" class="nav-menu__link" x-text="cat.name"></a></li>
+                </template>
+                <li class="nav-menu__item"><a href="/account.html" class="nav-menu__link">我的账户</a></li>
+                <li class="nav-menu__item"><a href="/become-seller.html" class="nav-menu__link">申请开店</a></li>
+                <li class="nav-menu__item"><a href="/contact.html" class="nav-menu__link">联系我们</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ======================= Header Top ========================= -->
+<div class="header-top bg-main-600 flex-between">
+    <div class="container container-lg">
+        <div class="flex-between flex-wrap gap-8">
+            <div class="d-flex align-items-center gap-10">
+                <span class="text-md fw-medium text-white" x-text="$store.app.settings.announcement || '欢迎光临，自动发货 · 7×24小时服务'"></span>
+            </div>
+            <ul class="header-top__right flex-align flex-wrap gap-16 w-auto">
+                <template x-if="!$store.app.user">
+                    <li class="d-flex align-items-center gap-12">
+                        <a href="/auth/login" class="text-white text-sm hover-text-decoration-underline">登录</a>
+                        <span class="text-white text-sm opacity-50">|</span>
+                        <a href="/become-seller.html" class="text-white text-sm hover-text-decoration-underline">申请开店</a>
+                    </li>
+                </template>
+                <template x-if="$store.app.user">
+                    <li class="d-flex align-items-center gap-12">
+                        <span class="text-white text-sm">欢迎，<span x-text="$store.app.user.username" class="fw-bold"></span></span>
+                        <a href="/account.html" class="text-white text-sm hover-text-decoration-underline">我的账户</a>
+                        <template x-if="$store.app.user.is_admin">
+                            <a href="/admin/" class="text-white text-sm hover-text-decoration-underline">管理后台</a>
+                        </template>
+                        <a href="#" @click.prevent="$store.app.logout()" class="text-white text-sm hover-text-decoration-underline">退出</a>
+                    </li>
+                </template>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ======================= Middle Header ========================= -->
+<header class="header-middle bg-color-one border-bottom border-gray-100">
+    <div class="container container-lg">
+        <nav class="header-inner flex-between gap-8">
+            <div class="logo flex-shrink-0">
+                <a href="/" class="link d-flex align-items-center">
+                    <template x-if="$store.app.siteLogoUrl()">
+                        <img :src="$store.app.siteLogoUrl()" alt="Logo" style="max-height:44px;">
+                    </template>
+                    <template x-if="!$store.app.siteLogoUrl()">
+                        <span class="text-xl fw-bold text-main-600" x-text="$store.app.siteName()">发卡平台</span>
+                    </template>
+                </a>
+            </div>
+            <form action="#" class="flex-grow-1 d-none d-md-block" style="max-width:500px;margin:0 24px;">
+                <div class="search-form__wrapper position-relative">
+                    <input type="text"
+                        class="common-input py-13 ps-16 pe-52 rounded-pill border border-gray-200"
+                        style="font-weight:400;box-shadow:none;outline:none;"
+                        onfocus="this.style.borderColor='#299e60';this.style.boxShadow='none'"
+                        onblur="this.style.borderColor=''"
+                        placeholder="搜索商品、商家...">
+                    <button type="submit"
+                        class="w-32 h-32 bg-main-600 hover-bg-main-800 rounded-circle flex-center text-white position-absolute top-50 translate-middle-y inset-inline-end-0 me-8"
+                        style="border:0;font-size:15px;">
+                        <i class="ph ph-magnifying-glass"></i>
+                    </button>
+                </div>
+            </form>
+            <div class="header-right flex-align gap-16 flex-shrink-0">
+                <button type="button" class="search-icon flex-align d-md-none gap-4 item-hover">
+                    <span class="text-2xl text-gray-700 d-flex item-hover__text"><i class="ph ph-magnifying-glass"></i></span>
+                </button>
+                <template x-if="$store.app.user">
+                    <a href="/account.html" class="flex-align gap-6 item-hover text-gray-700 hover-text-main-600" style="text-decoration:none;font-size:14px;">
+                        <span class="text-2xl d-flex position-relative item-hover__text"><i class="ph ph-user"></i></span>
+                        <span class="d-none d-xl-flex item-hover__text" x-text="$store.app.user.username || '我的账户'"></span>
+                    </a>
+                </template>
+                <template x-if="!$store.app.user">
+                    <a href="/auth/login" class="flex-align gap-6 item-hover text-gray-700" style="text-decoration:none;font-size:14px;">
+                        <span class="text-2xl d-flex item-hover__text"><i class="ph ph-user"></i></span>
+                        <span class="d-none d-xl-flex item-hover__text">登录 / 注册</span>
+                    </a>
+                </template>
+                <a href="/account.html#orders" class="flex-align gap-6 item-hover text-gray-700" style="text-decoration:none;font-size:14px;">
+                    <span class="text-2xl d-flex position-relative me-4 item-hover__text"><i class="ph ph-receipt"></i></span>
+                    <span class="d-none d-xl-flex item-hover__text">我的订单</span>
+                </a>
+                <a href="/account.html#balance" class="flex-align gap-6 item-hover text-gray-700" style="text-decoration:none;font-size:14px;">
+                    <span class="text-2xl d-flex position-relative me-4 item-hover__text"><i class="ph ph-wallet"></i></span>
+                    <span class="d-none d-xl-flex item-hover__text">我的余额</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<!-- ==================== Sticky Header ==================== -->
+<header class="header bg-white py-10">
+    <div class="container container-lg">
+        <nav class="header-inner d-flex justify-content-between gap-8">
+            <div class="flex-align menu-category-wrapper">
+                <div class="on-hover-item">
+                    <button type="button" class="category-button d-flex align-items-center gap-8 text-white bg-main-600 px-16 py-12 rounded-6 hover-bg-main-800 transition-2" style="font-size:14px;font-weight:500;border:0;">
+                        <span class="text-lg line-height-1"><i class="ph ph-squares-four"></i></span>
+                        <span class="d-md-inline d-none">全部分类</span>
+                        <span class="line-height-1"><i class="ph-bold ph-caret-down"></i></span>
+                    </button>
+                    <div class="on-hover-dropdown common-dropdown category-big-dropdown p-16" style="box-shadow:0 8px 32px rgba(0,0,0,.12);border-radius:12px;">
+                        <div class="d-grid gap-4" style="grid-template-columns:repeat(3,1fr);max-height:350px;overflow-y:auto;">
+                            <template x-for="(cat, i) in $store.app.categories" :key="cat.id">
+                                <a :href="'/category.html?id=' + cat.id"
+                                    class="d-flex flex-column align-items-center text-center py-16 px-8 rounded-8 hover-bg-main-50 border border-white hover-border-main-100"
+                                    style="text-decoration:none;">
+                                    <img :src="'/marketpro/images/icon/category-' + ((i % 9) + 1) + '.png'" alt="" style="width:40px;height:40px;object-fit:contain;">
+                                    <span class="fw-semibold text-heading mt-8" style="font-size:13px;line-height:1.3;" x-text="cat.name"></span>
+                                </a>
+                            </template>
+                            <template x-if="$store.app.categories.length === 0">
+                                <span class="text-gray-400 text-sm p-16">暂无分类</span>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-menu d-lg-block d-none ms-8">
+                    <ul class="nav-menu flex-align">
+                        <li class="nav-menu__item">
+                            <a href="/" class="nav-menu__link">首页</a>
+                        </li>
+                        <li class="on-hover-item nav-menu__item has-submenu activePage">
+                            <a href="/shops.html" class="nav-menu__link">全部商家</a>
+                            <ul class="on-hover-dropdown common-dropdown nav-submenu" style="min-width:160px;">
+                                <li class="common-dropdown__item"><a href="/shops.html" class="common-dropdown__link">商家列表</a></li>
+                                <li class="common-dropdown__item"><a href="/become-seller.html" class="common-dropdown__link">申请开店</a></li>
+                            </ul>
+                        </li>
+                        <li class="on-hover-item nav-menu__item has-submenu">
+                            <a href="javascript:void(0)" class="nav-menu__link">商品分类</a>
+                            <ul class="on-hover-dropdown common-dropdown nav-submenu scroll-sm" style="min-width:180px;max-height:320px;overflow-y:auto;">
+                                <template x-for="cat in $store.app.categories" :key="cat.id">
+                                    <li class="common-dropdown__item">
+                                        <a :href="'/category.html?id=' + cat.id" class="common-dropdown__link" x-text="cat.name"></a>
+                                    </li>
+                                </template>
+                            </ul>
+                        </li>
+                        <li class="nav-menu__item">
+                            <a href="/account.html" class="nav-menu__link">我的账户</a>
+                        </li>
+                        <li class="nav-menu__item">
+                            <a href="/become-seller.html" class="nav-menu__link">申请开店</a>
+                        </li>
+                        <li class="nav-menu__item">
+                            <a href="/contact.html" class="nav-menu__link">联系我们</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="header-right flex-align gap-20">
+                <template x-if="$store.app.settings.contact_qq">
+                    <a href="javascript:void(0)" class="d-sm-flex align-items-center gap-16 d-none">
+                        <span class="d-flex text-32"><img src="/marketpro/images/icon/mobile.png" alt=""></span>
+                        <span>
+                            <span class="d-block text-heading fw-medium">客服 QQ</span>
+                            <span class="d-block fw-bold text-main-600" x-text="$store.app.settings.contact_qq"></span>
+                        </span>
+                    </a>
+                </template>
+                <button type="button" class="toggle-mobileMenu d-lg-none" @click="$store.app.mobileOpen=true" style="background:transparent;border:0;font-size:28px;color:#333;"><i class="ph ph-list"></i></button>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb mb-0 py-26 bg-main-50">
+    <div class="container container-lg">
+        <div class="breadcrumb-wrapper flex-between flex-wrap gap-16">
+            <h6 class="mb-0">商家列表</h6>
+            <ul class="flex items-center gap-8 flex-wrap list-unstyled mb-0">
+                <li class="text-sm">
+                    <a href="/" class="text-gray-900 flex items-center gap-8 hover-text-main-600">
+                        <i class="ph ph-house"></i> 首页
+                    </a>
+                </li>
+                <li class="flex items-center"><i class="ph ph-caret-right"></i></li>
+                <li class="text-sm text-main-600">商家列表</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<section class="vendors-list py-80">
+    <div class="container container-lg">
+
+        <!-- Toolbar -->
+        <div class="flex-between flex-wrap gap-8 mb-40">
+            <span class="text-neutral-600 font-medium px-40 py-12 rounded-pill border border-neutral-100"
+                  x-text="loading ? '加载中...' : ('共 ' + total + ' 家商家')"></span>
+            <div class="flex items-center gap-16">
+                <form @submit.prevent="page=1;loadShops()" class="relative block">
+                    <input type="text" x-model="search"
+                           class="common-input py-13 ps-16 pe-44 rounded-pill"
+                           style="width:260px;"
+                           placeholder="搜索商家名称...">
+                    <button type="submit"
+                            class="w-32 h-32 bg-main-600 rounded-circle flex items-center justify-center text-xl text-white absolute top-1/2 -translate-y-1/2 right-0 me-8">
+                        <i class="ph ph-magnifying-glass"></i>
+                    </button>
+                </form>
+                <div class="flex items-center gap-8">
+                    <span class="text-gray-900 flex-shrink-0">排序：</span>
+                    <select x-model="sortBy" class="common-input rounded-pill border border-gray-100 ps-16 pe-36 h-48" style="min-width:120px;">
+                        <option value="default">默认</option>
+                        <option value="products">商品数</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading skeleton -->
+        <div class="row g-4 vendor-card-wrapper" x-show="loading">
+            <template x-for="i in 8" :key="i">
+                <div class="col-xxl-3 col-xl-4 col-md-6 flex-shrink-0">
+                    <div class="vendor-card text-center px-16 pb-24">
+                        <div>
+                            <div class="skeleton w-66 h-66 rounded-circle mx-auto" style="margin:12px auto;"></div>
+                            <div class="skeleton h-16 mx-auto mt-32 mb-8 rounded-4" style="width:60%"></div>
+                            <div class="skeleton h-12 mx-auto rounded-4" style="width:80%"></div>
+                        </div>
+                        <div class="vendor-card__list mt-22 flex items-center justify-center gap-8 overflow-hidden">
+                            <template x-for="j in 4" :key="j">
+                                <div class="vendor-card__item bg-white rounded-circle skeleton"></div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Empty -->
+        <div class="text-center py-60" x-show="!loading && sortedShops().length === 0">
+            <i class="ph ph-storefront d-block mb-16 text-gray-200" style="font-size:4rem;"></i>
+            <p class="text-gray-400">暂无商家入驻</p>
+        </div>
+
+        <!-- Shops grid -->
+        <div class="row g-4 vendor-card-wrapper" x-show="!loading && sortedShops().length > 0">
+            <template x-for="shop in sortedShops()" :key="shop.id">
+                <div class="col-xxl-3 col-xl-4 col-md-6 flex-shrink-0">
+                    <div class="vendor-card text-center px-16 pb-24">
+                        <div>
+                            <template x-if="shop.logo">
+                                <img :src="shop.logo" :alt="shop.name" class="vendor-card__logo m-12">
+                            </template>
+                            <template x-if="!shop.logo">
+                                <div style="width:66px;height:66px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;margin:12px auto;">
+                                    <i class="ph ph-storefront text-main-600" style="font-size:1.75rem;"></i>
+                                </div>
+                            </template>
+                            <h6 class="title mt-32">
+                                <a :href="'/shop.html?id=' + shop.id" x-text="shop.name"
+                                   class="hover-text-main-600"></a>
+                            </h6>
+                            <span class="text-heading text-sm d-block text-line-2 mt-4"
+                                  x-text="shop.description || '欢迎光临本店'"></span>
+                            <template x-if="shop.is_official">
+                                <a href="#"
+                                   class="bg-white text-neutral-600 hover-bg-main-600 hover-text-white rounded-pill py-6 px-16 text-12 d-inline-block mt-8">
+                                    <i class="ph ph-seal-check me-4"></i>官方认证
+                                </a>
+                            </template>
+                            <template x-if="!shop.is_official">
+                                <a :href="'/shop.html?id=' + shop.id"
+                                   class="bg-white text-neutral-600 hover-bg-main-600 hover-text-white rounded-pill py-6 px-16 text-12 d-inline-block mt-8"
+                                   x-text="(shop.products && shop.products.length > 0) ? (shop.products.length + ' 件商品') : '进入店铺'"></a>
+                            </template>
+                        </div>
+                        <div class="vendor-card__list mt-22 flex items-center justify-center gap-8 overflow-hidden">
+                            <template x-if="shop.products && shop.products.length > 0">
+                                <template x-for="p in shop.products.slice(0,5)" :key="p.id">
+                                    <div class="vendor-card__item bg-white flex items-center justify-center overflow-hidden"
+                                         style="border-radius:50%;">
+                                        <template x-if="p.image">
+                                            <img :src="p.image" :alt="p.name"
+                                                 style="width:100%;height:100%;object-fit:contain;">
+                                        </template>
+                                        <template x-if="!p.image">
+                                            <i class="ph ph-package text-main-600" style="font-size:1.1rem;"></i>
+                                        </template>
+                                    </div>
+                                </template>
+                            </template>
+                            <template x-if="productsLoading && !shop.products">
+                                <template x-for="k in 4" :key="k">
+                                    <div class="vendor-card__item skeleton" style="border-radius:50%;"></div>
+                                </template>
+                            </template>
+                            <template x-if="!productsLoading && (!shop.products || shop.products.length === 0)">
+                                <span class="text-gray-400 text-xs py-8">暂无商品</span>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Pagination -->
+        <div class="d-flex align-items-center justify-content-center gap-8 mt-40"
+             x-show="total > pageSize">
+            <button type="button" @click="changePage(page - 1)" :disabled="page === 1"
+                    class="w-40 h-40 d-flex align-items-center justify-content-center border border-gray-200 rounded-8 hover-border-main-600 hover-text-main-600"
+                    :style="page===1 ? 'opacity:.4;cursor:not-allowed;background:none' : 'background:none'">
+                <i class="ph ph-caret-left"></i>
+            </button>
+            <span class="text-sm text-gray-500"
+                  x-text="'第 ' + page + ' 页，共 ' + Math.ceil(total/pageSize) + ' 页'"></span>
+            <button type="button" @click="changePage(page + 1)"
+                    :disabled="page >= Math.ceil(total/pageSize)"
+                    class="w-40 h-40 d-flex align-items-center justify-content-center border border-gray-200 rounded-8 hover-border-main-600 hover-text-main-600"
+                    :style="page>=Math.ceil(total/pageSize) ? 'opacity:.4;cursor:not-allowed;background:none' : 'background:none'">
+                <i class="ph ph-caret-right"></i>
+            </button>
+        </div>
+    </div>
+</section>
+
+
+<!-- ==================== Footer ==================== -->
+<footer class="footer py-120">
+    <div class="container container-lg">
+        <div class="footer-item-wrapper d-flex align-items-start flex-wrap">
+            <div class="footer-item" data-aos="fade-up">
+                <div class="max-w-340">
+                    <div class="footer-item__logo">
+                        <a href="/">
+                            <span class="text-2xl fw-bold text-main-600" x-text="$store.app.siteName()"></span>
+                        </a>
+                    </div>
+                    <p class="mb-28 text-heading mt-12" x-text="$store.app.settings.site_description || '正版软件 · 游戏充值 · 卡密发货平台'"></p>
+                    <div class="d-flex flex-column gap-8">
+                        <template x-if="$store.app.settings.contact_email">
+                            <a :href="'mailto:' + $store.app.settings.contact_email" class="text-heading fw-medium hover-text-main-600">
+                                <i class="ph-fill ph-envelope me-4"></i>
+                                <span x-text="$store.app.settings.contact_email"></span>
+                            </a>
+                        </template>
+                        <template x-if="$store.app.settings.contact_qq">
+                            <span class="text-heading fw-medium">
+                                <i class="ph-fill ph-chat-circle-dots me-4"></i>
+                                QQ: <span x-text="$store.app.settings.contact_qq"></span>
+                            </span>
+                        </template>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-item" data-aos="fade-up">
+                <h6 class="footer-item__title">快速导航</h6>
+                <ul class="footer-menu">
+                    <li class="mb-16"><a href="/" class="text-heading hover-text-main-600">首页</a></li>
+                    <li class="mb-16"><a href="/shops.html" class="text-heading hover-text-main-600">全部商家</a></li>
+                    <li class="mb-16"><a href="/become-seller.html" class="text-heading hover-text-main-600">申请开店</a></li>
+                    <li class="mb-16"><a href="/account.html" class="text-heading hover-text-main-600">我的账户</a></li>
+                </ul>
+            </div>
+            <div class="footer-item" data-aos="fade-up">
+                <h6 class="footer-item__title">客户服务</h6>
+                <ul class="footer-menu">
+                    <li class="mb-16"><a href="/account.html#orders" class="text-heading hover-text-main-600">我的订单</a></li>
+                    <li class="mb-16"><a href="/account.html#balance" class="text-heading hover-text-main-600">账户余额</a></li>
+                    <li class="mb-16"><a href="javascript:void(0)" class="text-heading hover-text-main-600">使用帮助</a></li>
+                    <li class="mb-16"><a href="javascript:void(0)" class="text-heading hover-text-main-600">隐私政策</a></li>
+                </ul>
+            </div>
+            <div class="footer-item" data-aos="fade-up">
+                <h6 class="footer-item__title">热门分类</h6>
+                <ul class="footer-menu">
+                    <template x-for="cat in $store.app.categories.slice(0, 6)" :key="cat.id">
+                        <li class="mb-16">
+                            <a :href="'/category.html?id=' + cat.id" class="text-heading hover-text-main-600" x-text="cat.name"></a>
+                        </li>
+                    </template>
+                    <template x-if="$store.app.categories.length === 0">
+                        <li class="mb-16"><span class="text-gray-400">暂无分类</span></li>
+                    </template>
+                </ul>
+            </div>
+            <div class="footer-item" data-aos="fade-up">
+                <h6 class="footer-item__title">移动端访问</h6>
+                <p class="mb-16">扫码访问，便捷购物</p>
+                <div class="my-32">
+                    <div class="flex-align gap-8">
+                        <div class="bg-white rounded-10 p-1 box-shadow-5xl">
+                            <img src="/marketpro/images/thumbs/qr-code.png" alt="QR Code">
+                        </div>
+                    </div>
+                    <div class="mt-24">
+                        <img src="/marketpro/images/thumbs/method.png" alt="支付方式">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Bottom Footer -->
+
+<!-- ==================== Footer ==================== -->
+<footer class="footer py-120">
+    <div class="container container-lg">
+        <div class="footer-item-wrapper d-flex align-items-start flex-wrap">
+            <div class="footer-item" data-aos="fade-up">
+                <div class="max-w-340">
+                    <div class="footer-item__logo">
+                        <a href="/">
+                            <span class="text-2xl fw-bold text-main-600" x-text="$store.app.siteName()"></span>
+                        </a>
+                    </div>
+                    <p class="mb-28 text-heading mt-12" x-text="$store.app.settings.site_description || '正版软件 · 游戏充值 · 卡密发货平台'"></p>
+                    <div class="d-flex flex-column gap-8">
+                        <template x-if="$store.app.settings.contact_email">
+                            <a :href="'mailto:' + $store.app.settings.contact_email" class="text-heading fw-medium hover-text-main-600">
+                                <i class="ph-fill ph-envelope me-4"></i>
+                                <span x-text="$store.app.settings.contact_email"></span>
+                            </a>
+                        </template>
+                        <template x-if="$store.app.settings.contact_qq">
+                            <span class="text-heading fw-medium">
+                                <i class="ph-fill ph-chat-circle-dots me-4"></i>
+                                QQ: <span x-text="$store.app.settings.contact_qq"></span>
+                            </span>
+                        </template>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-item" data-aos="fade-up">
+                <h6 class="footer-item__title">快速导航</h6>
+                <ul class="footer-menu">
+                    <li class="mb-16"><a href="/" class="text-heading hover-text-main-600">首页</a></li>
+                    <li class="mb-16"><a href="/shops.html" class="text-heading hover-text-main-600">全部商家</a></li>
+                    <li class="mb-16"><a href="/become-seller.html" class="text-heading hover-text-main-600">申请开店</a></li>
+                    <li class="mb-16"><a href="/account.html" class="text-heading hover-text-main-600">我的账户</a></li>
+                </ul>
+            </div>
+            <div class="footer-item" data-aos="fade-up">
+                <h6 class="footer-item__title">客户服务</h6>
+                <ul class="footer-menu">
+                    <li class="mb-16"><a href="/account.html#orders" class="text-heading hover-text-main-600">我的订单</a></li>
+                    <li class="mb-16"><a href="/account.html#balance" class="text-heading hover-text-main-600">账户余额</a></li>
+                    <li class="mb-16"><a href="javascript:void(0)" class="text-heading hover-text-main-600">使用帮助</a></li>
+                    <li class="mb-16"><a href="javascript:void(0)" class="text-heading hover-text-main-600">隐私政策</a></li>
+                </ul>
+            </div>
+            <div class="footer-item" data-aos="fade-up">
+                <h6 class="footer-item__title">热门分类</h6>
+                <ul class="footer-menu">
+                    <template x-for="cat in $store.app.categories.slice(0, 6)" :key="cat.id">
+                        <li class="mb-16">
+                            <a :href="'/category.html?id=' + cat.id" class="text-heading hover-text-main-600" x-text="cat.name"></a>
+                        </li>
+                    </template>
+                    <template x-if="$store.app.categories.length === 0">
+                        <li class="mb-16"><span class="text-gray-400">暂无分类</span></li>
+                    </template>
+                </ul>
+            </div>
+            <div class="footer-item" data-aos="fade-up">
+                <h6 class="footer-item__title">移动端访问</h6>
+                <p class="mb-16">扫码访问，便捷购物</p>
+                <div class="my-32">
+                    <div class="flex-align gap-8">
+                        <div class="bg-white rounded-10 p-1 box-shadow-5xl">
+                            <img src="/marketpro/images/thumbs/qr-code.png" alt="QR Code">
+                        </div>
+                    </div>
+                    <div class="mt-24">
+                        <img src="/marketpro/images/thumbs/method.png" alt="支付方式">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Bottom Footer -->
+<div class="bottom-footer py-8">
+    <div class="container container-lg">
+        <div class="bottom-footer__inner flex-between flex-wrap gap-16 py-16 border-top border-neutral-50">
+            <p class="bottom-footer__text text-heading fw-medium">
+                <span x-text="$store.app.siteName()"></span> &copy;
+                <span class="text-success-600 fw-semibold" x-text="new Date().getFullYear()"></span>
+                版权所有
+                <span x-text="$store.app.settings.footer_text || ''"></span>
+            </p>
+            <div class="flex-align gap-8 flex-wrap">
+                <ul class="flex-align gap-16">
+                    <li><a href="javascript:void(0)" class="w-44 h-44 flex-center bg-white shadow-sm text-main-600 text-xl rounded-circle hover-bg-main-600 hover-text-white"><i class="ph-fill ph-wechat-logo"></i></a></li>
+                    <li><a href="javascript:void(0)" class="w-44 h-44 flex-center bg-white shadow-sm text-main-600 text-xl rounded-circle hover-bg-main-600 hover-text-white"><i class="ph-fill ph-chat-circle-dots"></i></a></li>
+                    <li><a href="javascript:void(0)" class="w-44 h-44 flex-center bg-white shadow-sm text-main-600 text-xl rounded-circle hover-bg-main-600 hover-text-white"><i class="ph-fill ph-envelope"></i></a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="/marketpro/dist-js/app.bundle.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script src="/js/site.js"></script>
+<script>
+    function shopsPage() {
+      return {
+        shops: [],
+        total: 0,
+        page: 1,
+        pageSize: 12,
+        loading: true,
+        productsLoading: false,
+        search: '',
+        sortBy: 'default',
+
+        async init() {
+          await new Promise(r => {
+            const check = () => this.$store.app.initialized ? r() : setTimeout(check, 50);
+            check();
+          });
+          await this.load();
+        },
+
+        async load() {
+          this.loading = true;
+          let url = '/api/shops?page=' + this.page + '&page_size=' + this.pageSize;
+          if (this.search) url += '&search=' + encodeURIComponent(this.search);
+          const r = await fetch(url).catch(() => null);
+          if (r && r.ok) {
+            const data = await r.json();
+            const raw = Array.isArray(data) ? data : (data.data || []);
+            this.shops = raw.filter(s => s.status === 1);
+            this.total = data.total || this.shops.length;
+          }
+          this.loading = false;
+          // fetch products for each shop in parallel (background)
+          this.fetchShopProducts();
+        },
+
+        async fetchShopProducts() {
+          this.productsLoading = true;
+          const results = await Promise.allSettled(
+            this.shops.map(shop =>
+              fetch('/api/shops/' + shop.id + '/products')
+                .then(r => r.ok ? r.json() : [])
+                .catch(() => [])
+            )
+          );
+          this.shops = this.shops.map((shop, i) => {
+            const raw = results[i].status === 'fulfilled' ? (results[i].value || []) : [];
+            const prods = Array.isArray(raw) ? raw : (raw.products || []);
+            return { ...shop, products: prods.filter(p => p.is_active) };
+          });
+          this.productsLoading = false;
+        },
+
+        async loadShops() { await this.load(); },
+
+        sortedShops() {
+          if (this.sortBy === 'products') {
+            return [...this.shops].sort((a, b) => (b.products?.length || 0) - (a.products?.length || 0));
+          }
+          return this.shops;
+        },
+
+        async changePage(p) {
+          if (p < 1 || p > Math.ceil(this.total / this.pageSize)) return;
+          this.page = p;
+          await this.load();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
+      };
+    }
+  </script>
+</body>
+</html>

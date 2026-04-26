@@ -493,6 +493,12 @@ func (h *AdminHandler) GetSettings(c *gin.Context) {
 		"payment_id":            h.settingService.Get(services.SettingPaymentID),
 		"payment_secret":        h.settingService.Get(services.SettingPaymentSecret),
 		"payment_callback_uri":  h.settingService.Get(services.SettingPaymentCallback),
+		"home_banners":           h.settingService.Get(services.SettingHomeBanners),
+		"home_promo_banners":     h.settingService.Get(services.SettingHomePromoBanners),
+		"home_flash_banners":     h.settingService.Get(services.SettingHomeFlashBanners),
+		"home_offer_cards":       h.settingService.Get(services.SettingHomeOfferCards),
+		"home_bestsell_cta":      h.settingService.Get(services.SettingHomeBestsellCTA),
+		"home_newsletter_img":    h.settingService.Get(services.SettingHomeNewsletterImg),
 	}
 	c.JSON(http.StatusOK, gin.H{"settings": settings})
 }

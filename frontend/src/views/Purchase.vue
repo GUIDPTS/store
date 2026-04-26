@@ -1,156 +1,158 @@
 <template>
-  <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-    <!-- Loading -->
-    <div v-if="loading" class="flex flex-col items-center justify-center py-20 gap-3">
-      <Loader2 class="w-8 h-8 animate-spin text-brand-green" />
-      <span class="text-sm text-zinc-400">加载中...</span>
+  <section class="py-40 bg-color-one">
+    <div class="container container-lg">
+      <ul class="flex items-center gap-8 text-sm text-gray-500">
+        <li><router-link :to="{ name: 'home' }" class="hover-text-main-600">首页</router-link></li>
+        <li><i class="ph ph-caret-right text-xs"></i></li>
+        <li v-if="product"><router-link :to="{ name: 'product', params: { id: product.id } }" class="hover-text-main-600">{{ product.name }}</router-link></li>
+        <li v-if="product"><i class="ph ph-caret-right text-xs"></i></li>
+        <li class="text-heading">下单</li>
+      </ul>
     </div>
-    
-    <template v-else-if="product">
-      <!-- Back -->
-      <router-link :to="`/product/${product.id}`" class="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-brand-green transition-colors">
-        <ArrowLeft class="w-4 h-4" />
-        <span>返回商品详情</span>
-      </router-link>
-      
-      <h1 class="text-2xl sm:text-3xl font-bold text-zinc-900">确认购买</h1>
-      
-      <!-- Product Summary -->
-      <div class="bg-white rounded-2xl border border-zinc-100 shadow-card p-5 sm:p-6">
-        <div class="flex items-center gap-4">
-          <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-brand-gradient-subtle flex items-center justify-center">
-            <Package class="w-7 h-7 text-brand-green/60" />
+  </section>
+
+  <section class="py-40">
+    <div class="container container-lg">
+      <div v-if="loading" class="py-80 text-center text-gray-400">
+        <i class="ph ph-circle-notch text-3xl animate-spin"></i>
+      </div>
+
+      <div v-else-if="product" class="flex flex-wrap gap-32">
+        <!-- Form -->
+        <div class="flex-1 min-w-[300px]">
+          <div class="border border-gray-100 rounded-16 bg-white p-32">
+            <h5 class="mb-24 flex items-center gap-12">
+              <i class="ph ph-shopping-bag text-main-600"></i> 订单信息
+            </h5>
+
+            <div class="mb-24">
+              <label class="text-neutral-900 text-md mb-8 font-[500] block">购买数量 <span class="text-danger">*</span></label>
+              <div class="flex items-center gap-12">
+                <button type="button" class="w-40 h-40 border border-gray-100 rounded-8 hover-bg-main-600 hover-text-white" @click="dec">
+                  <i class="ph ph-minus"></i>
+                </button>
+                <input v-model.number="quantity" type="number" min="1" :max="product.stock_count"
+                       class="common-input text-center" style="max-width:100px">
+                <button type="button" class="w-40 h-40 border border-gray-100 rounded-8 hover-bg-main-600 hover-text-white" @click="inc">
+                  <i class="ph ph-plus"></i>
+                </button>
+                <span class="text-sm text-gray-500">库存 {{ product.stock_count }}</span>
+              </div>
+            </div>
+
+            <div class="mb-24">
+              <label class="text-neutral-900 text-md mb-8 font-[500] block">联系方式（可选）</label>
+              <input v-model="contact" type="text" class="common-input" placeholder="邮箱 / QQ / Telegram，便于售后联系">
+            </div>
+
+            <div class="mb-24">
+              <label class="text-neutral-900 text-md mb-8 font-[500] block">备注（可选）</label>
+              <textarea v-model="remark" class="common-input" rows="3" placeholder="如有特殊需求请说明"></textarea>
+            </div>
+
+            <button
+              type="button"
+              class="btn btn-main rounded-pill px-32 py-14 inline-flex items-center gap-8 mt-12"
+              :disabled="submitting || !canBuy"
+              @click="submit"
+            >
+              <i v-if="submitting" class="ph ph-circle-notch animate-spin"></i>
+              <i v-else class="ph ph-credit-card"></i>
+              {{ submitting ? '提交中…' : '确认下单并支付' }}
+            </button>
           </div>
-          <div class="flex-1 min-w-0">
-            <h2 class="text-lg font-semibold text-zinc-900 truncate">{{ product.name }}</h2>
-            <div class="text-2xl font-bold text-zinc-900 font-mono tracking-tight mt-1">{{ formatPrice(product.price) }}</div>
-            <div class="flex items-center gap-1 text-xs text-zinc-400 mt-1">
-              <span class="w-1.5 h-1.5 rounded-full" :class="[product.stock_count > 10 ? 'bg-emerald-500' : product.stock_count > 0 ? 'bg-amber-500' : 'bg-red-500']"></span>
-              库存: {{ product.stock_count }}
+        </div>
+
+        <!-- Summary -->
+        <div class="w-full lg:w-[340px] flex-shrink-0">
+          <div class="border border-gray-100 rounded-16 bg-white p-24 sticky top-24">
+            <h6 class="text-md mb-16">订单摘要</h6>
+            <div class="flex items-center gap-12 mb-16 pb-16 border-b border-gray-100">
+              <div class="w-64 h-64 rounded-12 bg-color-one flex items-center justify-center overflow-hidden">
+                <img v-if="product.image" :src="product.image" :alt="product.name" class="w-full h-full object-cover">
+                <i v-else class="ph ph-package text-gray-400 text-3xl"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h6 class="text-sm mb-4 text-line-2">{{ product.name }}</h6>
+                <span class="text-gray-500 text-xs">¥{{ price.toFixed(2) }} × {{ quantity }}</span>
+              </div>
+            </div>
+            <div class="flex justify-between mb-8 text-sm">
+              <span class="text-gray-500">商品小计</span>
+              <span>¥{{ (price * quantity).toFixed(2) }}</span>
+            </div>
+            <div class="flex justify-between pt-12 border-t border-gray-100 mt-12">
+              <span class="text-md fw-bold">应付金额</span>
+              <span class="text-xl fw-bold text-main-600">¥{{ (price * quantity).toFixed(2) }}</span>
             </div>
           </div>
         </div>
       </div>
-      
-      <!-- Purchase Form -->
-      <form @submit.prevent="handleSubmit" class="space-y-5">
-        <div class="bg-white rounded-2xl border border-zinc-100 shadow-card p-5 sm:p-6 space-y-5">
-          <div>
-            <label class="block text-sm font-medium text-zinc-700 mb-1.5">购买数量</label>
-            <input
-              v-model.number="form.quantity"
-              type="number"
-              min="1"
-              :max="product.stock_count"
-              class="block w-full px-4 py-2.5 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green transition-colors"
-            />
-          </div>
-          
-          <div>
-            <label class="block text-sm font-medium text-zinc-700 mb-1.5">联系方式<span class="text-zinc-400 font-normal">（选填）</span></label>
-            <input
-              v-model="form.contact"
-              type="text"
-              placeholder="邮箱或其他联系方式"
-              class="block w-full px-4 py-2.5 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green transition-colors"
-            />
-            <p class="text-xs text-zinc-400 mt-1">方便我们联系您处理售后问题</p>
-          </div>
-          
-          <div>
-            <label class="block text-sm font-medium text-zinc-700 mb-1.5">备注<span class="text-zinc-400 font-normal">（选填）</span></label>
-            <textarea
-              v-model="form.remark"
-              rows="3"
-              placeholder="有什么需要备注的吗？"
-              class="block w-full px-4 py-2.5 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green transition-colors resize-none"
-            ></textarea>
-          </div>
-        </div>
-        
-        <!-- Total -->
-        <div class="bg-white rounded-2xl border border-zinc-100 shadow-card p-5 sm:p-6 space-y-3">
-          <div class="flex justify-between text-sm">
-            <span class="text-zinc-500">商品单价</span>
-            <span class="font-mono text-zinc-900">{{ formatPrice(product.price) }}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-zinc-500">购买数量</span>
-            <span class="font-mono text-zinc-900">× {{ form.quantity }}</span>
-          </div>
-          <div class="flex justify-between text-lg font-bold pt-3 border-t border-zinc-100">
-            <span class="text-zinc-900">应付金额</span>
-            <span class="font-mono text-gradient">{{ formatPrice(totalAmount) }}</span>
-          </div>
-        </div>
-        
-        <button
-          type="submit"
-          :disabled="submitting"
-          class="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-brand-gradient text-white font-medium rounded-xl hover:shadow-glow transition-all duration-300 hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-        >
-          <Loader2 v-if="submitting" class="w-5 h-5 animate-spin" />
-          <CreditCard v-else class="w-5 h-5" />
-          <span>{{ submitting ? '创建订单中...' : '确认购买' }}</span>
-        </button>
-      </form>
-    </template>
-  </div>
+
+      <EmptyState v-else icon="ph ph-warning-circle" title="商品不存在">
+        <router-link :to="{ name: 'home' }" class="btn btn-main rounded-pill px-24 py-10">返回首页</router-link>
+      </EmptyState>
+    </div>
+  </section>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Package, ArrowLeft, CreditCard, Loader2 } from 'lucide-vue-next'
 import api from '@/utils/api'
-import { formatPrice } from '@/utils/helpers'
 import { useToastStore } from '@/stores/toast'
+import EmptyState from '@/components/EmptyState.vue'
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
 
-const loading = ref(true)
-const submitting = ref(false)
 const product = ref(null)
-const form = ref({ quantity: 1, contact: '', remark: '' })
+const loading = ref(true)
+const quantity = ref(1)
+const contact = ref('')
+const remark = ref('')
+const submitting = ref(false)
 
-const totalAmount = computed(() => product.value ? product.value.price * form.value.quantity : 0)
+const price = computed(() => Number(product.value?.price || 0))
+const canBuy = computed(() => product.value?.is_active && (product.value?.stock_count || 0) >= quantity.value)
 
-onMounted(async () => {
+function inc() {
+  if (quantity.value < (product.value?.stock_count || 0)) quantity.value++
+}
+function dec() { if (quantity.value > 1) quantity.value-- }
+
+async function submit() {
+  if (!canBuy.value) return
+  submitting.value = true
   try {
-    const response = await api.get(`/api/products/${route.params.id}`)
-    product.value = response.data
-    if (!product.value.is_active || product.value.stock_count <= 0) {
-      toast.error('商品暂不可购买')
-      router.push({ name: 'Product', params: { id: route.params.id } })
-    }
-  } catch (error) {
-    console.error('Failed to load product', error)
-    router.push({ name: 'NotFound' })
-  } finally {
-    loading.value = false
-  }
-})
-
-async function handleSubmit() {
-  try {
-    submitting.value = true
-    const response = await api.post('/api/orders/create', {
+    const r = await api.post('/api/orders/create', {
       product_id: product.value.id,
-      quantity: form.value.quantity,
-      contact: form.value.contact,
-      remark: form.value.remark
+      quantity: quantity.value,
+      contact: contact.value,
+      remark: remark.value,
     })
-    if (response.data.payment_url) {
-      window.location.href = response.data.payment_url
+    const data = r.data || {}
+    if (data.payment_url) {
+      window.location.href = data.payment_url
+    } else if (data.order_no || data.order?.order_no) {
+      const no = data.order_no || data.order.order_no
+      router.push({ name: 'order-detail', params: { orderNo: no } })
     } else {
-      router.push({ name: 'OrderDetail', params: { orderNo: response.data.order_no } })
+      toast.success('下单成功')
     }
-  } catch (error) {
-    toast.error(error.response?.data?.error || '创建订单失败')
+  } catch (e) {
+    toast.error(e.response?.data?.error || '下单失败')
   } finally {
     submitting.value = false
   }
 }
+
+onMounted(async () => {
+  try {
+    const r = await api.get(`/api/products/${route.params.id}`)
+    product.value = r.data
+  } catch (_) { product.value = null }
+  finally { loading.value = false }
+})
 </script>

@@ -3,7 +3,16 @@ import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
 
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue({
+      template: {
+        // Don't try to resolve absolute asset paths (e.g. /marketpro/...) in SFC <img src>
+        transformAssetUrls: {
+          includeAbsolute: false,
+        },
+      },
+    }),
+  ],
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src')
