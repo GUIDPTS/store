@@ -1,0 +1,19 @@
+@use "../abstracts/variable" as *;
+
+/* ==== 
+ --------- (4.03) border radius styles start ---------
+ ==== */
+
+@each $property, $value in $spaces {
+  .rounded-#{$property} {
+    border-radius: #{$value} !important;
+  }
+}
+
+.rounded-top-right-0 {
+  border-top-right-radius: 0 !important;
+}
+
+/* ==== 
+ --------- (4.03) border radius styles end ---------
+ ==== */

@@ -186,33 +186,36 @@ func (h *AdminHandler) CreateProduct(c *gin.Context) {
 		Price       float64 `json:"price" binding:"required"`
 		OrigPrice   float64 `json:"orig_price"`
 		Image       string  `json:"image"`
-		Sort        int     `json:"sort"`
-		IsActive    bool    `json:"is_active"`
-	}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
-		return
-	}
+                Images      string  `json:"images"`
+                Sort        int     `json:"sort"`
+                IsActive    bool    `json:"is_active"`
+        }
+        if err := c.ShouldBindJSON(&req); err != nil {
+                c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+                return
+        }
 
-	product := &models.Product{
-		CategoryID:  req.CategoryID,
-		Name:        req.Name,
-		Description: req.Description,
-		Price:       req.Price,
-		OrigPrice:   req.OrigPrice,
-		Image:       req.Image,
-		Sort:        req.Sort,
-		IsActive:    req.IsActive,
-		StockCount:  0,
-		SalesCount:  0,
-	}
+        if req.Images == "" {
+                req.Images = "[]"
+        }
 
-	if err := h.productService.Create(product); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "创建商品失败"})
-		return
-	}
+        product := &models.Product{
+                CategoryID:  req.CategoryID,
+                Name:        req.Name,
+                Description: req.Description,
+                Price:       req.Price,
+                OrigPrice:   req.OrigPrice,
+                Image:       req.Image,
+                Images:      req.Images,
+                Sort:        req.Sort,
+                IsActive:    req.IsActive,
+        }
+        if err := h.productService.Create(product); err != nil {
+                c.JSON(http.StatusInternalServerError, gin.H{"error": "创建商品失败"})
+                return
+        }
 
-	c.JSON(http.StatusOK, gin.H{"product": product})
+        c.JSON(http.StatusOK, gin.H{"product": product})
 }
 
 // UpdateProduct 更新商品
@@ -232,38 +235,38 @@ func (h *AdminHandler) UpdateProduct(c *gin.Context) {
 		Price       *float64 `json:"price"`
 		OrigPrice   *float64 `json:"orig_price"`
 		Image       string   `json:"image"`
-		Sort        *int     `json:"sort"`
-		IsActive    *bool    `json:"is_active"`
-	}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
-		return
-	}
+                Images      *string  `json:"images"`
+                Sort        *int     `json:"sort"`
+                IsActive    *bool    `json:"is_active"`
+        }
+        if err := c.ShouldBindJSON(&req); err != nil {
+                c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+                return
+        }
 
-	if req.CategoryID != nil {
-		product.CategoryID = *req.CategoryID
-	}
-	if req.Name != "" {
-		product.Name = req.Name
-	}
-	if req.Description != "" {
-		product.Description = req.Description
-	}
-	if req.Price != nil {
-		product.Price = *req.Price
-	}
-	if req.OrigPrice != nil {
-		product.OrigPrice = *req.OrigPrice
-	}
-	if req.Image != "" {
-		product.Image = req.Image
-	}
-	if req.Sort != nil {
-		product.Sort = *req.Sort
-	}
-	if req.IsActive != nil {
-		product.IsActive = *req.IsActive
-	}
+        if req.CategoryID != nil {
+                product.CategoryID = *req.CategoryID
+        }
+        if req.Name != "" {
+                product.Name = req.Name
+        }
+        product.Description = req.Description
+        if req.Price != nil {
+                product.Price = *req.Price
+        }
+        if req.OrigPrice != nil {
+                product.OrigPrice = *req.OrigPrice
+        }
+        if req.Image != "" {
+                product.Image = req.Image
+        }
+        if req.Images != nil {
+                if *req.Images == "" {
+                        product.Images = "[]"
+                } else {
+                        product.Images = *req.Images
+                }
+        }
 
 	if err := h.productService.Update(product); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新商品失败"})

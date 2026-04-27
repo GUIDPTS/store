@@ -73,15 +73,17 @@ services:
       retries: 3
       start_period: 60s
 
-  # Frontend - 静态 HTML + MarketPro + Alpine.js
+  # Frontend - Nuxt 4 + MarketPro template
   frontend:
     build:
-      context: .
-      dockerfile: frontend-static/Dockerfile
+      context: ./marketpro
+      dockerfile: Dockerfile
     container_name: nodeloc-faka-frontend-dev
     restart: unless-stopped
+    environment:
+      - BACKEND_URL=http://backend:8080
     ports:
-      - "${PORT:-3000}:80"
+      - "${PORT:-3000}:3000"
     depends_on:
       - backend
     networks:

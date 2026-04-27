@@ -1,0 +1,41 @@
+/* ==== 
+ --------- (4.03) counter styles start ---------
+ ==== */
+
+.line-wrapper {
+  > div {
+    position: relative;
+
+    &:last-child {
+      &::before {
+        display: none;
+      }
+    }
+
+    &::before {
+      position: absolute;
+      content: "";
+      width: 1px;
+      height: 100%;
+      right: 0;
+      top: 0;
+      background: hsl(var(--white) / 0.1);
+
+      @media (max-width: 991px) {
+        display: none;
+      }
+    }
+  }
+}
+
+.counter-alt {
+  h3 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* ==== 
+ --------- (4.03) counter styles end ---------
+ ==== */

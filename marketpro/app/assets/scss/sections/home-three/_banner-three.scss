@@ -1,0 +1,154 @@
+/* ==== 
+ --------- (4.03) banner three styles start ---------
+ ==== */
+
+.banner-three {
+  background-color: var(--neutral-600);
+  padding: 80px 0;
+
+  @media (width: 991px) {
+    padding: 60px 0;
+  }
+}
+
+.animation {
+  position: absolute;
+  max-width: 10%;
+}
+
+.star-shape {
+  bottom: 4%;
+  inset-inline-start: 5%;
+  opacity: 0.3;
+
+  &.style-two {
+    inset-inline-start: auto;
+    bottom: auto;
+    top: 10%;
+    inset-inline-end: 8%;
+  }
+}
+
+.line-shape {
+  top: 14%;
+  left: 58%;
+}
+
+.banner-3 {
+  span.text-white,
+  h1,
+  p,
+  a {
+    opacity: 0;
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: all 1000ms ease;
+  }
+
+  img {
+    opacity: 0;
+    transform: scale(0);
+    transform-origin: center;
+    transition: all 1000ms ease;
+  }
+
+  .swiper-slide-active {
+    span.text-white {
+      opacity: 1;
+      transform: scaleY(1);
+      transition-delay: 600ms;
+    }
+
+    h1 {
+      opacity: 1;
+      transform: scaleY(1);
+      transition-delay: 1000ms;
+    }
+
+    p {
+      opacity: 1;
+      transform: scaleY(1);
+      transition-delay: 1400ms;
+    }
+
+    a {
+      opacity: 1;
+      transform: scaleY(1);
+      transition-delay: 1800ms;
+    }
+
+    img {
+      opacity: 1;
+      transform: scale(1);
+      transition-delay: 600ms;
+    }
+  }
+}
+
+.animation-rotate {
+  animation: rotation 6s linear infinite;
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(180deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.marquee {
+  overflow-x: clip;
+  direction: ltr;
+
+  .marquee__inner {
+    position: relative;
+    display: flex;
+    overflow: hidden;
+    user-select: none;
+    gap: 0px;
+    direction: ltr;
+
+    &:hover {
+      .marquee__slider {
+        animation-play-state: paused;
+      }
+    }
+  }
+
+  .marquee__slider {
+    flex-shrink: 0;
+    display: flex;
+    gap: 0px;
+    direction: ltr;
+    min-width: max-content;
+    animation: scroll 20s linear infinite;
+  }
+
+  .marquee__single {
+    flex: 0 0 auto;
+    padding-inline: 24px;
+    display: flex;
+    gap: 48px;
+  }
+}
+
+@keyframes scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(-100% - 0px));
+  }
+}
+
+/* ==== 
+ --------- (4.03) banner three styles end ---------
+ ==== */

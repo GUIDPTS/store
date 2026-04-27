@@ -1,0 +1,62 @@
+@use "../abstracts/mixins" as mixins;
+
+/* ==== 
+ --------- (4.03) vendor two styles start ---------
+ ==== */
+
+.grid-cols-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr !important;
+  gap: 24px;
+
+  @include mixins.lg-screen {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  @include mixins.msm-screen {
+    grid-template-columns: 1fr !important;
+  }
+
+  &.list-view {
+    grid-template-columns: 1fr 1fr !important;
+
+    @include mixins.xl-screen {
+      grid-template-columns: 1fr !important;
+    }
+  }
+}
+
+.grid-cols-3-repeat {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.list-view {
+  .vendors-two-item {
+    display: flex;
+  }
+}
+
+.m-range-track {
+  background-color: #cccccc !important;
+}
+
+.m-range-highlight-container {
+  display: block !important;
+}
+
+.m-range-highlight {
+  background-color: #1c799b !important;
+}
+
+.m-range-thumb {
+  background-color: #1c799b !important;
+  border-color: #1c799b !important;
+}
+
+#amount {
+  width: 100% !important;
+}
+
+/* ==== 
+ --------- (4.03) vendor two styles end ---------
+ ==== */

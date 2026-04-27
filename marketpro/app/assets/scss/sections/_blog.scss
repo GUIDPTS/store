@@ -1,0 +1,21 @@
+/* ==== 
+ --------- (4.03) blog styles start ---------
+ ==== */
+
+.blog-item {
+  margin-bottom: 48px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.details-img {
+  width: 100%;
+  height: auto;
+  min-height: 240px;
+}
+
+/* ==== 
+ --------- (4.03) blog styles end ---------
+ ==== */

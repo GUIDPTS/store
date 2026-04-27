@@ -1,0 +1,28 @@
+@use "../../abstracts/mixins" as mixins;
+
+/* ==== 
+ --------- (4.03) newsletter styles start ---------
+ ==== */
+
+.newsletter-box {
+  background-color: #121535;
+  padding: 32px clamp(1.5rem, -8.49rem + 13.33vw, 4rem);
+}
+
+.newsletter-two {
+  &__form {
+    @include mixins.md-screen {
+      width: 100% !important;
+    }
+  }
+
+  @include mixins.xsm-screen {
+    .flex-align {
+      flex-wrap: wrap;
+    }
+  }
+}
+
+/* ==== 
+ --------- (4.03) newsletter styles end ---------
+ ==== */

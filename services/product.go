@@ -123,7 +123,7 @@ func (s *ProductService) UpdateStock(id uint) error {
 	database.GetDB().Model(&models.CardKey{}).
 		Where("product_id = ? AND status = ?", id, models.CardKeyStatusAvailable).
 		Count(&count)
-	
+
 	return database.GetDB().Model(&models.Product{}).
 		Where("id = ?", id).
 		Update("stock_count", count).Error
@@ -135,6 +135,71 @@ func (s *ProductService) IncrementSales(id uint, quantity int) error {
 		Where("id = ?", id).
 		UpdateColumn("sales_count", database.GetDB().Raw("sales_count + ?", quantity)).
 		Error
+}
+
+// SearchParams 商品搜索参数
+type SearchParams struct {
+	CategoryID uint
+	Keyword    string
+	MinPrice   float64
+	MaxPrice   float64
+	Sort       string // default | price_asc | price_desc | sales | newest
+	Page       int
+	PageSize   int
+}
+
+// SearchProducts 带过滤、排序、分页的商品搜索（仅已批准店铺）
+func (s *ProductService) SearchProducts(p SearchParams) ([]models.Product, int64, error) {
+	if p.Page < 1 {
+		p.Page = 1
+	}
+	if p.PageSize < 1 || p.PageSize > 100 {
+		p.PageSize = 20
+	}
+
+	db := database.GetDB().
+		Model(&models.Product{}).
+		Joins("JOIN shops ON shops.id = products.shop_id AND shops.status = ?", models.ShopStatusApproved).
+		Where("products.is_active = ?", true)
+
+	if p.CategoryID > 0 {
+		db = db.Where("products.category_id = ?", p.CategoryID)
+	}
+	if p.Keyword != "" {
+		db = db.Where("products.name LIKE ?", "%"+p.Keyword+"%")
+	}
+	if p.MinPrice > 0 {
+		db = db.Where("products.price >= ?", p.MinPrice)
+	}
+	if p.MaxPrice > 0 {
+		db = db.Where("products.price <= ?", p.MaxPrice)
+	}
+
+	var total int64
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	switch p.Sort {
+	case "price_asc":
+		db = db.Order("products.price asc")
+	case "price_desc":
+		db = db.Order("products.price desc")
+	case "sales":
+		db = db.Order("products.sales_count desc")
+	case "newest":
+		db = db.Order("products.id desc")
+	default:
+		db = db.Order("products.sort asc, products.id desc")
+	}
+
+	db = db.Offset((p.Page - 1) * p.PageSize).Limit(p.PageSize)
+
+	var products []models.Product
+	if err := db.Preload("Category").Preload("Shop").Find(&products).Error; err != nil {
+		return nil, 0, err
+	}
+	return products, total, nil
 }
 
 // Count 获取商品数量

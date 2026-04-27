@@ -79,6 +79,7 @@ type Product struct {
 	Price       float64   `json:"price"`
 	OrigPrice   float64   `json:"orig_price"`
 	Image       string    `gorm:"size:500" json:"image"`
+	Images      string    `gorm:"type:varchar(2000)" json:"images"` // JSON array of image URLs
 	StockCount  int       `gorm:"default:0" json:"stock_count"`
 	SalesCount  int       `gorm:"default:0" json:"sales_count"`
 	Sort        int       `gorm:"default:0" json:"sort"`

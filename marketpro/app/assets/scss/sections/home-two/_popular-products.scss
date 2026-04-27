@@ -1,0 +1,17 @@
+@use "../../abstracts/mixins" as mixins;
+
+/* ==== 
+ --------- (4.03) popular products styles start ---------
+ ==== */
+
+.popular-products {
+  .product-card {
+    @include mixins.sm-screen {
+      flex-direction: column;
+    }
+  }
+}
+
+/* ==== 
+ --------- (4.03) popular products styles end ---------
+ ==== */

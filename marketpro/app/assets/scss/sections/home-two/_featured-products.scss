@@ -1,0 +1,17 @@
+@use "../../abstracts/mixins" as mixins;
+
+/* ==== 
+ --------- (4.03) featured products styles start ---------
+ ==== */
+
+.featured-products {
+  .product-card {
+    @include mixins.xsm-screen {
+      flex-direction: column;
+    }
+  }
+}
+
+/* ==== 
+ --------- (4.03) featured products styles end ---------
+ ==== */

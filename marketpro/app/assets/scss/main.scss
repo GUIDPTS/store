@@ -1,0 +1,183 @@
+/* ==============
+ ========= CSS Table of Contents =========
+
+ * Template Name: MarketPro
+ * Version: 1.0
+ * Description: eCommerce Multivendor Vue JS 3, Nuxt JS 4, Bootstrap 5 Template
+ * Author: wowtheme7
+ * Author URL: https://themeforest.net/user/wowtheme7
+
+01. abstracts
+    1.01 --> variables
+    1.02 --> mixins
+
+02. components
+    2.01 --> accordion
+    2.02 --> button
+    2.03 --> form
+    2.04 --> pagination
+    2.05 --> tab
+    2.06 --> table
+    2.07 --> card
+    2.08 --> select2
+    2.09 --> countdown
+    2.10 --> badge
+    2.11 --> range slider
+
+03. utilities
+    3.01 --> typography
+    3.02 --> margin
+    3.03 --> padding
+    3.04 --> classes
+    3.05 --> extend
+    3.06 --> size
+    3.07 --> colors
+    3.08 --> border
+    3.09 --> background
+    3.10 --> font-size
+    3.11 --> shadow
+    3.12 --> radius
+    3.13 --> scroll-hide
+    3.14 --> overlay
+    3.15 --> line-clamp
+    3.16 --> scrollbar
+    3.17 --> gap
+    3.18 --> hover
+    3.19 --> gutter
+
+04. layout
+    4.01 --> preloader
+    4.02 --> header-top
+    4.03 --> header
+    4.04 --> header-middle
+    4.05 --> mobile nav menu
+    4.06 --> footer
+    4.07 --> scroll-top
+    4.08 --> search form
+    4.09 --> slick
+    4.10 --> section heading
+
+05. sections
+    5.01 --> home banner
+    5.02 --> home feature
+    5.03 --> promotional banner
+    5.04 --> flash sales
+    5.05 --> product card
+    5.06 --> offer
+    5.07 --> vendor
+    5.08 --> delivery
+    5.09 --> short product
+    5.10 --> brand
+    5.11 --> shipping
+    5.12 --> newsletter
+    5.13 --> color two
+    5.14 --> banner two
+    5.15 --> deals
+    5.16 --> trending products
+    5.17 --> discount
+    5.18 --> popular products
+    5.19 --> day sale
+    5.20 --> top brand
+    5.21 --> featured products
+    5.22 --> banner three
+    5.23 --> promotional banner three
+    5.24 --> text slider
+    5.25 --> deals two
+    5.26 --> testimonials
+    5.27 --> product details
+    5.28 --> shop
+    5.29 --> cart
+    5.30 --> checkout
+    5.31 --> blog
+    5.32 --> counter
+    5.33 --> vendors two
+    5.34 --> vendor two details
+
+    ==================================
+============== */
+
+// abstract styles
+@use "./abstracts/variable" as variables;
+@use "./abstracts/mixins" as mixins;
+
+// component styles
+@use "./components/accordion" as accordion;
+@use "./components/button" as button;
+@use "./components/form" as form;
+@use "./components/pagination" as pagination;
+@use "./components/tab" as tab;
+@use "./components/table" as table;
+@use "./components/card" as card;
+@use "./components/select2" as select2;
+@use "./components/countdown" as countdown;
+@use "./components/badge" as badge;
+@use "./components/range-slider" as rangeSlider;
+
+// utility styles
+@use "./utilities/typography" as typography;
+@use "./utilities/margin" as margin;
+@use "./utilities/padding" as padding;
+@use "./utilities/classes" as classes;
+@use "./utilities/extend" as extend;
+@use "./utilities/size" as size;
+@use "./utilities/colors" as colors;
+@use "./utilities/border" as border;
+@use "./utilities/bg" as bg;
+@use "./utilities/font-size" as fontSize;
+@use "./utilities/shadow" as shadow;
+@use "./utilities/radius" as radius;
+@use "./utilities/scroll-hide" as scrollHide;
+@use "./utilities/overlay" as overlay;
+@use "./utilities/line-clamp" as lineClamp;
+@use "./utilities/scrollbar" as scrollbar;
+@use "./utilities/gap" as gap;
+@use "./utilities/hover" as hover;
+@use "./utilities/gutter" as gutter;
+
+// layout styles
+@use "./layout/preloader" as preloader;
+@use "./layout/header-top" as headerTop;
+@use "./layout/header" as header;
+@use "./layout/header-middle" as headerMiddle;
+@use "./layout/mobile-nav-menu" as mobileNavMenu;
+@use "./layout/footer" as footer;
+@use "./layout/scroll-top" as scrollTop;
+@use "./layout/search-form" as searchForm;
+@use "./layout/slick" as slick;
+@use "./layout/section-heading" as sectionHeading;
+
+// partial styles
+@use "./sections/home/banner" as banner;
+@use "./sections/home/feature" as feature;
+@use "./sections/home/promotional-banner" as promotionalBanner;
+@use "./sections/home/flash-sales" as flashSales;
+@use "./sections/home/product-card" as productCard;
+@use "./sections/home/offer" as offer;
+@use "./sections/home/vendor" as vendor;
+@use "./sections/home/delivery" as delivery;
+@use "./sections/home/short-product" as shortProduct;
+@use "./sections/home/brand" as brand;
+@use "./sections/home/shipping" as shipping;
+@use "./sections/home/newsletter" as newsletter;
+@use "./sections/home-two/color-two" as colorTwo;
+@use "./sections/home-two/banner-two" as bannerTwo;
+@use "./sections/home-two/deals" as deals;
+@use "./sections/home-two/trending-products" as trendingProducts;
+@use "./sections/home-two/discount" as discount;
+@use "./sections/home-two/popular-products" as popularProducts;
+@use "./sections/home-two/day-sale" as daySale;
+@use "./sections/home-two/top-brand" as topBrand;
+@use "./sections/home-two/featured-products" as featuredProducts;
+@use "./sections/home-three/banner-three" as bannerThree;
+@use "./sections/home-three/promotional-banner-three" as promotionalBannerThree;
+@use "./sections/home-three/text-slider" as textSlider;
+@use "./sections/home-three/deals" as dealsTwo;
+@use "./sections/home-three/testimonials" as testimonials;
+@use "./sections/product-details" as productDetails;
+@use "./sections/shop" as shop;
+@use "./sections/cart" as cart;
+@use "./sections/checkout" as checkout;
+@use "./sections/blog" as blog;
+@use "./sections/counter" as counter;
+@use "./sections/vendors-two" as vendorsTwo;
+@use "./sections/vendor-two-details" as vendorTwoDetails;

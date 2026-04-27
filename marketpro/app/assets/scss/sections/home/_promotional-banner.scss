@@ -1,0 +1,17 @@
+@use "../../abstracts/mixins" as mixins;
+
+/* ==== 
+ --------- (4.03) product styles start ---------
+ ==== */
+
+.promotional-banner-item {
+  &__title {
+    @include mixins.xl-screen {
+      font-size: 24px !important;
+    }
+  }
+}
+
+/* ==== 
+ --------- (4.03) product styles end ---------
+ ==== */

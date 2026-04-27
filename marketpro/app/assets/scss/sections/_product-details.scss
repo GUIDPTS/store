@@ -1,0 +1,48 @@
+/* ==== 
+ --------- (4.03) product styles start ---------
+ ==== */
+
+.product-details {
+  .slick-initialized.slick-slider .slick-slide > div > div {
+    height: 100%;
+  }
+}
+
+.product-dContent__box,
+.product-dContent__header {
+  padding: 16px 40px;
+}
+
+.product-dContent {
+  &__box {
+    padding-top: 48px;
+    padding-bottom: 48px;
+  }
+}
+
+.pr-1 {
+  padding: clamp(3rem, -2.17rem + 10.78vw, 7.25rem) !important;
+}
+
+.pr-2 {
+  .h-100 {
+    min-height: 120px !important;
+    max-height: 120px !important;
+    padding: 8px !important;
+
+    @media only screen and (max-width: 576px) {
+      min-height: 80px !important;
+      max-height: 80px !important;
+    }
+
+    img {
+      @media only screen and (max-width: 576px) {
+        max-width: 40px !important;
+      }
+    }
+  }
+}
+
+/* ==== 
+ --------- (4.03) product styles end ---------
+ ==== */

@@ -1,0 +1,23 @@
+@use "../../abstracts/mixins" as mixins;
+
+/* ==== 
+ --------- (4.03) brand styles start ---------
+ ==== */
+
+.brand-item {
+  img {
+    max-width: 152px !important;
+
+    @include mixins.xl-screen {
+      max-width: 132px !important;
+    }
+
+    @include mixins.md-screen {
+      max-width: 86px !important;
+    }
+  }
+}
+
+/* ==== 
+ --------- (4.03) brand styles end ---------
+ ==== */

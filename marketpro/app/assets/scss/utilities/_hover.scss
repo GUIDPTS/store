@@ -1,0 +1,86 @@
+/* ==== 
+ --------- (4.03) hover styles start ---------
+ ==== */
+
+.item-hover {
+  &:hover {
+    .item-hover__text {
+      color: var(--main-600) !important;
+    }
+  }
+}
+
+.item-hover-two {
+  &:hover {
+    .item-hover__text {
+      color: var(--main-two-600) !important;
+    }
+  }
+}
+
+.on-hover-dropdown {
+  visibility: hidden;
+  opacity: 0;
+  margin-block-start: 16px;
+}
+
+.on-hover-item {
+  position: relative;
+
+  &:hover {
+    .on-hover-dropdown {
+      visibility: visible;
+      opacity: 1;
+      margin-block-start: 0;
+    }
+
+    > a,
+    button {
+      &::before {
+        @media (min-width: 992px) {
+          color: hsl(var(--main));
+          transform: translateY(-50%) rotate(180deg);
+        }
+      }
+    }
+  }
+}
+
+.cfg {
+  img {
+    margin-top: 3px;
+  }
+}
+
+.cv-rt {
+  .slick-prev,
+  .slick-next {
+    position: unset !important;
+    transform: unset !important;
+    width: 48px !important;
+    height: 48px !important;
+
+    &::before {
+      content: none !important;
+    }
+  }
+}
+
+.testimonials-thumbs-slider.cv-rt-2 {
+  .swiper-slide-active {
+    height: 630px !important;
+
+    .testimonials-thumbs__img {
+      max-height: unset !important;
+      height: 630px !important;
+    }
+  }
+
+  @media (max-width: 992px) {
+    margin-top: 0px !important;
+  }
+}
+
+/* ==== 
+ --------- (4.03) hover styles end ---------
+ ==== */

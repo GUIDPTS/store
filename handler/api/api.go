@@ -62,24 +62,37 @@ func (h *APIHandler) GetCategory(c *gin.Context) {
 	c.JSON(http.StatusOK, category)
 }
 
-// GetProducts 获取商品列表
+// GetProducts 获取商品列表（支持分类、关键词、价格区间、排序、分页）
 func (h *APIHandler) GetProducts(c *gin.Context) {
-	categoryID := c.Query("category_id")
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
+	minPrice, _ := strconv.ParseFloat(c.Query("min_price"), 64)
+	maxPrice, _ := strconv.ParseFloat(c.Query("max_price"), 64)
 
-	var products []models.Product
-	var err error
-
-	if categoryID != "" {
-		products, err = h.productService.GetByCategory(ParseUint(categoryID))
-	} else {
-		products, err = h.productService.GetActive()
+	params := services.SearchParams{
+		CategoryID: ParseUint(c.Query("category_id")),
+		Keyword:    c.Query("keyword"),
+		MinPrice:   minPrice,
+		MaxPrice:   maxPrice,
+		Sort:       c.DefaultQuery("sort", "default"),
+		Page:       page,
+		PageSize:   pageSize,
 	}
 
+	products, total, err := h.productService.SearchProducts(params)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取商品失败"})
 		return
 	}
-	c.JSON(http.StatusOK, products)
+
+	totalPages := (total + int64(pageSize) - 1) / int64(pageSize)
+	c.JSON(http.StatusOK, gin.H{
+		"products":    products,
+		"total":       total,
+		"page":        page,
+		"page_size":   pageSize,
+		"total_pages": totalPages,
+	})
 }
 
 // GetProduct 获取单个商品

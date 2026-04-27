@@ -1,0 +1,28 @@
+@use "../abstracts/mixins" as mixins;
+
+/* ==== 
+ --------- (3.03) section header styles start ---------
+ ==== */
+
+.section-heading {
+  margin-bottom: 40px;
+
+  @include mixins.lg-screen {
+    margin-bottom: 24px;
+  }
+
+  &.writing-mode {
+    @media (min-width: 1200px) {
+      writing-mode: vertical-lr;
+      transform: rotate(180deg);
+    }
+
+    @media (max-width: 1199px) {
+      margin-bottom: 60px !important;
+    }
+  }
+}
+
+/* ==== 
+ --------- (3.03) section header styles end ---------
+ ==== */

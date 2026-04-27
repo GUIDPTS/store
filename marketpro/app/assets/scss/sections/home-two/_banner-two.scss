@@ -1,0 +1,131 @@
+@use "../../abstracts/mixins" as mixins;
+
+/* ==== 
+ --------- (4.03) banner two styles start ---------
+ ==== */
+
+.banner-item-two {
+  padding: 186px clamp(2rem, -10.739rem + 17vw, 6.25rem) 186px;
+  position: relative;
+
+  @include mixins.lg-screen {
+    padding: 86px clamp(2rem, -10.739rem + 17vw, 6.25rem) 86px;
+  }
+
+  @include mixins.md-screen {
+    padding: 60px clamp(2rem, -10.739rem + 17vw, 6.25rem) 60px;
+  }
+
+  @include mixins.sm-screen {
+    padding: 40px clamp(2rem, -10.739rem + 17vw, 6.25rem) 40px;
+  }
+
+  &-wrapper {
+    margin: 32px;
+    margin-inline-end: 0;
+    margin-right: 0px !important;
+
+    @include mixins.md-screen {
+      margin-inline-start: 0;
+    }
+  }
+
+  &__content {
+    max-width: 504px;
+
+    @include mixins.md-screen {
+      max-width: 362px;
+    }
+
+    @include mixins.msm-screen {
+      max-width: 320px;
+    }
+  }
+
+  &__title {
+    @include mixins.msm-screen {
+      font-size: 1.5rem;
+    }
+  }
+}
+
+.banner-2 {
+  .banner-item-two__content {
+    span,
+    h2,
+    a {
+      opacity: 0;
+      transform: scaleY(0);
+      transform-origin: top;
+      transition: all 1000ms ease;
+    }
+  }
+
+  img {
+    opacity: 0;
+    transform: scale(0);
+    transform-origin: center;
+    transition: all 1000ms ease;
+  }
+
+  .swiper-slide-active {
+    .banner-item-two__content {
+      span {
+        opacity: 1;
+        transform: scaleY(1);
+        transition-delay: 600ms;
+      }
+
+      h2 {
+        opacity: 1;
+        transform: scaleY(1);
+        transition-delay: 1000ms;
+      }
+
+      a {
+        opacity: 1;
+        transform: scaleY(1);
+        transition-delay: 1400ms;
+      }
+    }
+
+    img {
+      opacity: 1;
+      transform: scale(1);
+      transition-delay: 400ms;
+    }
+  }
+}
+
+.drpb-active {
+  border-radius: 6px;
+}
+
+.derti {
+  img {
+    max-width: unset;
+  }
+}
+
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+}
+
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.fade-slide-enter-to,
+.fade-slide-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ==== 
+ --------- (4.03) banner two styles end ---------
+ ==== */

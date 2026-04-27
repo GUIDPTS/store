@@ -1,100 +1,73 @@
 <template>
-  <section class="py-40 bg-color-one">
+  <section class="become-seller py-80">
     <div class="container container-lg">
-      <ul class="flex items-center gap-8 text-sm text-gray-500">
-        <li><router-link :to="{ name: 'home' }" class="hover-text-main-600">首页</router-link></li>
-        <li><i class="ph ph-caret-right text-xs"></i></li>
-        <li class="text-heading">入驻申请</li>
-      </ul>
-    </div>
-  </section>
+      <div class="row justify-content-center">
+        <div class="col-xl-6 col-lg-8">
+          <div class="border border-gray-100 rounded-16 p-40">
+            <div class="text-center mb-40">
+              <i class="ph ph-storefront text-main-600 mb-16 d-block" style="font-size:3rem;"></i>
+              <h3 class="fw-semibold mb-8">申请开店</h3>
+              <p class="text-gray-500">填写以下信息，申请成为平台商家</p>
+            </div>
 
-  <section class="py-40">
-    <div class="container container-lg">
-      <div class="max-w-[720px] mx-auto">
-        <div class="text-center mb-32">
-          <div class="w-80 h-80 mx-auto rounded-[50%] bg-main-50 text-main-600 flex items-center justify-center text-5xl mb-16">
-            <i class="ph-fill ph-storefront"></i>
+            <div v-if="!auth.user" class="text-center">
+              <p class="text-gray-500 mb-24">请先登录后再申请开店</p>
+              <a href="/auth/login" class="btn btn-main rounded-pill px-32 py-12">立即登录</a>
+            </div>
+
+            <form v-else @submit.prevent="submit">
+              <div class="mb-20">
+                <label class="fw-medium text-sm mb-8 d-block">店铺名称 <span class="text-danger-600">*</span></label>
+                <input type="text" v-model="form.name" required class="common-input py-14 px-16 rounded-8 w-100 border border-gray-200" placeholder="请输入店铺名称">
+              </div>
+              <div class="mb-20">
+                <label class="fw-medium text-sm mb-8 d-block">店铺简介</label>
+                <textarea v-model="form.description" rows="4" class="common-input py-14 px-16 rounded-8 w-100 border border-gray-200" placeholder="简单介绍一下您的店铺..." style="resize:vertical;"></textarea>
+              </div>
+              <div class="mb-20">
+                <label class="fw-medium text-sm mb-8 d-block">联系方式</label>
+                <input type="text" v-model="form.contact" class="common-input py-14 px-16 rounded-8 w-100 border border-gray-200" placeholder="QQ / 微信 / 邮箱">
+              </div>
+              <button type="submit" :disabled="loading" class="btn btn-main w-100 py-14 px-32 rounded-pill fw-semibold text-md">
+                {{ loading ? '提交中...' : '提交申请' }}
+              </button>
+            </form>
+
+            <div v-if="success" class="mt-24 text-center">
+              <i class="ph-fill ph-check-circle text-main-600 d-block mb-8" style="font-size:2.5rem;"></i>
+              <p class="text-gray-700 fw-medium">申请已提交，请等待审核</p>
+              <router-link to="/" class="btn btn-outline-main rounded-pill px-24 py-10 mt-12">返回首页</router-link>
+            </div>
           </div>
-          <h4 class="mb-8">成为商家</h4>
-          <p class="text-gray-500">填写下方表单提交店铺入驻申请，审核通过后即可上架商品</p>
         </div>
-
-        <div v-if="existing" class="border border-gray-100 rounded-16 bg-white p-32 text-center">
-          <i class="ph-fill ph-info text-main-600 text-5xl mb-12"></i>
-          <h6 class="text-lg mb-8">您已提交申请</h6>
-          <p class="text-gray-500 mb-16">当前状态：<span :class="statusClass">{{ statusText }}</span></p>
-          <router-link :to="{ name: 'account-shop' }" class="btn btn-main rounded-pill py-10 px-24">查看店铺信息</router-link>
-        </div>
-
-        <form v-else class="border border-gray-100 rounded-16 bg-white p-32" @submit.prevent="submit">
-          <div class="mb-24">
-            <label class="text-neutral-900 text-md mb-8 font-[500] block">店铺名称 <span class="text-danger">*</span></label>
-            <input v-model="form.name" type="text" required class="common-input" placeholder="请输入店铺名称">
-          </div>
-          <div class="mb-24">
-            <label class="text-neutral-900 text-md mb-8 font-[500] block">店铺简介</label>
-            <textarea v-model="form.description" class="common-input" rows="4" placeholder="一句话描述您的店铺"></textarea>
-          </div>
-          <div class="mb-24">
-            <label class="text-neutral-900 text-md mb-8 font-[500] block">店铺 LOGO URL</label>
-            <input v-model="form.logo" type="url" class="common-input" placeholder="https://...">
-          </div>
-          <div class="mb-24">
-            <label class="text-neutral-900 text-md mb-8 font-[500] block">联系方式 <span class="text-danger">*</span></label>
-            <input v-model="form.contact" type="text" required class="common-input" placeholder="邮箱 / Telegram / QQ">
-          </div>
-          <button type="submit" class="btn btn-main rounded-pill py-12 px-32 inline-flex items-center gap-8" :disabled="submitting">
-            <i v-if="submitting" class="ph ph-circle-notch animate-spin"></i>
-            <i v-else class="ph ph-paper-plane-tilt"></i>
-            提交申请
-          </button>
-        </form>
       </div>
     </div>
   </section>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import api from '@/utils/api'
+import { ref } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
+import api from '@/utils/api'
 
+const auth = useAuthStore()
 const toast = useToastStore()
-const form = ref({ name: '', description: '', logo: '', contact: '' })
-const existing = ref(null)
-const submitting = ref(false)
-
-const STATUS = {
-  pending: { text: '审核中', cls: 'text-warning-600' },
-  approved: { text: '已通过', cls: 'text-main-600' },
-  rejected: { text: '已驳回', cls: 'text-danger-600' },
-  blocked: { text: '已封禁', cls: 'text-danger-600' },
-}
-const statusText = computed(() => STATUS[existing.value?.status]?.text || existing.value?.status)
-const statusClass = computed(() => STATUS[existing.value?.status]?.cls || '')
-
-async function load() {
-  try {
-    const r = await api.get('/api/shop/me')
-    if (r.data && (r.data.shop || r.data.id)) {
-      existing.value = r.data.shop || r.data
-    }
-  } catch (_) { /* 没有店铺就保持表单 */ }
-}
+const loading = ref(false)
+const success = ref(false)
+const form = ref({ name: '', description: '', contact: '' })
 
 async function submit() {
-  submitting.value = true
+  if (!form.value.name.trim()) { toast.show('请填写店铺名称', 'error'); return }
+  loading.value = true
   try {
     await api.post('/api/shop/apply', form.value)
-    toast.success('申请已提交，请等待审核')
-    load()
+    success.value = true
+    toast.show('申请已提交！', 'success')
   } catch (e) {
-    toast.error(e.response?.data?.error || '提交失败')
+    toast.show(e.response?.data?.error || '提交失败，请稍后重试', 'error')
   } finally {
-    submitting.value = false
+    loading.value = false
   }
 }
-
-onMounted(load)
 </script>

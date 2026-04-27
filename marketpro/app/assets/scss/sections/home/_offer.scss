@@ -1,0 +1,24 @@
+@use "../../abstracts/mixins" as mixins;
+
+/* ==== 
+ --------- (4.03) offer styles start ---------
+ ==== */
+
+.offer-card {
+  &__thumb {
+    img {
+      @include mixins.xxl-screen {
+        max-width: 246px;
+        width: 100%;
+      }
+
+      @include mixins.lg-screen {
+        max-width: 163px;
+      }
+    }
+  }
+}
+
+/* ==== 
+ --------- (4.03) offer styles end ---------
+ ==== */

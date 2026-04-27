@@ -1,0 +1,111 @@
+@use "../abstracts/variable" as *;
+
+/* ==== 
+ --------- (4.03) background styles start ---------
+ ==== */
+
+// background
+@each $color, $shades in $colors {
+  @each $shade, $value in $shades {
+    .bg-#{$color}-#{$shade} {
+      background-color: var(--#{$color}-#{$shade}) !important;
+    }
+  }
+}
+
+// hover background
+@each $color, $shades in $colors {
+  @each $shade, $value in $shades {
+    .hover-bg-#{$color}-#{$shade} {
+      &:hover {
+        background-color: var(--#{$color}-#{$shade}) !important;
+      }
+    }
+  }
+}
+
+.hover-bg {
+  &-white {
+    &:hover {
+      background-color: hsl(var(--white)) !important;
+    }
+  }
+}
+
+.bg-white {
+  &-12 {
+    background: #ffffff1f;
+  }
+
+  &-06 {
+    background: #ffffff0f !important;
+  }
+}
+
+.bg-light-purple {
+  background: #ecdbec !important;
+}
+
+.bg {
+  &-black-light {
+    background-color: #1a1a1a;
+  }
+
+  &-yellow {
+    background-color: #ffcc53;
+  }
+
+  &-paste {
+    background-color: #10d5dc;
+  }
+
+  &-yellow-light {
+    background-color: #fffce1 !important;
+  }
+
+  &-danger-light {
+    background-color: #ffebee !important;
+  }
+
+  &-purple-light {
+    background-color: #f5e7fc !important;
+  }
+
+  &-danger-light {
+    background-color: #ffe2f5 !important;
+  }
+
+  &-warning-light {
+    background-color: #fbeedd !important;
+  }
+
+  &-success-light {
+    background-color: #f6f5db !important;
+  }
+}
+
+.gradient-shadow {
+  position: relative;
+
+  &::before,
+  &::after {
+    position: absolute;
+    content: "";
+    width: 200px;
+    height: 100%;
+    inset-inline-start: 0;
+    inset-block-start: 0;
+    background: linear-gradient(90deg, #ffffff, transparent);
+    z-index: 1;
+  }
+
+  &::after {
+    inset-inline-start: auto;
+    inset-inline-end: 0;
+    background: linear-gradient(-90deg, #fff, transparent);
+  }
+}
+
+/* ==== 
+ --------- (4.03) background styles end ---------
+ ==== */

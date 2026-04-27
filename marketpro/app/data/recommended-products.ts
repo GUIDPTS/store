@@ -1,0 +1,138 @@
+export interface RecommendedProduct {
+  id: number;
+  badgeText: string;
+  badgeClass: string;
+  imgSrc: string;
+  discount: string;
+  title: string;
+  rating: number;
+  ratingCount: string;
+  fulfilledBy: string;
+  oldPrice: string;
+  newPrice: string;
+  deliveryDate: string;
+  href: string;
+}
+
+export const recommendedProducts: RecommendedProduct[] = [
+  {
+    id: 1,
+    badgeText: "Best Seller",
+    badgeClass: "bg-tertiary-600",
+    imgSrc: "/images/thumbs/product-two-img1.png",
+    discount: "19%OFF",
+    title: "Instax Mini 12 Instant Film Camera - Green",
+    rating: 4.8,
+    ratingCount: "12K",
+    fulfilledBy: "Marketpro",
+    oldPrice: "$28.99",
+    newPrice: "$14.99",
+    deliveryDate: "Aug 02",
+    href: "/product-details-two",
+  },
+  {
+    id: 2,
+    badgeText: "New",
+    badgeClass: "bg-warning-600",
+    imgSrc: "/images/thumbs/product-two-img2.png",
+    discount: "19%OFF",
+    title: "Instax Mini 12 Instant Film Camera - Green",
+    rating: 4.8,
+    ratingCount: "12K",
+    fulfilledBy: "Marketpro",
+    oldPrice: "$28.99",
+    newPrice: "$14.99",
+    deliveryDate: "Aug 02",
+    href: "/product-details-two",
+  },
+  {
+    id: 3,
+    badgeText: "Sold",
+    badgeClass: "bg-success-600",
+    imgSrc: "/images/thumbs/product-two-img3.png",
+    discount: "19%OFF",
+    title: "Instax Mini 12 Instant Film Camera - Green",
+    rating: 4.8,
+    ratingCount: "12K",
+    fulfilledBy: "Marketpro",
+    oldPrice: "$28.99",
+    newPrice: "$14.99",
+    deliveryDate: "Aug 02",
+    href: "/product-details-two",
+  },
+  {
+    id: 4,
+    badgeText: "New",
+    badgeClass: "bg-warning-600",
+    imgSrc: "/images/thumbs/product-two-img4.png",
+    discount: "19%OFF",
+    title: "Instax Mini 12 Instant Film Camera - Green",
+    rating: 4.8,
+    ratingCount: "12K",
+    fulfilledBy: "Marketpro",
+    oldPrice: "$28.99",
+    newPrice: "$14.99",
+    deliveryDate: "Aug 02",
+    href: "/product-details-two",
+  },
+  {
+    id: 5,
+    badgeText: "Best Seller",
+    badgeClass: "bg-tertiary-600",
+    imgSrc: "/images/thumbs/product-two-img1.png",
+    discount: "19%OFF",
+    title: "Instax Mini 12 Instant Film Camera - Green",
+    rating: 4.8,
+    ratingCount: "12K",
+    fulfilledBy: "Marketpro",
+    oldPrice: "$28.99",
+    newPrice: "$14.99",
+    deliveryDate: "Aug 02",
+    href: "/product-details-two",
+  },
+  {
+    id: 6,
+    badgeText: "New",
+    badgeClass: "bg-warning-600",
+    imgSrc: "/images/thumbs/product-two-img2.png",
+    discount: "19%OFF",
+    title: "Instax Mini 12 Instant Film Camera - Green",
+    rating: 4.8,
+    ratingCount: "12K",
+    fulfilledBy: "Marketpro",
+    oldPrice: "$28.99",
+    newPrice: "$14.99",
+    deliveryDate: "Aug 02",
+    href: "/product-details-two",
+  },
+  {
+    id: 7,
+    badgeText: "Sold",
+    badgeClass: "bg-success-600",
+    imgSrc: "/images/thumbs/product-two-img3.png",
+    discount: "19%OFF",
+    title: "Instax Mini 12 Instant Film Camera - Green",
+    rating: 4.8,
+    ratingCount: "12K",
+    fulfilledBy: "Marketpro",
+    oldPrice: "$28.99",
+    newPrice: "$14.99",
+    deliveryDate: "Aug 02",
+    href: "/product-details-two",
+  },
+  {
+    id: 8,
+    badgeText: "New",
+    badgeClass: "bg-warning-600",
+    imgSrc: "/images/thumbs/product-two-img4.png",
+    discount: "19%OFF",
+    title: "Instax Mini 12 Instant Film Camera - Green",
+    rating: 4.8,
+    ratingCount: "12K",
+    fulfilledBy: "Marketpro",
+    oldPrice: "$28.99",
+    newPrice: "$14.99",
+    deliveryDate: "Aug 02",
+    href: "/product-details-two",
+  },
+];

@@ -1,0 +1,41 @@
+/* ==== 
+ --------- (3.03) footer styles start ---------
+ ==== */
+
+.footer {
+  margin-block-start: auto;
+
+  &-item-wrapper {
+    gap: clamp(2rem, 0.716rem + 1.714vw, 2.75rem);
+  }
+
+  &-item-two-wrapper {
+    gap: clamp(2rem, -4.209rem + 8.286vw, 5.625rem);
+  }
+
+  &-item {
+    &__logo {
+      margin-block-end: 20px;
+
+      a {
+        img {
+          width: 100%;
+          height: 100%;
+          max-width: 190px;
+          max-height: 64px;
+        }
+      }
+    }
+  }
+}
+
+.body-bottom-bg {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  z-index: -1;
+}
+
+/* ==== 
+ --------- (3.03) footer styles end ---------
+ ==== */

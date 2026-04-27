@@ -1,0 +1,33 @@
+/* ==== 
+ --------- (4.03) trending products styles start ---------
+ ==== */
+
+.trending-products-three {
+  .product-card__thumb {
+    height: 330px;
+  }
+}
+
+.trending-products {
+  &-box {
+    background-color: #f3edde;
+
+    &__title {
+      max-width: 444px;
+      margin: 0 auto;
+    }
+  }
+}
+
+.expand-btn {
+  color: var(--neutral-600);
+}
+
+.expand-icons {
+  display: none;
+  flex-direction: column;
+}
+
+/* ==== 
+ --------- (4.03) trending products styles end ---------
+ ==== */

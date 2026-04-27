@@ -1,0 +1,171 @@
+/* ==== 
+ --------- (3.03) search form styles start ---------
+ ==== */
+
+.search-box {
+  position: fixed;
+  inset: 0px;
+  width: 100%;
+  height: 100%;
+  z-index: 9;
+  background: hsl(var(--black));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  visibility: hidden;
+  opacity: 0;
+  transition: 0.2s linear;
+  transform: scale(0.8);
+  z-index: 9;
+
+  &.active {
+    visibility: visible;
+    opacity: 1;
+    transform: scale(1);
+    animation: searchBoxZoom 0.3s linear;
+  }
+}
+
+.border-half-start::before {
+  position: absolute;
+  content: "";
+  width: 1px;
+  height: 30px;
+  inset-inline-start: 0;
+  top: 50%;
+  background: var(--neutral-40);
+  transform: translateY(-50%);
+}
+
+.js-example-basic-single {
+  width: 100%;
+  max-width: 200px;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: space-between;
+  min-height: unset !important;
+  height: auto;
+  cursor: pointer;
+
+  .multiselect__tags {
+    border: 0px;
+    padding: 0px 48px 0px 24px;
+    min-height: unset;
+    height: auto;
+  }
+
+  .multiselect__placeholder {
+    padding: 0px !important;
+    margin: 0px !important;
+    color: #444444;
+    text-transform: capitalize !important;
+    font-size: 14px !important;
+  }
+
+  .multiselect__input,
+  .multiselect__single {
+    margin: 0px !important;
+    font-size: 14px !important;
+    text-transform: capitalize !important;
+    padding: 0px !important;
+
+    &::placeholder {
+      font-size: 0px !important;
+    }
+  }
+
+  .multiselect__select {
+    width: 16px !important;
+    height: 16px !important;
+    z-index: 99;
+    position: absolute;
+    inset: unset !important;
+    right: 16px !important;
+    top: 33% !important;
+    padding: 0px !important;
+
+    &::before {
+      content: "\e136" !important;
+      font-family: "Phosphor" !important;
+      border: 0px;
+      font-weight: 900;
+      color: #444444;
+      position: absolute;
+      margin-top: unset !important;
+
+      inset: 0px !important;
+    }
+  }
+
+  .multiselect__content-wrapper {
+    top: 100% !important;
+    inset-inline: 0px !important;
+    bottom: unset !important;
+    border-top: 1px solid #e8e8e8 !important;
+
+    .multiselect__option {
+      font-size: 14px;
+
+      &::after {
+        content: none !important;
+      }
+    }
+  }
+}
+
+@media only screen and (max-width: 991px) {
+  .header-cmdc {
+    .js-example-basic-single {
+      padding-block: 8px !important;
+      border-radius: 20px !important;
+      border: 1px solid #e5e7eb !important;
+      max-width: 180px !important;
+
+      .multiselect__select {
+        top: 26% !important;
+        right: 12px !important;
+
+        &::before {
+          font-size: 14px;
+        }
+      }
+
+      .multiselect__tags {
+        padding: 0px 38px 0px 16px;
+      }
+    }
+  }
+}
+
+@media only screen and (max-width: 400px) {
+  .header-cmdc {
+    .header-right {
+      .gap-20 {
+        gap: 8px !important;
+      }
+
+      .text-2xl,
+      .text-xl {
+        font-size: 20px !important;
+      }
+    }
+  }
+}
+
+@keyframes searchBoxZoom {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  100% {
+    visibility: visible;
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ==== 
+ --------- (3.03) search form styles end ---------
+ ==== */

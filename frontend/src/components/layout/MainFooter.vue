@@ -1,56 +1,95 @@
 <template>
-  <footer class="footer py-80 bg-white border-t border-gray-100">
+  <footer class="footer py-120">
     <div class="container container-lg">
-      <div class="footer-item-wrapper flex items-start flex-wrap gap-32">
-        <div class="footer-item flex-1 min-w-[260px]">
-          <div class="footer-item__logo mb-16">
-            <span class="text-3xl fw-bold text-heading flex items-center gap-12">
-              <span class="w-44 h-44 rounded-[50%] bg-main-600 text-white flex items-center justify-center text-2xl">
-                <i class="ph-fill ph-storefront"></i>
-              </span>
-              {{ siteName }}
-            </span>
-          </div>
-          <p class="mb-16 text-gray-600">{{ siteDesc || '专业、安全、便捷的多商户卡密交易平台。' }}</p>
-        </div>
+      <div class="footer-item-wrapper d-flex align-items-start flex-wrap">
 
+        <!-- Brand -->
         <div class="footer-item">
-          <h6 class="footer-item__title">导航</h6>
-          <ul class="footer-menu">
-            <li class="mb-12"><router-link :to="{ name: 'home' }" class="text-gray-600 hover-text-main-600">首页</router-link></li>
-            <li class="mb-12"><router-link :to="{ name: 'shops' }" class="text-gray-600 hover-text-main-600">店铺</router-link></li>
-            <li class="mb-12"><router-link :to="{ name: 'shop-apply' }" class="text-gray-600 hover-text-main-600">入驻申请</router-link></li>
-          </ul>
-        </div>
-
-        <div class="footer-item">
-          <h6 class="footer-item__title">用户</h6>
-          <ul class="footer-menu">
-            <li class="mb-12"><router-link :to="{ name: 'account-orders' }" class="text-gray-600 hover-text-main-600">我的订单</router-link></li>
-            <li class="mb-12"><router-link :to="{ name: 'account-balance' }" class="text-gray-600 hover-text-main-600">我的余额</router-link></li>
-            <li class="mb-12"><router-link :to="{ name: 'account-profile' }" class="text-gray-600 hover-text-main-600">个人资料</router-link></li>
-          </ul>
-        </div>
-
-        <div class="footer-item">
-          <h6 class="footer-item__title">分类</h6>
-          <ul class="footer-menu">
-            <li v-for="c in categories.slice(0, 6)" :key="c.id" class="mb-12">
-              <router-link :to="{ name: 'category', params: { id: c.id } }" class="text-gray-600 hover-text-main-600">
-                {{ c.name }}
+          <div class="max-w-340">
+            <div class="footer-item__logo">
+              <router-link to="/">
+                <span class="text-2xl fw-bold text-main-600">{{ siteName }}</span>
               </router-link>
-            </li>
+            </div>
+            <p class="mb-28 text-heading mt-12">{{ siteDesc || '正版软件 · 游戏充值 · 卡密发货平台' }}</p>
+            <div class="d-flex flex-column gap-8">
+              <a v-if="settings.contact_email"
+                :href="'mailto:' + settings.contact_email"
+                class="text-heading fw-medium hover-text-main-600">
+                <i class="ph-fill ph-envelope me-4"></i>{{ settings.contact_email }}
+              </a>
+              <span v-if="settings.contact_qq" class="text-heading fw-medium">
+                <i class="ph-fill ph-chat-circle-dots me-4"></i>QQ: {{ settings.contact_qq }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Nav -->
+        <div class="footer-item">
+          <h6 class="footer-item__title">快速导航</h6>
+          <ul class="footer-menu">
+            <li class="mb-16"><router-link to="/" class="text-heading hover-text-main-600">首页</router-link></li>
+            <li class="mb-16"><router-link to="/shops" class="text-heading hover-text-main-600">全部商家</router-link></li>
+            <li class="mb-16"><router-link to="/shop-apply" class="text-heading hover-text-main-600">申请开店</router-link></li>
+            <li class="mb-16"><router-link to="/account" class="text-heading hover-text-main-600">我的账户</router-link></li>
           </ul>
         </div>
+
+        <!-- Customer Service -->
+        <div class="footer-item">
+          <h6 class="footer-item__title">客户服务</h6>
+          <ul class="footer-menu">
+            <li class="mb-16"><router-link to="/account/orders" class="text-heading hover-text-main-600">我的订单</router-link></li>
+            <li class="mb-16"><router-link to="/account/balance" class="text-heading hover-text-main-600">账户余额</router-link></li>
+            <li class="mb-16"><router-link to="/contact" class="text-heading hover-text-main-600">联系我们</router-link></li>
+          </ul>
+        </div>
+
+        <!-- Hot Categories -->
+        <div class="footer-item">
+          <h6 class="footer-item__title">热门分类</h6>
+          <ul class="footer-menu">
+            <li v-for="cat in categories.slice(0, 6)" :key="cat.id" class="mb-16">
+              <router-link :to="`/category/${cat.id}`" class="text-heading hover-text-main-600">{{ cat.name }}</router-link>
+            </li>
+            <li v-if="!categories.length" class="mb-16"><span class="text-gray-400">暂无分类</span></li>
+          </ul>
+        </div>
+
+        <!-- QR / Payment -->
+        <div class="footer-item">
+          <h6 class="footer-item__title">移动端访问</h6>
+          <p class="mb-16">扫码访问，便捷购物</p>
+          <div class="my-32">
+            <div class="flex-align gap-8">
+              <div class="bg-white rounded-10 p-1 box-shadow-5xl">
+                <img src="/marketpro/images/thumbs/qr-code.png" alt="QR Code">
+              </div>
+            </div>
+            <div class="mt-24">
+              <img src="/marketpro/images/thumbs/method.png" alt="支付方式">
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </footer>
-  <div class="bottom-footer bg-color-one py-8">
+
+  <div class="bottom-footer py-8">
     <div class="container container-lg">
-      <div class="bottom-footer__inner flex-between flex-wrap gap-16 py-16">
-        <p class="bottom-footer__text">{{ siteName }} &copy; {{ year }} · All Rights Reserved</p>
-        <div class="flex items-center gap-8 flex-wrap">
-          <span class="text-heading text-sm">Powered by NodeLoc</span>
+      <div class="bottom-footer__inner flex-between flex-wrap gap-16 py-16 border-top border-neutral-50">
+        <p class="bottom-footer__text text-heading fw-medium">
+          {{ siteName }} &copy; <span class="text-success-600 fw-semibold">{{ year }}</span> 版权所有
+          <span v-if="settings.footer_text"> {{ settings.footer_text }}</span>
+        </p>
+        <div class="flex-align gap-8 flex-wrap">
+          <ul class="flex-align gap-16">
+            <li><a href="javascript:void(0)" class="w-44 h-44 flex-center bg-white shadow-sm text-main-600 text-xl rounded-circle hover-bg-main-600 hover-text-white"><i class="ph-fill ph-wechat-logo"></i></a></li>
+            <li><a href="javascript:void(0)" class="w-44 h-44 flex-center bg-white shadow-sm text-main-600 text-xl rounded-circle hover-bg-main-600 hover-text-white"><i class="ph-fill ph-chat-circle-dots"></i></a></li>
+            <li><a href="javascript:void(0)" class="w-44 h-44 flex-center bg-white shadow-sm text-main-600 text-xl rounded-circle hover-bg-main-600 hover-text-white"><i class="ph-fill ph-envelope"></i></a></li>
+          </ul>
         </div>
       </div>
     </div>
@@ -62,8 +101,9 @@ import { computed } from 'vue'
 import { useSiteStore } from '@/stores/site'
 
 const site = useSiteStore()
-const siteName = computed(() => site.settings?.site_name || '社区发卡')
-const siteDesc = computed(() => site.settings?.site_description || '')
+const settings = computed(() => site.settings || {})
+const siteName = computed(() => settings.value.site_name || '发卡平台')
+const siteDesc = computed(() => settings.value.site_description || '')
 const categories = computed(() => site.categories || [])
 const year = new Date().getFullYear()
 </script>
