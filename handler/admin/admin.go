@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/nodeloc-faka/database"
 	"github.com/nodeloc-faka/models"
 	"github.com/nodeloc-faka/services"
 )
@@ -18,6 +19,7 @@ type AdminHandler struct {
 	orderService    *services.OrderService
 	userService     *services.UserService
 	settingService  *services.SettingService
+	balanceService  *services.BalanceService
 }
 
 // NewAdminHandler 创建管理员处理器
@@ -29,6 +31,7 @@ func NewAdminHandler() *AdminHandler {
 		orderService:    services.NewOrderService(),
 		userService:     services.NewUserService(),
 		settingService:  services.NewSettingService(),
+		balanceService:  services.NewBalanceService(),
 	}
 }
 
@@ -63,6 +66,7 @@ func (h *AdminHandler) CreateCategory(c *gin.Context) {
 		Name        string `json:"name" binding:"required"`
 		Description string `json:"description"`
 		Icon        string `json:"icon"`
+		Image       string `json:"image"`
 		Sort        int    `json:"sort"`
 		IsActive    bool   `json:"is_active"`
 	}
@@ -75,6 +79,7 @@ func (h *AdminHandler) CreateCategory(c *gin.Context) {
 		Name:        req.Name,
 		Description: req.Description,
 		Icon:        req.Icon,
+		Image:       req.Image,
 		Sort:        req.Sort,
 		IsActive:    req.IsActive,
 	}
@@ -101,6 +106,7 @@ func (h *AdminHandler) UpdateCategory(c *gin.Context) {
 		Name        string `json:"name"`
 		Description string `json:"description"`
 		Icon        string `json:"icon"`
+		Image       string `json:"image"`
 		Sort        *int   `json:"sort"`
 		IsActive    *bool  `json:"is_active"`
 	}
@@ -118,6 +124,7 @@ func (h *AdminHandler) UpdateCategory(c *gin.Context) {
 	if req.Icon != "" {
 		category.Icon = req.Icon
 	}
+	category.Image = req.Image
 	if req.Sort != nil {
 		category.Sort = *req.Sort
 	}
@@ -257,9 +264,7 @@ func (h *AdminHandler) UpdateProduct(c *gin.Context) {
         if req.OrigPrice != nil {
                 product.OrigPrice = *req.OrigPrice
         }
-        if req.Image != "" {
-                product.Image = req.Image
-        }
+        product.Image = req.Image
         if req.Images != nil {
                 if *req.Images == "" {
                         product.Images = "[]"
@@ -444,6 +449,42 @@ func (h *AdminHandler) GetUser(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "用户不存在"})
 		return
 	}
+	c.JSON(http.StatusOK, gin.H{"user": user})
+}
+
+// AdjustUserBalance 管理员调整用户余额
+func (h *AdminHandler) AdjustUserBalance(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 32)
+
+	var req struct {
+		Amount      float64 `json:"amount" binding:"required"`
+		Description string  `json:"description" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误：金额和备注均必填"})
+		return
+	}
+	if req.Amount == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "调整金额不能为 0"})
+		return
+	}
+
+	// 使用数据库事务
+	tx := database.GetDB().Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "开启事务失败"})
+		return
+	}
+
+	err := h.balanceService.AddBalance(tx, uint(id), req.Amount, models.BalanceTxAdminAdjust, req.Description, "admin", 0)
+	if err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	tx.Commit()
+
+	user, _ := h.userService.FindByID(uint(id))
 	c.JSON(http.StatusOK, gin.H{"user": user})
 }
 

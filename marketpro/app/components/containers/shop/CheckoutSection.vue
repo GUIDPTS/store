@@ -150,6 +150,7 @@ async function placeOrder() {
       const res: any = await $fetch("/api/orders/create", {
         method: "POST",
         credentials: "include",
+        signal: AbortSignal.timeout(15000),
         body: {
           product_id: item.id,
           quantity: item.qty,
@@ -174,7 +175,11 @@ async function placeOrder() {
       router.push("/account/orders");
     }
   } catch (e: any) {
-    errorMsg.value = e?.data?.error || "下单失败，请重试";
+    if (e?.name === "TimeoutError" || e?.cause?.name === "TimeoutError") {
+      errorMsg.value = "请求超时，请稍后重试";
+    } else {
+      errorMsg.value = e?.data?.error || "下单失败，请重试";
+    }
   } finally {
     submitting.value = false;
   }

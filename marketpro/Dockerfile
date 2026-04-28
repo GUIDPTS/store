@@ -4,7 +4,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
-RUN npm run build
+RUN npx nuxt prepare
+RUN npx nuxt build
 
 # Runtime stage
 FROM node:20-alpine

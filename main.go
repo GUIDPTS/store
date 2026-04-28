@@ -160,6 +160,7 @@ func main() {
 		adminAPIGroup.GET("/users", adminHandler.GetUsers)
 		adminAPIGroup.GET("/users/:id", adminHandler.GetUser)
 		adminAPIGroup.PUT("/users/:id", adminHandler.UpdateUser)
+		adminAPIGroup.POST("/users/:id/balance", adminHandler.AdjustUserBalance)
 
 		// 系统设置
 		adminAPIGroup.GET("/settings", adminHandler.GetSettings)

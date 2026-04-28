@@ -6,6 +6,14 @@ import (
 	"gorm.io/gorm"
 )
 
+// Session 持久化 session 表
+type Session struct {
+	ID        string    `gorm:"primaryKey;type:varchar(64)" json:"id"`
+	Data      string    `gorm:"type:text" json:"data"`
+	ExpiresAt time.Time `json:"expires_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 // Setting 系统设置
 type Setting struct {
 	ID        uint      `gorm:"primaryKey" json:"id"`
@@ -60,6 +68,7 @@ type Category struct {
 	Name        string    `gorm:"size:100" json:"name"`
 	Description string    `gorm:"type:text" json:"description"`
 	Icon        string    `gorm:"size:50" json:"icon"`
+	Image       string    `gorm:"size:500" json:"image"`
 	Sort        int       `gorm:"default:0" json:"sort"`
 	IsActive    bool      `gorm:"default:true" json:"is_active"`
 	CreatedAt   time.Time `json:"created_at"`
@@ -254,6 +263,7 @@ type ProductReview struct {
 // AutoMigrate 自动迁移数据库
 func AutoMigrate(db *gorm.DB) error {
 	return db.AutoMigrate(
+		&Session{},
 		&Setting{},
 		&Admin{},
 		&User{},

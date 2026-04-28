@@ -45,8 +45,8 @@ WORKDIR /app
 # 从构建阶段复制二进制文件
 COPY --from=builder /app/faka .
 
-# 设置权限
-RUN chown -R appuser:appuser /app
+# 创建 uploads 目录并设置权限
+RUN mkdir -p /app/uploads && chown -R appuser:appuser /app
 
 # 切换到非 root 用户
 USER appuser
@@ -56,7 +56,7 @@ EXPOSE 8080
 
 # 健康检查（使用 wget 检查健康端点）
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
+    CMD wget --no-verbose --tries=1 -O /dev/null http://localhost:8080/api/health || exit 1
 
 # 运行应用
 CMD ["./faka"]

@@ -30,15 +30,17 @@ services:
       timeout: 10s
       retries: 3
   
-  # Frontend
+  # Frontend - Nuxt 4 + MarketPro template
   frontend:
     build:
-      context: ./frontend
+      context: ./marketpro
       dockerfile: Dockerfile
     container_name: nodeloc-faka-frontend
     restart: unless-stopped
+    environment:
+      - BACKEND_URL=http://backend:8080
     ports:
-      - "${PORT:-3000}:80"
+      - "${PORT:-3000}:3000"
     depends_on:
       - backend
     networks:

@@ -275,6 +275,12 @@ func (h *APIHandler) CreateOrder(c *gin.Context) {
 		return
 	}
 
+	// 预检查支付是否已配置，避免创建脏订单
+	if !h.paymentService.IsConfigured() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "NodeLoc 积分支付暂未开启，请使用余额支付"})
+		return
+	}
+
 	// 创建订单（使用 CreatePendingOrder 创建待支付订单）
 	order, err := h.orderService.CreatePendingOrder(u.ID, req.ProductID, req.Quantity, req.Contact, req.Remark)
 	if err != nil {
@@ -295,10 +301,11 @@ func (h *APIHandler) CreateOrder(c *gin.Context) {
 
 	paymentResp, err := h.paymentService.CreatePayment(paymentReq)
 	if err != nil {
-		// 支付接口调用失败，记录日志并返回错误
+		// 支付接口调用失败，取消待支付订单并返回错误
 		fmt.Printf("支付接口调用失败: %v\n", err)
+		h.orderService.Cancel(order.ID)
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Sprintf("支付接口调用失败: %v", err),
+			"error": "支付接口调用失败，请稍后重试或使用余额支付",
 		})
 		return
 	}

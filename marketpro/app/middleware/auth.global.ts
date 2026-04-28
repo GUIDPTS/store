@@ -1,7 +1,9 @@
-// Route guard: protect /account/* routes
-// Note: /admin is served as a static HTML file and handles its own auth via the API
-export default defineNuxtRouteMiddleware(to => {
+export default defineNuxtRouteMiddleware(async to => {
   const auth = useAuthStore();
+
+  if (!auth.initialized) {
+    await auth.fetchUser();
+  }
 
   if (to.path.startsWith("/account")) {
     if (!auth.isAuthenticated) {
@@ -9,6 +11,18 @@ export default defineNuxtRouteMiddleware(to => {
         window.location.href = "/auth/login?redirect=" + encodeURIComponent(to.fullPath);
       }
       return abortNavigation();
+    }
+  }
+
+  if (to.path.startsWith("/admin")) {
+    if (!auth.isAuthenticated) {
+      if (import.meta.client) {
+        window.location.href = "/auth/login?redirect=" + encodeURIComponent(to.fullPath);
+      }
+      return abortNavigation();
+    }
+    if (!auth.isAdmin) {
+      return navigateTo("/");
     }
   }
 });

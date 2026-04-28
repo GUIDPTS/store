@@ -16,17 +16,24 @@ export const useAuthStore = defineStore("auth", () => {
   const isAuthenticated = computed(() => !!user.value);
   const isAdmin = computed(() => user.value?.is_admin === true);
 
+  let _fetchPromise: Promise<void> | null = null;
+
   async function fetchUser() {
+    if (initialized.value) return;
+    if (_fetchPromise) return _fetchPromise;
     loading.value = true;
-    try {
-      const res = await $fetch<{ user: User }>("/api/user/info", { credentials: "include" });
-      user.value = res.user;
-    } catch {
-      user.value = null;
-    } finally {
-      loading.value = false;
-      initialized.value = true;
-    }
+    _fetchPromise = (async () => {
+      try {
+        const res = await $fetch<{ user: User }>("/api/user/info", { credentials: "include" });
+        user.value = res.user;
+      } catch {
+        user.value = null;
+      } finally {
+        loading.value = false;
+        initialized.value = true;
+      }
+    })();
+    return _fetchPromise;
   }
 
   function logout() {

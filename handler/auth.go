@@ -3,6 +3,7 @@ package handler
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -81,6 +82,7 @@ func (h *AuthHandler) Callback(c *gin.Context) {
 	// 交换 token
 	token, err := h.oauthClient.ExchangeToken(c.Request.Context(), code)
 	if err != nil {
+		log.Printf("❌ Token exchange failed: %v", err)
 		c.Redirect(http.StatusTemporaryRedirect, "/?error=token_exchange_failed")
 		return
 	}
@@ -113,7 +115,7 @@ func (h *AuthHandler) Callback(c *gin.Context) {
 	}
 
 	// 保存用户信息到 session
-	session["user"] = user
+	session["user_id"] = user.ID
 	session["token"] = token
 
 	// 获取重定向地址
@@ -131,7 +133,7 @@ func (h *AuthHandler) Callback(c *gin.Context) {
 func (h *AuthHandler) Logout(c *gin.Context) {
 	// 清除 session
 	session := c.MustGet("session").(map[string]interface{})
-	delete(session, "user")
+	delete(session, "user_id")
 	delete(session, "token")
 
 	c.Redirect(http.StatusTemporaryRedirect, "/")

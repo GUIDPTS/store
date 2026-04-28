@@ -30,6 +30,9 @@ func (s *BalanceService) AddBalance(tx *gorm.DB, userID uint, amount float64, tx
 	// 锁定用户行
 	var user models.User
 	if err := tx.Set("gorm:query_option", "FOR UPDATE").First(&user, userID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil // 用户不存在（如店主账号未注册），跳过结算
+		}
 		return err
 	}
 

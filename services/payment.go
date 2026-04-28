@@ -96,7 +96,8 @@ func (s *PaymentService) CreatePayment(req *CreatePaymentRequest) (*CreatePaymen
 		formData.Set(k, v)
 	}
 
-	resp, err := http.PostForm(apiURL, formData)
+	client := &http.Client{Timeout: 8 * time.Second}
+	resp, err := client.PostForm(apiURL, formData)
 	if err != nil {
 		return nil, fmt.Errorf("请求支付API失败: %w", err)
 	}
@@ -215,7 +216,8 @@ func (s *PaymentService) QueryPayment(transactionID string) (*QueryPaymentRespon
 		formData.Set(k, v)
 	}
 
-	resp, err := http.PostForm(apiURL, formData)
+	client := &http.Client{Timeout: 8 * time.Second}
+	resp, err := client.PostForm(apiURL, formData)
 	if err != nil {
 		return nil, fmt.Errorf("请求查询API失败: %w", err)
 	}

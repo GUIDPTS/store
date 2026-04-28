@@ -398,7 +398,6 @@ func (s *OrderService) completeOrderTx(order *models.Order, availableCards []mod
 
 // completeOrderTxWithDB 在指定事务中完成订单
 func (s *OrderService) completeOrderTxWithDB(tx *gorm.DB, order *models.Order, availableCards []models.CardKey) error {
-	productService := NewProductService()
 	cardKeyService := NewCardKeyService()
 	balanceService := NewBalanceService()
 
@@ -421,8 +420,15 @@ func (s *OrderService) completeOrderTxWithDB(tx *gorm.DB, order *models.Order, a
 		UpdateColumn("sales_count", gorm.Expr("sales_count + ?", order.Quantity)).Error; err != nil {
 		return err
 	}
-	// 重新计算库存
-	productService.UpdateStock(order.ProductID)
+	// 重新计算库存（必须在同一事务内，否则新连接会被当前事务的行锁阻塞 50s）
+	var availableCount int64
+	tx.Model(&models.CardKey{}).
+		Where("product_id = ? AND status = ?", order.ProductID, models.CardKeyStatusAvailable).
+		Count(&availableCount)
+	if err := tx.Model(&models.Product{}).Where("id = ?", order.ProductID).
+		Update("stock_count", availableCount).Error; err != nil {
+		return err
+	}
 
 	// 店主结算
 	if order.ShopID > 0 {

@@ -3,45 +3,50 @@ package middleware
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"net/http"
-	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/nodeloc-faka/database"
 	"github.com/nodeloc-faka/models"
 	"github.com/nodeloc-faka/services"
 )
 
-// SessionStore 简单的内存 session 存储
-type SessionStore struct {
-	sessions map[string]map[string]interface{}
-	mu       sync.RWMutex
-}
+// SessionStore 数据库持久化 session 存储
+type SessionStore struct{}
 
-// NewSessionStore 创建新的 session 存储
+// NewSessionStore 创建 session 存储
 func NewSessionStore() *SessionStore {
-	return &SessionStore{
-		sessions: make(map[string]map[string]interface{}),
-	}
+	return &SessionStore{}
 }
 
-// Get 获取 session
+// Get 从数据库获取 session
 func (s *SessionStore) Get(sessionID string) map[string]interface{} {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	session, exists := s.sessions[sessionID]
-	if !exists {
+	var sess models.Session
+	if err := database.GetDB().First(&sess, "id = ? AND expires_at > ?", sessionID, time.Now()).Error; err != nil {
 		return make(map[string]interface{})
 	}
-	return session
+	var data map[string]interface{}
+	if err := json.Unmarshal([]byte(sess.Data), &data); err != nil {
+		return make(map[string]interface{})
+	}
+	return data
 }
 
-// Set 设置 session
+// Set 保存 session 到数据库
 func (s *SessionStore) Set(sessionID string, data map[string]interface{}) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.sessions[sessionID] = data
+	b, err := json.Marshal(data)
+	if err != nil {
+		return
+	}
+	sess := models.Session{
+		ID:        sessionID,
+		Data:      string(b),
+		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
+		UpdatedAt: time.Now(),
+	}
+	database.GetDB().Save(&sess)
 }
 
 // SessionMiddleware Session 中间件
@@ -60,10 +65,20 @@ func SessionMiddleware(store *SessionStore) gin.HandlerFunc {
 		c.Set("session", session)
 		c.Set("session_id", sessionID)
 
-		// 如果 session 中有用户信息，设置到 context
-		if userInterface, exists := session["user"]; exists {
-			if user, ok := userInterface.(*models.User); ok {
-				c.Set("user", user)
+		// 如果 session 中有 user_id，从数据库加载用户
+		if rawID, exists := session["user_id"]; exists && rawID != nil {
+			var userID uint
+			switch v := rawID.(type) {
+			case float64:
+				userID = uint(v)
+			case uint:
+				userID = v
+			}
+			if userID > 0 {
+				var user models.User
+				if err := database.GetDB().First(&user, userID).Error; err == nil {
+					c.Set("user", &user)
+				}
 			}
 		}
 
