@@ -11,12 +11,66 @@
             <div v-if="loading" class="text-center py-48 text-gray-400">加载中...</div>
 
             <!-- No shop -->
-            <div v-else-if="!shop" class="border border-gray-100 rounded-8 p-48 text-center">
-              <i class="ph ph-storefront text-gray-300" style="font-size: 4rem"></i>
-              <h6 class="mt-16 mb-8 text-gray-600">您还没有店铺</h6>
-              <NuxtLink to="/become-seller" class="btn btn-main mt-16 px-40 rounded-8"
-                >申请开店</NuxtLink
+            <div v-else-if="!shop">
+              <!-- Pending review state -->
+              <div
+                v-if="applySuccess"
+                class="border border-gray-100 rounded-8 p-48 text-center"
               >
+                <i class="ph ph-clock text-warning-600" style="font-size: 4rem"></i>
+                <h6 class="mt-16 mb-8 text-gray-600">申请已提交，等待审核</h6>
+                <p class="text-gray-400 text-sm">管理员审核通过后，您即可开始运营店铺。</p>
+              </div>
+
+              <!-- Apply form -->
+              <div v-else class="border border-gray-100 rounded-8 p-32">
+                <h5 class="mb-24 fw-semibold">申请开店</h5>
+                <form @submit.prevent="applyShop">
+                  <div class="row gy-3">
+                    <div class="col-12">
+                      <label class="form-label fw-medium">店铺名称 <span class="text-danger-600">*</span></label>
+                      <input
+                        v-model="applyName"
+                        type="text"
+                        class="form-control py-12 px-16 border border-gray-200 rounded-8"
+                        placeholder="请输入店铺名称"
+                        required
+                      />
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label fw-medium">联系方式</label>
+                      <input
+                        v-model="applyContact"
+                        type="text"
+                        class="form-control py-12 px-16 border border-gray-200 rounded-8"
+                        placeholder="QQ / 微信 / 邮箱等"
+                      />
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label fw-medium">店铺简介</label>
+                      <textarea
+                        v-model="applyDescription"
+                        class="form-control py-12 px-16 border border-gray-200 rounded-8"
+                        rows="3"
+                        placeholder="简单介绍一下您的店铺"
+                      ></textarea>
+                    </div>
+                    <div class="col-12">
+                      <div
+                        v-if="applyError"
+                        class="mb-8 text-sm text-danger-600"
+                      >{{ applyError }}</div>
+                      <button
+                        type="submit"
+                        class="btn btn-main px-40 rounded-8"
+                        :disabled="applying"
+                      >
+                        {{ applying ? "提交中..." : "提交申请" }}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
             </div>
 
             <!-- Shop info -->
@@ -136,6 +190,14 @@ const editName = ref("");
 const editContact = ref("");
 const editDescription = ref("");
 
+// Apply form
+const applyName = ref("");
+const applyContact = ref("");
+const applyDescription = ref("");
+const applying = ref(false);
+const applyError = ref("");
+const applySuccess = ref(false);
+
 onMounted(async () => {
   try {
     shop.value = await $fetch<any>("/api/shop/me", { credentials: "include" });
@@ -173,6 +235,27 @@ async function saveShop() {
     saveOk.value = false;
   } finally {
     saving.value = false;
+  }
+}
+
+async function applyShop() {
+  applying.value = true;
+  applyError.value = "";
+  try {
+    await $fetch("/api/shop/apply", {
+      method: "POST",
+      credentials: "include",
+      body: {
+        name: applyName.value,
+        contact: applyContact.value,
+        description: applyDescription.value,
+      },
+    });
+    applySuccess.value = true;
+  } catch (e: any) {
+    applyError.value = e?.data?.error || "提交失败，请稍后重试";
+  } finally {
+    applying.value = false;
   }
 }
 </script>

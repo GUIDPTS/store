@@ -16,8 +16,24 @@
         <p class="text-white my-20">
           More than half the units sold in our stores from independent sellers.
         </p>
-        <NuxtLink to="/account" class="btn btn-main-two rounded-8">Create An Account</NuxtLink>
+        <NuxtLink
+          v-if="isAuthenticated"
+          to="/account/shop"
+          class="btn btn-main-two rounded-8"
+        >Open My Store</NuxtLink>
+        <a
+          v-else
+          href="/auth/login?redirect=/account/shop"
+          class="btn btn-main-two rounded-8"
+        >Create Account</a>
       </div>
     </div>
   </section>
 </template>
+
+<script setup lang="ts">
+import { useAuthStore } from "~/stores/auth";
+
+const authStore = useAuthStore();
+const { isAuthenticated } = storeToRefs(authStore);
+</script>
