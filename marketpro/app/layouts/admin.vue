@@ -49,6 +49,10 @@
             <el-icon><Wallet /></el-icon>
             <template #title>提现审核</template>
           </el-menu-item>
+          <el-menu-item index="/admin/blog">
+            <el-icon><Document /></el-icon>
+            <template #title>博客管理</template>
+          </el-menu-item>
           <el-menu-item index="/admin/settings">
             <el-icon><Setting /></el-icon>
             <template #title>系统设置</template>
@@ -91,7 +95,7 @@ const activeMenu = computed(() => {
   const subs = [
     "/admin/categories", "/admin/products", "/admin/card-keys",
     "/admin/orders", "/admin/users", "/admin/shops",
-    "/admin/withdrawals", "/admin/settings",
+    "/admin/withdrawals", "/admin/blog", "/admin/settings",
   ];
   return subs.find(s => p.startsWith(s)) ?? "/admin";
 });

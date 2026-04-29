@@ -49,9 +49,9 @@
           :navigation="{ nextEl: nextEl, prevEl: prevEl }"
           :breakpoints="breakpoints"
         >
-          <SwiperSlide v-for="brand in shopBrands" :key="brand.id">
+          <SwiperSlide v-for="shop in displayShops" :key="shop.id">
             <div class="brand-item">
-              <img :src="brand.src" :alt="brand.alt" />
+              <img :src="shop.logo || '/images/thumbs/brand-img1.png'" :alt="shop.name" />
             </div>
           </SwiperSlide>
         </Swiper>
@@ -64,12 +64,17 @@
 import { ref } from "vue";
 import { Swiper, SwiperSlide } from "swiper/vue";
 import { Autoplay, Navigation } from "swiper/modules";
-import { shopBrands } from "~/data/shop-brands";
+import { useHomeData } from "~/composables/useHomeData";
 
 const prevEl = ref<HTMLElement | null>(null);
 const nextEl = ref<HTMLElement | null>(null);
 
 const isRtl = typeof document !== "undefined" && document.documentElement.dir === "rtl";
+
+const { shops, fetchAll } = useHomeData();
+const displayShops = computed(() => shops.value.filter(s => s.logo).slice(0, 12));
+
+onMounted(() => fetchAll());
 
 const breakpoints = {
   0: { slidesPerView: 2 },

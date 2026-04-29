@@ -73,7 +73,8 @@ type Category struct {
 	IsActive    bool      `gorm:"default:true" json:"is_active"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
-	Products    []Product `gorm:"foreignKey:CategoryID" json:"products,omitempty"`
+	Products     []Product `gorm:"foreignKey:CategoryID" json:"products,omitempty"`
+	ProductCount int       `gorm:"-"                    json:"product_count"`
 }
 
 // Product 商品
@@ -89,13 +90,44 @@ type Product struct {
 	OrigPrice   float64   `json:"orig_price"`
 	Image       string    `gorm:"size:500" json:"image"`
 	Images      string    `gorm:"type:varchar(2000)" json:"images"` // JSON array of image URLs
-	StockCount  int       `gorm:"default:0" json:"stock_count"`
-	SalesCount  int       `gorm:"default:0" json:"sales_count"`
-	Sort        int       `gorm:"default:0" json:"sort"`
-	IsActive    bool      `gorm:"default:true" json:"is_active"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
-	CardKeys    []CardKey `gorm:"foreignKey:ProductID" json:"card_keys,omitempty"`
+	StockCount  int        `gorm:"default:0" json:"stock_count"`
+	SalesCount  int        `gorm:"default:0" json:"sales_count"`
+	Sort        int        `gorm:"default:0" json:"sort"`
+	IsActive    bool       `gorm:"default:true" json:"is_active"`
+	// 限时促销
+	PromoPrice  float64    `gorm:"default:0" json:"promo_price"`   // 0 = 无促销
+	PromoStart  *time.Time `json:"promo_start"`
+	PromoEnd    *time.Time `json:"promo_end"`
+	// 计算字段，不入库
+	IsPromoActive  bool    `gorm:"-" json:"is_promo_active"`
+	EffectivePrice float64 `gorm:"-" json:"effective_price"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+	CardKeys    []CardKey  `gorm:"foreignKey:ProductID" json:"card_keys,omitempty"`
+}
+
+// GetEffectivePrice 返回当前有效价格（促销期内返回促销价）
+func (p *Product) GetEffectivePrice() float64 {
+	now := time.Now()
+	if p.PromoPrice > 0 &&
+		(p.PromoStart == nil || !now.Before(*p.PromoStart)) &&
+		(p.PromoEnd == nil || now.Before(*p.PromoEnd)) {
+		return p.PromoPrice
+	}
+	return p.Price
+}
+
+// ComputePromo 填充 IsPromoActive 和 EffectivePrice
+func (p *Product) ComputePromo() {
+	now := time.Now()
+	p.IsPromoActive = p.PromoPrice > 0 &&
+		(p.PromoStart == nil || !now.Before(*p.PromoStart)) &&
+		(p.PromoEnd == nil || now.Before(*p.PromoEnd))
+	if p.IsPromoActive {
+		p.EffectivePrice = p.PromoPrice
+	} else {
+		p.EffectivePrice = p.Price
+	}
 }
 
 // CardKey 卡密
@@ -260,6 +292,22 @@ type ProductReview struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+// BlogPost 博客文章
+type BlogPost struct {
+	ID          uint       `gorm:"primaryKey" json:"id"`
+	Title       string     `gorm:"size:200;not null" json:"title"`
+	Slug        string     `gorm:"uniqueIndex;size:200" json:"slug"`
+	Category    string     `gorm:"size:100;index" json:"category"`
+	CoverImage  string     `gorm:"size:500" json:"cover_image"`
+	Excerpt     string     `gorm:"type:text" json:"excerpt"`
+	Content     string     `gorm:"type:longtext" json:"content"`
+	IsPublished bool       `gorm:"default:false;index" json:"is_published"`
+	Views       int        `gorm:"default:0" json:"views"`
+	PublishedAt *time.Time `json:"published_at"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+}
+
 // AutoMigrate 自动迁移数据库
 func AutoMigrate(db *gorm.DB) error {
 	return db.AutoMigrate(
@@ -275,5 +323,6 @@ func AutoMigrate(db *gorm.DB) error {
 		&WithdrawalRequest{},
 		&BalanceTx{},
 		&ProductReview{},
+		&BlogPost{},
 	)
 }

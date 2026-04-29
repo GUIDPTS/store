@@ -17,8 +17,20 @@
         <el-table-column prop="name" label="名称" show-overflow-tooltip />
         <el-table-column label="价格" width="140">
           <template #default="{ row }">
-            <span style="color:#e6162d;font-weight:600">¥{{ row.price }}</span>
-            <span v-if="row.orig_price" style="color:#86909c;text-decoration:line-through;font-size:12px;margin-left:4px">¥{{ row.orig_price }}</span>
+            <div>
+              <span v-if="row.is_promo_active" style="color:#e6162d;font-weight:600">¥{{ row.promo_price }}</span>
+              <span v-else style="color:#e6162d;font-weight:600">¥{{ row.price }}</span>
+              <span v-if="row.orig_price || row.is_promo_active" style="color:#86909c;text-decoration:line-through;font-size:12px;margin-left:4px">
+                ¥{{ row.is_promo_active ? row.price : row.orig_price }}
+              </span>
+            </div>
+            <el-tag v-if="row.is_promo_active" type="danger" size="small" style="margin-top:2px">限时促销</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="库存/已售" width="110">
+          <template #default="{ row }">
+            <span>{{ row.stock_count }}</span>
+            <span style="color:#86909c;font-size:12px"> / {{ row.sales_count }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="sort" label="排序" width="70" />
@@ -51,8 +63,8 @@
       </div>
     </el-card>
 
-    <el-dialog v-model="dialogVisible" :title="editingId ? '编辑商品' : '新增商品'" width="640px">
-      <el-form :model="form" label-width="90px">
+    <el-dialog v-model="dialogVisible" :title="editingId ? '编辑商品' : '新增商品'" width="820px">
+      <el-form :model="form" label-width="80px">
         <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="商品名称" required>
@@ -70,20 +82,55 @@
         <el-form-item label="描述">
           <el-input v-model="form.description" type="textarea" :rows="3" />
         </el-form-item>
+
+        <!-- 价格行：两列，每列更宽 -->
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="售价" required>
+              <el-input-number v-model="form.price" :min="0" :precision="2" style="width:100%" controls-position="right" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="原价">
+              <el-input-number v-model="form.orig_price" :min="0" :precision="2" style="width:100%" controls-position="right" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <!-- 库存 / 已售 / 排序 -->
         <el-row :gutter="16">
           <el-col :span="8">
-            <el-form-item label="售价" required>
-              <el-input-number v-model="form.price" :min="0" :precision="2" style="width:100%" />
+            <el-form-item label="库存数量">
+              <el-input-number v-model="form.stock_count" :min="0" style="width:100%" controls-position="right" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="原价">
-              <el-input-number v-model="form.orig_price" :min="0" :precision="2" style="width:100%" />
+            <el-form-item label="已售">
+              <el-input :model-value="form.sales_count" disabled style="width:100%" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="排序">
-              <el-input-number v-model="form.sort" style="width:100%" />
+              <el-input-number v-model="form.sort" style="width:100%" controls-position="right" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-divider content-position="left" style="margin:8px 0">限时促销</el-divider>
+        <el-row :gutter="16">
+          <el-col :span="8">
+            <el-form-item label="促销价">
+              <el-input-number v-model="form.promo_price" :min="0" :precision="2" style="width:100%" controls-position="right" placeholder="0=不启用" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="开始时间">
+              <el-date-picker v-model="form.promo_start" type="datetime" style="width:100%" placeholder="留空立即生效" value-format="YYYY-MM-DDTHH:mm:ss" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="结束时间">
+              <el-date-picker v-model="form.promo_end" type="datetime" style="width:100%" placeholder="留空永久有效" value-format="YYYY-MM-DDTHH:mm:ss" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -173,8 +220,13 @@ const defaultForm = () => ({
   orig_price: 0,
   image: "",
   images: "[]",
+  stock_count: 0,
+  sales_count: 0,
   sort: 0,
   is_active: true,
+  promo_price: 0,
+  promo_start: null as string | null,
+  promo_end: null as string | null,
 });
 const form = ref(defaultForm());
 
@@ -217,8 +269,13 @@ function openEdit(row: any) {
     orig_price: row.orig_price ?? 0,
     image: row.image ?? "",
     images: row.images ?? "[]",
+    stock_count: row.stock_count ?? 0,
+    sales_count: row.sales_count ?? 0,
     sort: row.sort,
     is_active: row.is_active,
+    promo_price: row.promo_price ?? 0,
+    promo_start: row.promo_start ? row.promo_start.slice(0, 19) : null,
+    promo_end: row.promo_end ? row.promo_end.slice(0, 19) : null,
   };
   try {
     imageList.value = JSON.parse(row.images || "[]");

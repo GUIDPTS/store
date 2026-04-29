@@ -10,7 +10,7 @@
         <div class="col-xxl-8">
           <div class="row gy-4">
             <div
-              v-for="(product, idx) in bestSells"
+              v-for="(product, idx) in bestSellsData"
               :key="product.id"
               class="col-md-6"
               :data-aos="'fade-up'"
@@ -56,14 +56,17 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
 import BestCard from "~/components/widgets/shop/BestCard.vue";
-import { bestSells } from "~/data/best-sells";
 import { initializeCountdown } from "@/utils/countdown";
 import { useHomeConfig } from "~/composables/useHomeConfig";
+import { useHomeData, toBestSell } from "~/composables/useHomeData";
 
 const { bestsellCTA } = useHomeConfig();
+const { topProducts, fetchAll } = useHomeData();
+const bestSellsData = computed(() => topProducts.value.slice(0, 6).map(toBestSell));
 
-onMounted(() => {
-  bestSells.forEach(p => {
+onMounted(async () => {
+  await fetchAll();
+  bestSellsData.value.forEach(p => {
     initializeCountdown(`countdown-${p.id}`, p.countdownTarget, () => {});
   });
 });

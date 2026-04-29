@@ -30,18 +30,18 @@
           :breakpoints="swiperBreakpoints"
           class="feature-item-wrapper"
         >
-          <SwiperSlide v-for="(item, idx) in featureItems" :key="idx">
+          <SwiperSlide v-for="cat in displayCategories" :key="cat.id">
             <div class="feature-item text-center">
               <div class="feature-item__thumb rounded-circle">
-                <NuxtLink :to="item.link" class="w-100 h-100 flex-center">
-                  <NuxtImg :src="item.thumb" :alt="item.name" />
+                <NuxtLink :to="`/category/${cat.id}`" class="w-100 h-100 flex-center">
+                  <NuxtImg :src="cat.image || cat.icon || '/images/thumbs/feature-img1.png'" :alt="cat.name" />
                 </NuxtLink>
               </div>
               <div class="feature-item__content mt-16">
                 <h6 class="text-lg mb-8">
-                  <NuxtLink :to="item.link" class="text-inherit">{{ item.name }}</NuxtLink>
+                  <NuxtLink :to="`/category/${cat.id}`" class="text-inherit">{{ cat.name }}</NuxtLink>
                 </h6>
-                <span class="text-sm text-gray-400">{{ item.productCount }}+ Products</span>
+                <span class="text-sm text-gray-400">{{ cat.product_count ?? cat.products?.length ?? 0 }}+ 商品</span>
               </div>
             </div>
           </SwiperSlide>
@@ -59,11 +59,19 @@ import { Autoplay, Navigation } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 
-import { featureItems } from "~/data/features";
+import { useHomeData } from "~/composables/useHomeData";
 
 const prevEl = ref<HTMLElement | null>(null);
 const nextEl = ref<HTMLElement | null>(null);
 const isRtl = ref(false);
+
+const { categories, fetchAll } = useHomeData();
+const displayCategories = computed(() => categories.value.filter(c => c).slice(0, 12));
+
+onMounted(async () => {
+  isRtl.value = document.documentElement.dir === "rtl";
+  await fetchAll();
+});
 
 const slidesPerView = 1;
 
@@ -78,7 +86,4 @@ const swiperBreakpoints = {
   359: { slidesPerView: 1 },
 };
 
-onMounted(() => {
-  isRtl.value = document.documentElement.dir === "rtl";
-});
 </script>

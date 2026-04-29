@@ -119,15 +119,30 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import type { Tab } from "~/data/recommented-two";
-import { recommendedTabs } from "~/data/recommented-two";
+import { ref, computed, onMounted } from "vue";
+import { useHomeData, toRecommended } from "~/composables/useHomeData";
 
-const activeTab = ref<string>(recommendedTabs[0]?.id ?? "");
+const { categories, fetchAll } = useHomeData();
 
-const activeTabContent = computed<Tab | undefined>(() =>
-  recommendedTabs.find(tab => tab.id === activeTab.value)
+const recommendedTabs = computed(() =>
+  categories.value.slice(0, 6).map(cat => ({
+    id: String(cat.id),
+    label: cat.name,
+    products: (cat.products ?? []).slice(0, 8).map(toRecommended),
+  }))
 );
+
+const activeTab = ref<string>("");
+
+watch(recommendedTabs, tabs => {
+  if (!activeTab.value && tabs.length) activeTab.value = tabs[0].id;
+}, { immediate: true });
+
+const activeTabContent = computed(() =>
+  recommendedTabs.value.find(tab => tab.id === activeTab.value)
+);
+
+onMounted(() => fetchAll());
 
 const wishlistedProductIds = ref<Set<number>>(new Set());
 

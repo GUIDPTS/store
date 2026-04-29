@@ -84,6 +84,9 @@ func (h *APIHandler) GetProducts(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取商品失败"})
 		return
 	}
+	for i := range products {
+		products[i].ComputePromo()
+	}
 
 	totalPages := (total + int64(pageSize) - 1) / int64(pageSize)
 	c.JSON(http.StatusOK, gin.H{
@@ -103,6 +106,7 @@ func (h *APIHandler) GetProduct(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "商品不存在"})
 		return
 	}
+	product.ComputePromo()
 	c.JSON(http.StatusOK, product)
 }
 

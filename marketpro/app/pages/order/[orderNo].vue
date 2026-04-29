@@ -31,7 +31,7 @@
               </div>
               <div class="col-sm-6 col-md-4">
                 <div class="text-gray-500 text-sm mb-4">商品名称</div>
-                <div>{{ order.product_name || "-" }}</div>
+                <div>{{ order.product?.name || "-" }}</div>
               </div>
               <div class="col-sm-6 col-md-4">
                 <div class="text-gray-500 text-sm mb-4">数量</div>
@@ -59,26 +59,40 @@
             v-if="order.card_keys && order.card_keys.length > 0"
             class="border border-success-100 bg-success-50 rounded-8 p-32"
           >
-            <h6 class="text-success-600 mb-16"><i class="ph-fill ph-key me-8"></i>卡密信息</h6>
+            <h6 class="text-success-600 mb-16">
+              <i class="ph-fill ph-key me-8"></i>卡密信息
+              <span class="text-sm fw-normal text-gray-500 ms-8">共 {{ order.card_keys.length }} 张</span>
+            </h6>
             <div
               v-for="(key, i) in order.card_keys"
               :key="i"
-              class="bg-white border border-success-200 rounded-8 px-20 py-12 mb-8 d-flex justify-content-between align-items-center"
+              class="bg-white border border-success-200 rounded-8 px-20 py-16 mb-8"
             >
-              <code class="text-gray-900 fw-semibold">{{ key }}</code>
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-main rounded-8"
-                @click="copy(key)"
-              >
-                复制
-              </button>
+              <div class="d-flex justify-content-between align-items-start gap-12">
+                <div class="flex-1 min-w-0">
+                  <div class="mb-6">
+                    <span class="text-gray-500 text-xs me-8">卡号</span>
+                    <code class="text-gray-900 fw-semibold">{{ key.card_no }}</code>
+                  </div>
+                  <div v-if="key.card_pwd">
+                    <span class="text-gray-500 text-xs me-8">卡密</span>
+                    <code class="text-gray-900 fw-semibold">{{ key.card_pwd }}</code>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-main rounded-8 flex-shrink-0"
+                  @click="copy(key.card_pwd ? `${key.card_no}:${key.card_pwd}` : key.card_no)"
+                >
+                  复制
+                </button>
+              </div>
             </div>
           </div>
 
           <!-- Pending payment -->
           <div
-            v-if="order.status === 'pending' && order.payment_url"
+            v-if="order.status === 0 && order.payment_url"
             class="border border-warning-100 rounded-8 p-24 mt-16 text-center"
           >
             <p class="text-warning-600 mb-16">订单待支付</p>
@@ -116,26 +130,24 @@ function formatDate(d: string) {
   return new Date(d).toLocaleString("zh-CN");
 }
 
-function statusLabel(s: string) {
-  const map: Record<string, string> = {
-    pending: "待支付",
-    paid: "已支付",
-    completed: "已完成",
-    cancelled: "已取消",
-    failed: "失败",
+function statusLabel(s: number) {
+  const map: Record<number, string> = {
+    0: "待支付",
+    1: "已支付",
+    2: "已完成",
+    3: "已取消",
   };
-  return map[s] || s;
+  return map[s] ?? String(s);
 }
 
-function statusClass(s: string) {
-  const map: Record<string, string> = {
-    pending: "bg-warning-100 text-warning-600",
-    paid: "bg-success-100 text-success-600",
-    completed: "bg-main-100 text-main-600",
-    cancelled: "bg-danger-100 text-danger-600",
-    failed: "bg-neutral-100 text-neutral-600",
+function statusClass(s: number) {
+  const map: Record<number, string> = {
+    0: "bg-warning-100 text-warning-600",
+    1: "bg-success-100 text-success-600",
+    2: "bg-main-100 text-main-600",
+    3: "bg-danger-100 text-danger-600",
   };
-  return map[s] || "bg-neutral-100 text-neutral-600";
+  return map[s] ?? "bg-neutral-100 text-neutral-600";
 }
 
 function copy(text: string) {

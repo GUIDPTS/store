@@ -63,6 +63,7 @@ func (s *CategoryService) GetActive() ([]models.Category, error) {
 }
 
 // GetWithProducts 获取分类及其商品（仅来自已批准店铺的上架商品）
+// ProductCount 字段统计所有上架商品（不限店铺状态），用于前端展示真实数量
 func (s *CategoryService) GetWithProducts() ([]models.Category, error) {
 	var categories []models.Category
 	db := database.GetDB()
@@ -78,6 +79,27 @@ func (s *CategoryService) GetWithProducts() ([]models.Category, error) {
 		Find(&categories).Error; err != nil {
 		return nil, err
 	}
+
+	// 批量查询各分类的实际上架商品总数（不过滤店铺状态）
+	type countRow struct {
+		CategoryID uint
+		Total      int
+	}
+	var rows []countRow
+	db.Model(&models.Product{}).
+		Select("category_id, COUNT(*) as total").
+		Where("is_active = ?", true).
+		Group("category_id").
+		Scan(&rows)
+
+	countMap := make(map[uint]int, len(rows))
+	for _, r := range rows {
+		countMap[r.CategoryID] = r.Total
+	}
+	for i := range categories {
+		categories[i].ProductCount = countMap[categories[i].ID]
+	}
+
 	return categories, nil
 }
 

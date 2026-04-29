@@ -10,6 +10,12 @@ export default defineNuxtConfig({
   ],
   modules: ["@nuxt/eslint", "@nuxt/image", "@nuxt/scripts", "nuxt-aos", "@pinia/nuxt"],
 
+  image: {
+    // Images under /uploads/ are served by the Go backend (proxied via Nitro route rules).
+    // IPX's filesystem storage can't find them; using 'none' passes URLs through as-is.
+    provider: "none",
+  },
+
   nitro: {
     routeRules: {
       "/api/**": { proxy: `${process.env.BACKEND_URL || "http://backend:8080"}/api/**` },

@@ -195,7 +195,7 @@ func (s *OrderService) CreatePendingOrder(userID, productID uint, quantity int, 
 		ProductID:   productID,
 		ShopID:      product.ShopID,
 		Quantity:    quantity,
-		TotalAmount: product.Price * float64(quantity),
+		TotalAmount: product.GetEffectivePrice() * float64(quantity),
 		Status:      models.OrderStatusPending,
 		PayMethod:   models.PayMethodNodeLoc,
 		Contact:     contact,
@@ -308,7 +308,7 @@ func (s *OrderService) CreateAndProcess(userID, productID uint, quantity int, co
 		ProductID:   productID,
 		ShopID:      product.ShopID,
 		Quantity:    quantity,
-		TotalAmount: product.Price * float64(quantity),
+		TotalAmount: product.GetEffectivePrice() * float64(quantity),
 		Status:      models.OrderStatusCompleted,
 		PayMethod:   models.PayMethodFree,
 		Contact:     contact,
@@ -345,7 +345,7 @@ func (s *OrderService) CreateAndProcessByBalance(userID, productID uint, quantit
 		return nil, ErrInsufficientStock
 	}
 
-	totalAmount := product.Price * float64(quantity)
+	totalAmount := product.GetEffectivePrice() * float64(quantity)
 	balanceService := NewBalanceService()
 
 	now := time.Now()

@@ -4,14 +4,14 @@
     data-aos="fade-up"
     data-aos-duration="800"
   >
-    <h6 class="text-xl mb-32 pb-32 border-bottom border-gray-100">Search Here</h6>
+    <h6 class="text-xl mb-32 pb-32 border-bottom border-gray-100">搜索文章</h6>
     <form novalidate @submit.prevent="handleSubmit">
       <div class="input-group">
         <input
           v-model.trim="searchQuery"
           type="text"
           class="form-control common-input bg-color-three"
-          placeholder="Searching..."
+          placeholder="输入关键词..."
           :aria-invalid="!!error"
           :aria-describedby="error ? 'search-error' : undefined"
         />
@@ -49,7 +49,7 @@ const router = useRouter();
 
 function handleSubmit() {
   if (validateSearch(searchQuery.value)) {
-    router.push({ path: "/search", query: { q: searchQuery.value } });
+    router.push({ path: "/blog", query: { q: searchQuery.value } });
   }
 }
 </script>

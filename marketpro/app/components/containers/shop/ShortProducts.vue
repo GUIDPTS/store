@@ -2,9 +2,9 @@
   <div class="short-product pt-80" data-aos="fade-up" data-aos-duration="600">
     <div class="container container-lg">
       <div class="row gy-4">
-        <ShortCard title="Featured Products" :products="featuredProducts" />
-        <ShortCard title="Top Selling Products" :products="sellingProducts" />
-        <ShortCard title="On-sale Products" :products="sellProducts" />
+        <ShortCard title="最新商品" :products="latestShortProducts" />
+        <ShortCard title="热销商品" :products="topShortProducts" />
+        <ShortCard title="特价商品" :products="saleShortProducts" />
 
         <div class="col-xxl-3 col-lg-4 col-sm-6">
           <div
@@ -118,23 +118,41 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref } from "vue";
+import { onMounted, onBeforeUnmount, ref, computed } from "vue";
 import { initializeCountdown } from "@/utils/countdown";
-import { featuredProducts } from "~/data/featured-two";
-import { sellingProducts } from "~/data/selling-short";
-import { sellProducts } from "~/data/sale-short";
 import ShortCard from "~/components/widgets/shop/ShortCard.vue";
+import { useHomeData } from "~/composables/useHomeData";
 
 const isWishlisted = ref(false);
+const toggleWishlist = () => { isWishlisted.value = !isWishlisted.value; };
 
-const toggleWishlist = () => {
-  isWishlisted.value = !isWishlisted.value;
-};
+const { products: apiProducts, topProducts, fetchAll } = useHomeData();
+
+function toShortProduct(p: ReturnType<typeof apiProducts.value[number]>) {
+  const op = p as any;
+  return {
+    id: op.id,
+    imgSrc: op.image || "/images/thumbs/product-img26.png",
+    imgAlt: op.name,
+    rating: 4.8,
+    ratingCount: op.sales_count || 0,
+    title: op.name,
+    priceCurrent: `¥${Number(op.price).toFixed(2)}`,
+    priceOld: op.orig_price > op.price ? `¥${Number(op.orig_price).toFixed(2)}` : undefined,
+  };
+}
+
+const latestShortProducts = computed(() => apiProducts.value.slice(0, 8).map(toShortProduct));
+const topShortProducts = computed(() => topProducts.value.slice(0, 8).map(toShortProduct));
+const saleShortProducts = computed(() =>
+  apiProducts.value.filter(p => p.orig_price > p.price).slice(0, 8).map(toShortProduct)
+);
 
 const intervalId = ref<ReturnType<typeof setInterval> | null>(null);
 
-onMounted(() => {
-  intervalId.value = initializeCountdown("countdown26", "2025-12-30T23:59:59", () => {});
+onMounted(async () => {
+  await fetchAll();
+  intervalId.value = initializeCountdown("countdown26", "2027-12-30T23:59:59", () => {});
 });
 
 onBeforeUnmount(() => {

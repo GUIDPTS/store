@@ -100,12 +100,15 @@ import { Navigation } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 
-import { flashSaleProducts } from "@/data/flash-sales";
-
-const products = flashSaleProducts;
+import { useHomeData, toFlashSale } from "~/composables/useHomeData";
 
 const prevEl = ref<HTMLElement | null>(null);
 const nextEl = ref<HTMLElement | null>(null);
+
+const { products: apiProducts, fetchAll } = useHomeData();
+const products = computed(() => apiProducts.value.map(toFlashSale));
+
+onMounted(() => fetchAll());
 
 const breakpoints = {
   0: { slidesPerView: 1 },

@@ -105,7 +105,7 @@
             :breakpoints="hotDealsBreakpoints"
             class="hot-deals-slider"
           >
-            <SwiperSlide v-for="(product, index) in hotDeals" :key="index">
+            <SwiperSlide v-for="(product, index) in hotDealsData" :key="index">
               <HotCard :product="product" />
             </SwiperSlide>
           </Swiper>
@@ -123,8 +123,11 @@ import "swiper/css";
 import "swiper/css/navigation";
 
 import HotCard from "~/components/widgets/shop/HotCard.vue";
-import { hotDeals } from "~/data/hot-deals";
 import { initializeCountdown } from "@/utils/countdown";
+import { useHomeData, toHotDeal } from "~/composables/useHomeData";
+
+const { topProducts, fetchAll } = useHomeData();
+const hotDealsData = computed(() => topProducts.value.map(toHotDeal));
 
 const prevHotDeal = ref<HTMLElement | null>(null);
 const nextHotDeal = ref<HTMLElement | null>(null);
@@ -147,6 +150,7 @@ const hotDealsBreakpoints = {
 const countdownInterval = ref<ReturnType<typeof setInterval> | null>(null);
 
 onMounted(async () => {
+  await fetchAll();
   await nextTick();
   countdownInterval.value = initializeCountdown(
     "hot-deal-countdown",

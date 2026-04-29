@@ -77,6 +77,37 @@ func (h *ShopAdminHandler) RejectShop(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
+// UpdateShop 后台编辑店铺信息
+func (h *ShopAdminHandler) UpdateShop(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 32)
+	shop, err := h.shopService.FindByID(uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "店铺不存在"})
+		return
+	}
+	var req struct {
+		Name        string `json:"name"`
+		Description string `json:"description"`
+		Logo        string `json:"logo"`
+		Contact     string `json:"contact"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		return
+	}
+	if req.Name != "" {
+		shop.Name = req.Name
+	}
+	shop.Description = req.Description
+	shop.Logo = req.Logo
+	shop.Contact = req.Contact
+	if err := h.shopService.Update(shop); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新失败"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "shop": shop})
+}
+
 // BlockShop 封禁店铺
 func (h *ShopAdminHandler) BlockShop(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 32)

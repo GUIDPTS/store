@@ -69,6 +69,8 @@ func main() {
 	shopHandler := api.NewShopHandler()
 	shopAdminHandler := admin.NewShopAdminHandler()
 	uploadHandler := handler.NewUploadHandler()
+	blogHandler := api.NewBlogHandler()
+	blogAdminHandler := admin.NewBlogAdminHandler()
 
 	// 设置 Gin
 	router := gin.Default()
@@ -96,6 +98,11 @@ func main() {
 		apiGroup.GET("/health", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"status": "ok"})
 		})
+		// 博客
+		apiGroup.GET("/blog/posts", blogHandler.ListPosts)
+		apiGroup.GET("/blog/posts/:slug", blogHandler.GetPost)
+		apiGroup.GET("/blog/categories", blogHandler.GetCategories)
+		apiGroup.GET("/blog/recent", blogHandler.RecentPosts)
 	}
 
 	// 需要认证的 API
@@ -171,11 +178,18 @@ func main() {
 		adminAPIGroup.POST("/shops/:id/approve", shopAdminHandler.ApproveShop)
 		adminAPIGroup.POST("/shops/:id/reject", shopAdminHandler.RejectShop)
 		adminAPIGroup.POST("/shops/:id/block", shopAdminHandler.BlockShop)
+		adminAPIGroup.PUT("/shops/:id", shopAdminHandler.UpdateShop)
 
 		// 提现审核
 		adminAPIGroup.GET("/withdrawals", shopAdminHandler.ListWithdrawals)
 		adminAPIGroup.POST("/withdrawals/:id/approve", shopAdminHandler.ApproveWithdrawal)
 		adminAPIGroup.POST("/withdrawals/:id/reject", shopAdminHandler.RejectWithdrawal)
+
+		// 博客管理
+		adminAPIGroup.GET("/blog/posts", blogAdminHandler.List)
+		adminAPIGroup.POST("/blog/posts", blogAdminHandler.Create)
+		adminAPIGroup.PUT("/blog/posts/:id", blogAdminHandler.Update)
+		adminAPIGroup.DELETE("/blog/posts/:id", blogAdminHandler.Delete)
 	}
 
 	// ========================================

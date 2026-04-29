@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nodeloc-faka/database"
@@ -187,42 +188,48 @@ func (h *AdminHandler) GetProduct(c *gin.Context) {
 // CreateProduct 创建商品
 func (h *AdminHandler) CreateProduct(c *gin.Context) {
 	var req struct {
-		CategoryID  uint    `json:"category_id" binding:"required"`
-		Name        string  `json:"name" binding:"required"`
-		Description string  `json:"description"`
-		Price       float64 `json:"price" binding:"required"`
-		OrigPrice   float64 `json:"orig_price"`
-		Image       string  `json:"image"`
-                Images      string  `json:"images"`
-                Sort        int     `json:"sort"`
-                IsActive    bool    `json:"is_active"`
-        }
-        if err := c.ShouldBindJSON(&req); err != nil {
-                c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
-                return
-        }
-
-        if req.Images == "" {
-                req.Images = "[]"
-        }
-
-        product := &models.Product{
-                CategoryID:  req.CategoryID,
-                Name:        req.Name,
-                Description: req.Description,
-                Price:       req.Price,
-                OrigPrice:   req.OrigPrice,
-                Image:       req.Image,
-                Images:      req.Images,
-                Sort:        req.Sort,
-                IsActive:    req.IsActive,
-        }
-        if err := h.productService.Create(product); err != nil {
-                c.JSON(http.StatusInternalServerError, gin.H{"error": "创建商品失败"})
-                return
-        }
-
-        c.JSON(http.StatusOK, gin.H{"product": product})
+		CategoryID  uint       `json:"category_id" binding:"required"`
+		Name        string     `json:"name" binding:"required"`
+		Description string     `json:"description"`
+		Price       float64    `json:"price" binding:"required"`
+		OrigPrice   float64    `json:"orig_price"`
+		Image       string     `json:"image"`
+		Images      string     `json:"images"`
+		StockCount  int        `json:"stock_count"`
+		Sort        int        `json:"sort"`
+		IsActive    bool       `json:"is_active"`
+		PromoPrice  float64    `json:"promo_price"`
+		PromoStart  *time.Time `json:"promo_start"`
+		PromoEnd    *time.Time `json:"promo_end"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		return
+	}
+	if req.Images == "" {
+		req.Images = "[]"
+	}
+	product := &models.Product{
+		CategoryID:  req.CategoryID,
+		Name:        req.Name,
+		Description: req.Description,
+		Price:       req.Price,
+		OrigPrice:   req.OrigPrice,
+		Image:       req.Image,
+		Images:      req.Images,
+		StockCount:  req.StockCount,
+		Sort:        req.Sort,
+		IsActive:    req.IsActive,
+		PromoPrice:  req.PromoPrice,
+		PromoStart:  req.PromoStart,
+		PromoEnd:    req.PromoEnd,
+	}
+	if err := h.productService.Create(product); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "创建商品失败"})
+		return
+	}
+	product.ComputePromo()
+	c.JSON(http.StatusOK, gin.H{"product": product})
 }
 
 // UpdateProduct 更新商品
@@ -236,48 +243,45 @@ func (h *AdminHandler) UpdateProduct(c *gin.Context) {
 	}
 
 	var req struct {
-		CategoryID  *uint    `json:"category_id"`
-		Name        string   `json:"name"`
-		Description string   `json:"description"`
-		Price       *float64 `json:"price"`
-		OrigPrice   *float64 `json:"orig_price"`
-		Image       string   `json:"image"`
-                Images      *string  `json:"images"`
-                Sort        *int     `json:"sort"`
-                IsActive    *bool    `json:"is_active"`
-        }
-        if err := c.ShouldBindJSON(&req); err != nil {
-                c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
-                return
-        }
-
-        if req.CategoryID != nil {
-                product.CategoryID = *req.CategoryID
-        }
-        if req.Name != "" {
-                product.Name = req.Name
-        }
-        product.Description = req.Description
-        if req.Price != nil {
-                product.Price = *req.Price
-        }
-        if req.OrigPrice != nil {
-                product.OrigPrice = *req.OrigPrice
-        }
-        product.Image = req.Image
-        if req.Images != nil {
-                if *req.Images == "" {
-                        product.Images = "[]"
-                } else {
-                        product.Images = *req.Images
-                }
-        }
+		CategoryID  *uint      `json:"category_id"`
+		Name        string     `json:"name"`
+		Description string     `json:"description"`
+		Price       *float64   `json:"price"`
+		OrigPrice   *float64   `json:"orig_price"`
+		Image       string     `json:"image"`
+		Images      *string    `json:"images"`
+		StockCount  *int       `json:"stock_count"`
+		Sort        *int       `json:"sort"`
+		IsActive    *bool      `json:"is_active"`
+		PromoPrice  *float64   `json:"promo_price"`
+		PromoStart  *time.Time `json:"promo_start"`
+		PromoEnd    *time.Time `json:"promo_end"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		return
+	}
+	if req.CategoryID != nil { product.CategoryID = *req.CategoryID }
+	if req.Name != "" { product.Name = req.Name }
+	product.Description = req.Description
+	if req.Price != nil { product.Price = *req.Price }
+	if req.OrigPrice != nil { product.OrigPrice = *req.OrigPrice }
+	product.Image = req.Image
+	if req.Images != nil {
+		if *req.Images == "" { product.Images = "[]" } else { product.Images = *req.Images }
+	}
+	if req.StockCount != nil { product.StockCount = *req.StockCount }
+	if req.Sort != nil { product.Sort = *req.Sort }
+	if req.IsActive != nil { product.IsActive = *req.IsActive }
+	if req.PromoPrice != nil { product.PromoPrice = *req.PromoPrice }
+	product.PromoStart = req.PromoStart
+	product.PromoEnd = req.PromoEnd
 
 	if err := h.productService.Update(product); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新商品失败"})
 		return
 	}
-
+	product.ComputePromo()
 	c.JSON(http.StatusOK, gin.H{"product": product})
 }
 
@@ -530,13 +534,6 @@ func (h *AdminHandler) GetSettings(c *gin.Context) {
 		"site_description":      h.settingService.Get(services.SettingSiteDescription),
 		"footer_text":           h.settingService.Get(services.SettingFooterText),
 		"announcement":          h.settingService.Get(services.SettingAnnouncement),
-		"nodeloc_client_id":     h.settingService.Get(services.SettingNodeLocClientID),
-		"nodeloc_client_secret": h.settingService.Get(services.SettingNodeLocClientSecret),
-		"nodeloc_redirect_uri":  h.settingService.Get(services.SettingNodeLocRedirectURI),
-		"payment_enabled":       h.settingService.Get(services.SettingPaymentEnabled) == "true",
-		"payment_id":            h.settingService.Get(services.SettingPaymentID),
-		"payment_secret":        h.settingService.Get(services.SettingPaymentSecret),
-		"payment_callback_uri":  h.settingService.Get(services.SettingPaymentCallback),
 		"home_banners":           h.settingService.Get(services.SettingHomeBanners),
 		"home_promo_banners":     h.settingService.Get(services.SettingHomePromoBanners),
 		"home_flash_banners":     h.settingService.Get(services.SettingHomeFlashBanners),
@@ -556,8 +553,16 @@ func (h *AdminHandler) UpdateSettings(c *gin.Context) {
 	}
 
 	// 转换为 map[string]string
+	// Keys managed via .env, not editable through admin UI
+	envOnlyKeys := map[string]bool{
+		"nodeloc_client_id": true, "nodeloc_client_secret": true, "nodeloc_redirect_uri": true,
+		"payment_id": true, "payment_secret": true, "payment_callback_uri": true, "payment_enabled": true,
+	}
 	settings := make(map[string]string)
 	for key, value := range req {
+		if envOnlyKeys[key] {
+			continue
+		}
 		switch v := value.(type) {
 		case string:
 			settings[key] = v
