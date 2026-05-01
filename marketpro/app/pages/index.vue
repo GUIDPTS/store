@@ -33,8 +33,8 @@ import BestSells from "~/components/containers/shop/BestSells.vue";
 import NewsletterFour from "~/components/widgets/newsletter/NewsletterFour.vue";
 
 useSeo({
-  title: "Home",
-  description: "eCommerce Multivendor Vue JS 3, Nuxt JS 4, Bootstrap 5 Template",
+  title: "首页",
+  
   keywords: ["ecommerce", "fashion", "electronics", "grocery", "shop", "store", "multipurpose"],
 });
 </script>

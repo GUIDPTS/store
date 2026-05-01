@@ -1,7 +1,6 @@
 <template>
   <div>
     <AppPreloader />
-    <HeaderTopTwo />
     <HeaderMiddleTwo />
     <HeaderTwo />
     <main>
@@ -15,7 +14,6 @@
 
 <script setup lang="ts">
 import AppPreloader from "~/components/AppPreloader.vue";
-import HeaderTopTwo from "~/components/layout/header/HeaderTopTwo.vue";
 import HeaderMiddleTwo from "~/components/layout/header/HeaderMiddleTwo.vue";
 import HeaderTwo from "~/components/layout/header/HeaderTwo.vue";
 import FooterTwo from "~/components/layout/footer/FooterTwo.vue";

@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/nodeloc-faka/database"
 	"github.com/nodeloc-faka/models"
 	"github.com/nodeloc-faka/services"
 )
@@ -20,6 +21,7 @@ type APIHandler struct {
 	userService     *services.UserService
 	paymentService  *services.PaymentService
 	reviewService   *services.ReviewService
+	shopService     *services.ShopService
 }
 
 // NewAPIHandler 创建API处理器
@@ -32,6 +34,7 @@ func NewAPIHandler() *APIHandler {
 		userService:     services.NewUserService(),
 		paymentService:  services.NewPaymentService(),
 		reviewService:   services.NewReviewService(),
+		shopService:     services.NewShopService(),
 	}
 }
 
@@ -88,9 +91,32 @@ func (h *APIHandler) GetProducts(c *gin.Context) {
 		products[i].ComputePromo()
 	}
 
+	// 批量查询评分统计
+	productIDs := make([]uint, len(products))
+	for i, p := range products {
+		productIDs[i] = p.ID
+	}
+	ratingMap := h.reviewService.GetAvgRatingByProducts(productIDs)
+
+	// 构建带评分的响应
+	type productWithRating struct {
+		models.Product
+		AvgRating   float64 `json:"avg_rating"`
+		ReviewCount int     `json:"review_count"`
+	}
+	result := make([]productWithRating, len(products))
+	for i, p := range products {
+		stats := ratingMap[p.ID]
+		result[i] = productWithRating{
+			Product:     p,
+			AvgRating:   stats.AvgRating,
+			ReviewCount: stats.Total,
+		}
+	}
+
 	totalPages := (total + int64(pageSize) - 1) / int64(pageSize)
 	c.JSON(http.StatusOK, gin.H{
-		"products":    products,
+		"products":    result,
 		"total":       total,
 		"page":        page,
 		"page_size":   pageSize,
@@ -159,6 +185,23 @@ func (h *APIHandler) GetOrder(c *gin.Context) {
 		return
 	}
 
+	c.JSON(http.StatusOK, order)
+}
+
+// ConfirmReceipt 买家确认收货
+func (h *APIHandler) ConfirmReceipt(c *gin.Context) {
+	userInterface, exists := c.Get("user")
+	if !exists || userInterface == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "请先登录"})
+		return
+	}
+	u := userInterface.(*models.User)
+	orderNo := c.Param("orderNo")
+	order, err := h.orderService.ConfirmReceipt(orderNo, u.ID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 	c.JSON(http.StatusOK, order)
 }
 
@@ -244,6 +287,7 @@ func (h *APIHandler) CreateOrder(c *gin.Context) {
 		Contact   string `json:"contact"`
 		Remark    string `json:"remark"`
 		PayMethod string `json:"pay_method"` // nodeloc / balance；默认 nodeloc
+		CouponID  uint   `json:"coupon_id"`  // 优惠券ID（可选）
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -263,6 +307,24 @@ func (h *APIHandler) CreateOrder(c *gin.Context) {
 		return
 	}
 
+	// 应用优惠券（如果有）
+	couponSvc := services.NewCouponService()
+	var couponDiscount float64
+	var appliedCouponID uint
+	if req.CouponID > 0 {
+		coupon, err := couponSvc.FindByID(req.CouponID)
+		if err == nil {
+			amount := product.GetEffectivePrice() * float64(req.Quantity)
+			result, err := couponSvc.Validate(coupon.Code, product.ShopID, amount)
+			if err == nil {
+				couponDiscount = result.Discount
+				appliedCouponID = coupon.ID
+			}
+		}
+	}
+	_ = couponDiscount
+	_ = appliedCouponID
+
 	// 余额支付分支
 	if req.PayMethod == models.PayMethodBalance {
 		order, err := h.orderService.CreateAndProcessByBalance(u.ID, req.ProductID, req.Quantity, req.Contact, req.Remark)
@@ -281,7 +343,7 @@ func (h *APIHandler) CreateOrder(c *gin.Context) {
 
 	// 预检查支付是否已配置，避免创建脏订单
 	if !h.paymentService.IsConfigured() {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "NodeLoc 积分支付暂未开启，请使用余额支付"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "NodeLoc 能量支付暂未开启，请使用余额支付"})
 		return
 	}
 
@@ -298,7 +360,7 @@ func (h *APIHandler) CreateOrder(c *gin.Context) {
 
 	// 发起支付（NodeLoc Payment）
 	paymentReq := &services.CreatePaymentRequest{
-		Amount:      int(order.TotalAmount), // 积分 = 人民币（1:1）
+		Amount:      int(order.TotalAmount), // 能量 = 人民币（1:1）
 		Description: fmt.Sprintf("购买商品: %s x%d", product.Name, req.Quantity),
 		OrderID:     order.OrderNo,
 	}
@@ -392,4 +454,61 @@ func ParseUint(s string) uint {
 		return 0
 	}
 	return uint(id)
+}
+
+// SubscribeNewsletter 邮件订阅
+func (h *APIHandler) SubscribeNewsletter(c *gin.Context) {
+	var req struct {
+		Email string `json:"email" binding:"required,email"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "请输入有效的邮箱地址"})
+		return
+	}
+
+	// 存入数据库（重复订阅忽略）
+	sub := &models.NewsletterSubscriber{Email: req.Email}
+	database.GetDB().Where("email = ?", req.Email).FirstOrCreate(sub)
+
+	siteName := h.settingService.Get(services.SettingSiteName)
+	if siteName == "" {
+		siteName = "NodeLoc发卡系统"
+	}
+
+	emailSvc := services.NewEmailService()
+	if emailSvc.IsEnabled() {
+		emailSvc.SendNewsletterConfirm(req.Email, siteName)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "订阅成功"})
+}
+func (h *APIHandler) GetDealsOfWeek(c *gin.Context) {
+	productIDStr := h.settingService.Get(services.SettingDealsOfWeekProductID)
+	if productIDStr == "" {
+		c.JSON(http.StatusOK, gin.H{"product": nil})
+		return
+	}
+
+	productID, err := strconv.ParseUint(productIDStr, 10, 32)
+	if err != nil || productID == 0 {
+		c.JSON(http.StatusOK, gin.H{"product": nil})
+		return
+	}
+
+	product, err := h.productService.FindByID(uint(productID))
+	if err != nil || !product.IsActive {
+		c.JSON(http.StatusOK, gin.H{"product": nil})
+		return
+	}
+	product.ComputePromo()
+
+	// 附带评分统计
+	ratingMap := h.reviewService.GetAvgRatingByProducts([]uint{product.ID})
+	stats := ratingMap[product.ID]
+
+	c.JSON(http.StatusOK, gin.H{
+		"product":      product,
+		"avg_rating":   stats.AvgRating,
+		"review_count": stats.Total,
+	})
 }

@@ -152,7 +152,7 @@ build_backend() {
     print_info "==========================================<br/>"
     
     docker build \
-        --platform linux/amd64,linux/arm64 \
+        --platform linux/amd64 \
         -t "${BACKEND_FULL_NAME}" \
         -f Dockerfile \
         .
@@ -172,10 +172,10 @@ build_frontend() {
     print_info "=========================================="
     
     docker build \
-        --platform linux/amd64,linux/arm64 \
+        --platform linux/amd64 \
         -t "${FRONTEND_FULL_NAME}" \
-        -f frontend/Dockerfile \
-        frontend/
+        -f marketpro/Dockerfile \
+        marketpro/
     
     # 同时打 latest 标签
     if [ "$VERSION" != "latest" ]; then

@@ -79,7 +79,7 @@ function onSubmit(e: Event) {
     hasError.value = true;
     return;
   }
-  alert(`Searching for: ${searchQuery.value}`);
+  navigateTo(`/shop?keyword=${encodeURIComponent(searchQuery.value)}`);
   close();
 }
 

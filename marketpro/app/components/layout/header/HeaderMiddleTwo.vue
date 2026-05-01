@@ -8,7 +8,7 @@
       <nav class="header-inner flex-between gap-8" aria-label="Primary navigation">
         <div class="logo">
           <NuxtLink to="/" class="link" aria-label="Go to homepage">
-            <NuxtImg src="/images/logo/logo-two.png" alt="Logo" width="172" height="40" />
+            <img :src="site.settings.site_logo || '/images/logo/logo-two.png'" :alt="site.settings.site_name || 'Logo'" style="max-height:40px;object-fit:contain" />
           </NuxtLink>
         </div>
 
@@ -49,6 +49,10 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import Navbar from "./Navbar.vue";
+import { useSiteStore } from "~/stores/site";
+
+const site = useSiteStore();
+site.ensureLoaded();
 import LanguageSelectorTwo from "~/components/widgets/language/LanguageSelectorTwo.vue";
 import CurrencySelectorTwo from "~/components/widgets/currency/CurrencySelectorTwo.vue";
 import MobileMenu from "./MobileMenu.vue";

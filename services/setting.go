@@ -70,11 +70,15 @@ const (
 	SettingSiteLogo        = "site_logo"
 	SettingSiteKeywords    = "site_keywords"
 	SettingAdminPath       = "admin_path"
+	SettingNodeLocURL          = "nodeloc_url"
 	SettingNodeLocClientID     = "nodeloc_client_id"
 	SettingNodeLocClientSecret = "nodeloc_client_secret"
 	SettingNodeLocRedirectURI  = "nodeloc_redirect_uri"
 	SettingSessionSecret   = "session_secret"
 	SettingContactEmail    = "contact_email"
+	SettingContactTel      = "contact_tel"
+	SettingContactTelLabel = "contact_tel_label"
+	SettingContactAddress  = "contact_address"
 	SettingContactQQ       = "contact_qq"
 	SettingAnnouncement    = "announcement"
 	SettingFooterText      = "footer_text"
@@ -96,12 +100,17 @@ const (
 	SettingNodelocTransferAPI   = "nodeloc_transfer_api"    // NodeLoc 转账 API 地址（预留）
 
 	// 首页配置
-	SettingHomeBanners      = "home_banners"       // 首页主轮播（JSON 数组字符串）
-	SettingHomePromoBanners = "home_promo_banners" // 首页促销横幅（JSON 数组字符串）
-	SettingHomeFlashBanners = "home_flash_banners" // 首页闪购横幅（JSON 数组字符串）
-	SettingHomeOfferCards   = "home_offer_cards"   // 首页特惠卡片（JSON 数组字符串，2张）
-	SettingHomeBestsellCTA  = "home_bestsell_cta"  // 每日精选侧边 CTA（JSON 对象字符串）
+	SettingHomeBanners       = "home_banners"        // 首页主轮播（JSON 数组字符串）
+	SettingHomePromoBanners  = "home_promo_banners"  // 首页促销横幅（JSON 数组字符串）
+	SettingHomeFlashBanners  = "home_flash_banners"  // 首页闪购横幅（JSON 数组字符串）
+	SettingHomeOfferCards    = "home_offer_cards"    // 首页特惠卡片（JSON 数组字符串，2张）
+	SettingHomeBestsellCTA   = "home_bestsell_cta"   // 每日精选侧边 CTA（JSON 对象字符串）
 	SettingHomeNewsletterImg = "home_newsletter_img" // 订阅区右侧图片 URL
+	SettingDealsOfWeekShopID = "deals_of_week_shop_id" // 本周精选店铺 ID（已废弃）
+	SettingDealsOfWeekProductID = "deals_of_week_product_id" // 本周精选商品 ID
+	SettingHomeFeatures = "home_features" // 首页特色功能区（JSON 数组）
+	SettingHomeHotDeal  = "home_hot_deal"  // 首页 Hot Deals 左侧横幅（JSON）
+	SettingFooterConfig  = "footer_config"  // 页脚配置（JSON）
 )
 
 // GetSiteSettings 获取网站设置
@@ -112,6 +121,9 @@ func (s *SettingService) GetSiteSettings() map[string]string {
 		SettingSiteLogo,
 		SettingSiteKeywords,
 		SettingContactEmail,
+		SettingContactTel,
+		SettingContactTelLabel,
+		SettingContactAddress,
 		SettingContactQQ,
 		SettingAnnouncement,
 		SettingFooterText,
@@ -121,6 +133,11 @@ func (s *SettingService) GetSiteSettings() map[string]string {
 		SettingHomeOfferCards,
 		SettingHomeBestsellCTA,
 		SettingHomeNewsletterImg,
+		SettingDealsOfWeekShopID,
+		SettingDealsOfWeekProductID,
+		SettingHomeFeatures,
+		SettingHomeHotDeal,
+		SettingFooterConfig,
 	}
 	
 	result := make(map[string]string)

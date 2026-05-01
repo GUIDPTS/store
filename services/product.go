@@ -202,6 +202,13 @@ func (s *ProductService) SearchProducts(p SearchParams) ([]models.Product, int64
 	return products, total, nil
 }
 
+// CountByShop 获取指定店铺的上架商品数量
+func (s *ProductService) CountByShop(shopID uint, out *int64) {
+	database.GetDB().Model(&models.Product{}).
+		Where("shop_id = ? AND is_active = ?", shopID, true).
+		Count(out)
+}
+
 // Count 获取商品数量
 func (s *ProductService) Count() int64 {
 	var count int64

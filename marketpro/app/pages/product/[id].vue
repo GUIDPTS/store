@@ -148,7 +148,10 @@
                         <i class="ph-fill ph-lightning"></i>
                       </span>
                       <h6 class="text-md mb-0 fw-bold text-gray-900">
-                        {{ product.stock_count > 0 ? '库存充足，即刻下单' : '库存紧张' }}
+                        <template v-if="product.stock_count <= 0">库存不足</template>
+                        <template v-else-if="product.stock_count <= 5">仅剩 {{ product.stock_count }} 件，抓紧下单</template>
+                        <template v-else-if="soldPercent >= 80">热销中，库存紧张</template>
+                        <template v-else>库存充足，即刻下单</template>
                       </h6>
                     </div>
                     <div class="progress w-100 bg-gray-100 rounded-pill h-8" role="progressbar">
@@ -302,7 +305,6 @@
     </section>
 
     <ShippingOverviewTwo />
-    <NewsletterThree />
   </div>
 </template>
 
@@ -329,6 +331,10 @@ const cartStore = useCartStore();
 const wishlistStore = useWishlistStore();
 const swiperModules = [Controller, EffectFade];
 
+// 动态 SEO — 移到 product 定义之后
+const site = useSiteStore();
+const siteName = computed(() => (site.settings.site_name as string) || "NodeLoc");
+
 interface Product {
   id: number; name: string; description?: string; price: number; orig_price?: number;
   image?: string; images?: string; stock_count: number; sales_count?: number;
@@ -339,6 +345,21 @@ interface Product {
 }
 
 const product = ref<Product | null>(null);
+
+// SEO watch（product 已定义）
+watch(product, (p) => {
+  if (!p) return;
+  useHead({
+    title: `${p.name} | ${siteName.value}`,
+    meta: [
+      { name: "description", content: p.description ? p.description.slice(0, 160) : `${p.name} - ${siteName.value}` },
+      { property: "og:title", content: p.name },
+      { property: "og:description", content: p.description?.slice(0, 160) || p.name },
+      ...(p.image ? [{ property: "og:image", content: p.image }] : []),
+      { property: "og:type", content: "product" },
+    ],
+  });
+});
 const related = ref<Product[]>([]);
 const loading = ref(true);
 const qty = ref(1);
@@ -378,12 +399,23 @@ const soldPercent = computed(() => {
   return Math.min(Math.round(((product.value.sales_count || 0) / total) * 100), 100);
 });
 
-const sidebarItems = [
+const DEFAULT_SIDEBAR_ITEMS = [
   { icon: "ph-fill ph-seal-check", title: "正版授权", text: "所有商品均为正版授权，支持验真。" },
-  { icon: "ph-fill ph-key", title: "即时发货", text: "付款后卡密自动发送，无需等待。" },
-  { icon: "ph-fill ph-lock-key", title: "安全支付", text: "多种支付方式，全程加密保障。" },
-  { icon: "ph-fill ph-headset", title: "售后保障", text: "遇到问题联系店铺客服，快速处理。" },
+  { icon: "ph-fill ph-key",        title: "即时发货", text: "付款后卡密自动发送，无需等待。" },
+  { icon: "ph-fill ph-lock-key",   title: "安全支付", text: "多种支付方式，全程加密保障。" },
+  { icon: "ph-fill ph-headset",    title: "售后保障", text: "遇到问题联系店铺客服，快速处理。" },
 ];
+
+const sidebarItems = computed(() => {
+  try {
+    const raw = (product.value?.shop as any)?.features;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch { /* fall through */ }
+  return DEFAULT_SIDEBAR_ITEMS;
+});
 
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
 

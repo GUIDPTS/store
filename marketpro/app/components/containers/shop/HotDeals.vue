@@ -47,43 +47,36 @@
               class="position-absolute inset-inline-end-0 inset-block-end-0"
             />
             <span
+              v-if="hotDeal.tag"
               class="text-primary-600 bg-yellow text-heading py-4 px-12 rounded-4 text-sm fw-medium"
             >
-              Medical equipment
+              {{ hotDeal.tag }}
             </span>
-            <h5 class="text-white mb-8 mt-12">Deals of the day</h5>
-            <p class="fw-semibold text-success-600">Save up to 50% off on your first order</p>
+            <h5 class="text-white mb-8 mt-12">{{ hotDeal.title }}</h5>
+            <p class="fw-semibold text-success-600">{{ hotDeal.subtitle }}</p>
 
             <div id="hot-deal-countdown" class="countdown mt-24 mb-24">
               <ul class="countdown-list d-flex align-items-center flex-wrap">
-                <li
-                  class="countdown-list__item py-8 px-12 text-heading flex-align gap-4 text-sm fw-medium colon-white"
-                >
+                <li class="countdown-list__item py-8 px-12 text-heading flex-align gap-4 text-sm fw-medium colon-white">
                   <span class="days"></span> D
                 </li>
-                <li
-                  class="countdown-list__item py-8 px-12 text-heading flex-align gap-4 text-sm fw-medium colon-white"
-                >
+                <li class="countdown-list__item py-8 px-12 text-heading flex-align gap-4 text-sm fw-medium colon-white">
                   <span class="hours"></span> H
                 </li>
-                <li
-                  class="countdown-list__item py-8 px-12 text-heading flex-align gap-4 text-sm fw-medium colon-white"
-                >
+                <li class="countdown-list__item py-8 px-12 text-heading flex-align gap-4 text-sm fw-medium colon-white">
                   <span class="minutes"></span> M
                 </li>
-                <li
-                  class="countdown-list__item py-8 px-12 text-heading flex-align gap-4 text-sm fw-medium colon-white"
-                >
+                <li class="countdown-list__item py-8 px-12 text-heading flex-align gap-4 text-sm fw-medium colon-white">
                   <span class="seconds"></span> S
                 </li>
               </ul>
             </div>
 
             <NuxtLink
-              to="/shop"
+              :to="hotDeal.btn_link || '/shop'"
               class="mt-16 btn bg-white hover-text-white hover-bg-main-800 text-main-600 fw-medium d-inline-flex align-items-center rounded-pill gap-8"
             >
-              Explore Shop
+              {{ hotDeal.btn_text || 'Explore Shop' }}
               <span class="icon text-xl d-flex">
                 <i class="ph-bold ph-shopping-cart"></i>
               </span>
@@ -132,6 +125,26 @@ const hotDealsData = computed(() => topProducts.value.map(toHotDeal));
 const prevHotDeal = ref<HTMLElement | null>(null);
 const nextHotDeal = ref<HTMLElement | null>(null);
 
+// Hot Deal 横幅配置
+const DEFAULT_HOT_DEAL = {
+  tag: "Medical equipment",
+  title: "Deals of the day",
+  subtitle: "Save up to 50% off on your first order",
+  btn_text: "Explore Shop",
+  btn_link: "/shop",
+  countdown: "2027-12-30T23:59:59",
+};
+const hotDeal = ref({ ...DEFAULT_HOT_DEAL });
+
+// 从 settings 读取配置
+const { data: settingsData } = await useFetch<Record<string, string>>("/api/settings");
+if (settingsData.value?.home_hot_deal) {
+  try {
+    const parsed = JSON.parse(settingsData.value.home_hot_deal);
+    hotDeal.value = { ...DEFAULT_HOT_DEAL, ...parsed };
+  } catch { /* keep defaults */ }
+}
+
 const isRTL = computed(() => {
   if (typeof document !== "undefined") {
     return document.documentElement.dir === "rtl";
@@ -154,7 +167,7 @@ onMounted(async () => {
   await nextTick();
   countdownInterval.value = initializeCountdown(
     "hot-deal-countdown",
-    "2027-12-30T23:59:59",
+    hotDeal.value.countdown || "2027-12-30T23:59:59",
     () => {}
   );
 });

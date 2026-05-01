@@ -90,7 +90,25 @@
             </div>
           </div>
 
-          <!-- Pending payment -->
+          <!-- 已发货：显示发货内容 + 确认收货 -->
+          <div
+            v-if="order.status === 4 && order.deliver_content"
+            class="border border-main-100 bg-main-50 rounded-8 p-32 mt-16"
+          >
+            <h6 class="text-main-600 mb-12">
+              <i class="ph-fill ph-package me-8"></i>卖家已发货
+            </h6>
+            <div class="bg-white border border-main-200 rounded-8 px-20 py-16 mb-16">
+              <div class="text-gray-500 text-xs mb-6">发货内容</div>
+              <div class="fw-semibold" style="white-space:pre-wrap">{{ order.deliver_content }}</div>
+              <div v-if="order.deliver_note" class="text-gray-400 text-sm mt-8">备注：{{ order.deliver_note }}</div>
+            </div>
+            <button class="btn btn-main px-32 rounded-8" :disabled="confirming" @click="confirmReceipt">
+              {{ confirming ? "确认中..." : "确认收货" }}
+            </button>
+          </div>
+
+          <!-- 待支付 -->
           <div
             v-if="order.status === 0 && order.payment_url"
             class="border border-warning-100 rounded-8 p-24 mt-16 text-center"
@@ -112,6 +130,7 @@ definePageMeta({ layout: "layout-three" });
 const route = useRoute();
 const order = ref<any>(null);
 const loading = ref(true);
+const confirming = ref(false);
 
 onMounted(async () => {
   try {
@@ -132,10 +151,7 @@ function formatDate(d: string) {
 
 function statusLabel(s: number) {
   const map: Record<number, string> = {
-    0: "待支付",
-    1: "已支付",
-    2: "已完成",
-    3: "已取消",
+    0: "待支付", 1: "待发货", 2: "已完成", 3: "已取消", 4: "已发货/待确认",
   };
   return map[s] ?? String(s);
 }
@@ -143,11 +159,27 @@ function statusLabel(s: number) {
 function statusClass(s: number) {
   const map: Record<number, string> = {
     0: "bg-warning-100 text-warning-600",
-    1: "bg-success-100 text-success-600",
-    2: "bg-main-100 text-main-600",
+    1: "bg-main-100 text-main-600",
+    2: "bg-success-100 text-success-600",
     3: "bg-danger-100 text-danger-600",
+    4: "bg-purple-100 text-purple-600",
   };
   return map[s] ?? "bg-neutral-100 text-neutral-600";
+}
+
+async function confirmReceipt() {
+  if (!confirm("确认已收到商品？确认后将完成交易，款项将结算给卖家。")) return;
+  confirming.value = true;
+  try {
+    order.value = await $fetch(`/api/orders/${route.params.orderNo}/confirm`, {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch (e: any) {
+    alert(e?.data?.error || "操作失败");
+  } finally {
+    confirming.value = false;
+  }
 }
 
 function copy(text: string) {

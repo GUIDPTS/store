@@ -181,45 +181,54 @@
     flex-wrap: wrap;
   }
 
-  span.fw-semibold,
-  h2,
+  span.fw-semibold {
+    opacity: 0;
+    transform: translateX(-40px);
+    transition: opacity 900ms ease, transform 900ms ease;
+  }
+
+  h2 {
+    opacity: 0;
+    transform: translateX(-50px);
+    transition: opacity 1000ms ease, transform 1000ms ease;
+  }
+
   .rdf {
     opacity: 0;
-    transform: scaleY(0);
-    transform-origin: top;
-    transition: all 1000ms ease;
+    transform: translateX(-40px);
+    transition: opacity 900ms ease, transform 900ms ease;
   }
 
   img {
     opacity: 0;
-    transform: scale(0);
+    transform: scale(0.8);
     transform-origin: center;
-    transition: all 1000ms ease;
+    transition: opacity 1100ms ease, transform 1100ms ease;
   }
 
   .swiper-slide-active {
     span.fw-semibold {
       opacity: 1;
-      transform: scaleY(1);
-      transition-delay: 600ms;
+      transform: translateX(0);
+      transition-delay: 300ms;
     }
 
     h2 {
       opacity: 1;
-      transform: scaleY(1);
-      transition-delay: 1000ms;
+      transform: translateX(0);
+      transition-delay: 550ms;
     }
 
     .rdf {
       opacity: 1;
-      transform: scaleY(1);
-      transition-delay: 1400ms;
+      transform: translateX(0);
+      transition-delay: 800ms;
     }
 
     img {
       opacity: 1;
       transform: scale(1);
-      transition-delay: 400ms;
+      transition-delay: 150ms;
     }
   }
 }

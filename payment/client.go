@@ -260,3 +260,73 @@ const (
 	PaymentStatusCancelled  = "cancelled"
 	PaymentStatusRefunded   = "refunded"
 )
+
+// TransferRequest 转账请求
+type TransferRequest struct {
+	ToUserID  int    // 接收方 NodeLoc 用户 ID（nodeloc_id）
+	ToUsername string // 接收方 NodeLoc 用户名
+	Amount    int    // 转账积分数量（整数）
+	OrderID   string // 幂等单号
+}
+
+// TransferResponse 转账响应
+type TransferResponse struct {
+	Success       bool    `json:"success"`
+	TransactionID string  `json:"transaction_id"`
+	OrderID       string  `json:"order_id"`
+	Status        string  `json:"status"`
+	Amount        int     `json:"amount"`
+	Fee           int     `json:"fee"`
+	TotalDeduction int    `json:"total_deduction"`
+	PaidAt        string  `json:"paid_at"`
+	Error         string  `json:"error"`
+}
+
+// Transfer 向指定 NodeLoc 用户转账积分
+func (c *Client) Transfer(req *TransferRequest) (*TransferResponse, error) {
+	if !c.IsConfigured() {
+		return nil, fmt.Errorf("payment client not configured")
+	}
+
+	params := map[string]string{
+		"to_user_id":  fmt.Sprintf("%d", req.ToUserID),
+		"to_username": req.ToUsername,
+		"amount":      fmt.Sprintf("%d", req.Amount),
+		"order_id":    req.OrderID,
+	}
+
+	signature := c.generateSignature(params)
+
+	formData := url.Values{}
+	for k, v := range params {
+		formData.Set(k, v)
+	}
+	formData.Set("signature", signature)
+
+	apiURL := fmt.Sprintf("%s/payment/transfer/%s", c.baseURL, c.paymentID)
+	resp, err := c.httpClient.PostForm(apiURL, formData)
+	if err != nil {
+		return nil, fmt.Errorf("转账请求失败: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("读取响应失败: %w", err)
+	}
+
+	var result TransferResponse
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("解析响应失败: body=%s err=%w", string(body), err)
+	}
+
+	if resp.StatusCode != http.StatusOK || !result.Success {
+		errMsg := result.Error
+		if errMsg == "" {
+			errMsg = fmt.Sprintf("http %d: %s", resp.StatusCode, string(body))
+		}
+		return nil, fmt.Errorf("转账失败: %s", errMsg)
+	}
+
+	return &result, nil
+}

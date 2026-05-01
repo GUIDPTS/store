@@ -328,7 +328,13 @@ async function save() {
   if (!form.value.name || !form.value.category_id) return ElMessage.warning("请填写商品名称和分类");
   saving.value = true;
   try {
-    const payload = { ...form.value, images: JSON.stringify(imageList.value) };
+    const toRFC3339 = (s: string | null) => s ? new Date(s).toISOString() : null;
+    const payload = {
+      ...form.value,
+      images: JSON.stringify(imageList.value),
+      promo_start: toRFC3339(form.value.promo_start),
+      promo_end: toRFC3339(form.value.promo_end),
+    };
     editingId.value
       ? await put(`/api/admin/products/${editingId.value}`, payload)
       : await post("/api/admin/products", payload);

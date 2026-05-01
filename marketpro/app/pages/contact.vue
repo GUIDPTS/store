@@ -24,8 +24,8 @@ useHead({
 });
 
 useSeo({
-  title: "Contact",
-  description: "eCommerce Multivendor Vue JS 3, Nuxt JS 4, Bootstrap 5 Template",
+  title: "联系我们",
+  
   keywords: ["ecommerce", "fashion", "electronics", "grocery", "shop", "store", "multipurpose"],
 });
 </script>

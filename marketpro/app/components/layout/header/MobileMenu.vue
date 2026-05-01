@@ -6,7 +6,7 @@
 
     <div class="mobile-menu__inner">
       <NuxtLink to="/" class="mobile-menu__logo">
-        <NuxtImg src="/images/logo/logo.png" alt="Logo" width="160" />
+        <img :src="site.settings.site_logo || '/images/logo/logo.png'" :alt="site.settings.site_name || 'Logo'" style="max-height:40px;object-fit:contain" />
       </NuxtLink>
 
       <nav class="mobile-menu__menu" aria-label="Primary mobile navigation">
@@ -90,7 +90,11 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { NuxtLink, NuxtImg } from "#components";
+import { useSiteStore } from "~/stores/site";
 import navbarMenu from "~/data/navbar";
+
+const site = useSiteStore();
+site.ensureLoaded();
 import type { MenuItem } from "~/composables/useActiveRoute";
 import { useActiveRoute } from "~/composables/useActiveRoute";
 import { useWindowWidth } from "~/composables/useWindowWidth";

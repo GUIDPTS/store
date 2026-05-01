@@ -358,9 +358,27 @@ func (h *AdminHandler) GetOrders(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
 	status, _ := strconv.Atoi(c.DefaultQuery("status", "-1"))
+	keyword := c.Query("keyword")
 
-	orders, total, err := h.orderService.GetWithPagination(page, pageSize, status)
-	if err != nil {
+	db := database.GetDB().Model(&models.Order{})
+	if status >= 0 {
+		db = db.Where("orders.status = ?", status)
+	}
+	if keyword != "" {
+		db = db.Joins("LEFT JOIN users ON users.id = orders.user_id").
+			Where("orders.order_no LIKE ? OR users.username LIKE ? OR users.name LIKE ?",
+				"%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%")
+	}
+
+	var total int64
+	db.Count(&total)
+
+	var orders []models.Order
+	offset := (page - 1) * pageSize
+	if err := db.Preload("User").Preload("Product").
+		Order("orders.id desc").
+		Offset(offset).Limit(pageSize).
+		Find(&orders).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取订单失败"})
 		return
 	}
@@ -530,16 +548,27 @@ func (h *AdminHandler) UpdateUser(c *gin.Context) {
 // GetSettings 获取所有设置
 func (h *AdminHandler) GetSettings(c *gin.Context) {
 	settings := gin.H{
-		"site_name":             h.settingService.Get(services.SettingSiteName),
-		"site_description":      h.settingService.Get(services.SettingSiteDescription),
-		"footer_text":           h.settingService.Get(services.SettingFooterText),
-		"announcement":          h.settingService.Get(services.SettingAnnouncement),
-		"home_banners":           h.settingService.Get(services.SettingHomeBanners),
-		"home_promo_banners":     h.settingService.Get(services.SettingHomePromoBanners),
-		"home_flash_banners":     h.settingService.Get(services.SettingHomeFlashBanners),
-		"home_offer_cards":       h.settingService.Get(services.SettingHomeOfferCards),
-		"home_bestsell_cta":      h.settingService.Get(services.SettingHomeBestsellCTA),
-		"home_newsletter_img":    h.settingService.Get(services.SettingHomeNewsletterImg),
+		"site_name":           h.settingService.Get(services.SettingSiteName),
+		"site_description":    h.settingService.Get(services.SettingSiteDescription),
+		"site_logo":           h.settingService.Get(services.SettingSiteLogo),
+		"contact_tel":         h.settingService.Get(services.SettingContactTel),
+		"contact_tel_label":   h.settingService.Get(services.SettingContactTelLabel),
+		"contact_email":       h.settingService.Get(services.SettingContactEmail),
+		"contact_address":     h.settingService.Get(services.SettingContactAddress),
+		"footer_text":         h.settingService.Get(services.SettingFooterText),
+		"announcement":        h.settingService.Get(services.SettingAnnouncement),
+		"home_banners":        h.settingService.Get(services.SettingHomeBanners),
+		"home_promo_banners":  h.settingService.Get(services.SettingHomePromoBanners),
+		"home_flash_banners":  h.settingService.Get(services.SettingHomeFlashBanners),
+		"home_offer_cards":    h.settingService.Get(services.SettingHomeOfferCards),
+		"home_bestsell_cta":   h.settingService.Get(services.SettingHomeBestsellCTA),
+		"home_newsletter_img": h.settingService.Get(services.SettingHomeNewsletterImg),
+		"deals_of_week_shop_id":    h.settingService.Get(services.SettingDealsOfWeekShopID),
+		"deals_of_week_product_id": h.settingService.Get(services.SettingDealsOfWeekProductID),
+		"shop_apply_enabled":       h.settingService.Get(services.SettingShopApplyEnabled),
+		"home_features":            h.settingService.Get(services.SettingHomeFeatures),
+		"home_hot_deal":            h.settingService.Get(services.SettingHomeHotDeal),
+		"footer_config":            h.settingService.Get(services.SettingFooterConfig),
 	}
 	c.JSON(http.StatusOK, gin.H{"settings": settings})
 }
@@ -591,19 +620,133 @@ func (h *AdminHandler) UpdateSettings(c *gin.Context) {
 // 统计信息
 // ============================================
 
-// GetDashboard 获取仪表板统计信息
+// ============================================
+// 邮件订阅管理
+// ============================================
+
+// GetNewsletterSubscribers 获取订阅列表
+func (h *AdminHandler) GetNewsletterSubscribers(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "50"))
+	keyword := c.Query("keyword")
+
+	db := database.GetDB().Model(&models.NewsletterSubscriber{})
+	if keyword != "" {
+		db = db.Where("email LIKE ?", "%"+keyword+"%")
+	}
+
+	var total int64
+	db.Count(&total)
+
+	var subs []models.NewsletterSubscriber
+	offset := (page - 1) * pageSize
+	db.Order("id desc").Offset(offset).Limit(pageSize).Find(&subs)
+
+	c.JSON(http.StatusOK, gin.H{"data": subs, "total": total, "page": page, "page_size": pageSize})
+}
+
+// DeleteNewsletterSubscriber 删除订阅
+func (h *AdminHandler) DeleteNewsletterSubscriber(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 32)
+	database.GetDB().Delete(&models.NewsletterSubscriber{}, id)
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
 func (h *AdminHandler) GetDashboard(c *gin.Context) {
+	db := database.GetDB()
+
+	// 基础计数
 	userCount := h.userService.Count()
 	productCount := h.productService.Count()
 	orderCount := h.orderService.Count()
 	categoryCount := h.categoryService.Count()
 
+	// 订单各状态数量
+	pendingOrders := h.orderService.CountByStatus(models.OrderStatusPending)
+	completedOrders := h.orderService.CountByStatus(models.OrderStatusCompleted)
+	cancelledOrders := h.orderService.CountByStatus(models.OrderStatusCancelled)
+
+	// 总销售额（已完成+已支付+已发货）
+	totalSales := h.orderService.GetTotalSales()
+	todaySales := h.orderService.GetTodaySales()
+
+	// 今日新增用户
+	var todayUsers int64
+	today := time.Now().Format("2006-01-02")
+	db.Model(&models.User{}).Where("DATE(created_at) = ?", today).Count(&todayUsers)
+
+	// 今日新增订单
+	var todayOrders int64
+	db.Model(&models.Order{}).Where("DATE(created_at) = ?", today).Count(&todayOrders)
+
+	// 待审核店铺数
+	var pendingShops int64
+	db.Model(&models.Shop{}).Where("status = ?", models.ShopStatusPending).Count(&pendingShops)
+
+	// 待审核提现数
+	var pendingWithdrawals int64
+	db.Model(&models.WithdrawalRequest{}).Where("status = ?", models.WithdrawalStatusPending).Count(&pendingWithdrawals)
+
+	// 最近 10 条订单
+	var recentOrders []models.Order
+	db.Preload("User").Preload("Product").
+		Order("id desc").Limit(10).
+		Find(&recentOrders)
+
+	// 最近 7 天每日订单数和销售额
+	type DayStat struct {
+		Date   string  `json:"date"`
+		Orders int64   `json:"orders"`
+		Sales  float64 `json:"sales"`
+	}
+	var dailyStats []DayStat
+	for i := 6; i >= 0; i-- {
+		day := time.Now().AddDate(0, 0, -i).Format("2006-01-02")
+		var cnt int64
+		var sales float64
+		db.Model(&models.Order{}).
+			Where("DATE(created_at) = ? AND status IN ?", day,
+				[]int{models.OrderStatusCompleted, models.OrderStatusPaid, models.OrderStatusShipped}).
+			Count(&cnt)
+		db.Model(&models.Order{}).
+			Where("DATE(created_at) = ? AND status IN ?", day,
+				[]int{models.OrderStatusCompleted, models.OrderStatusPaid, models.OrderStatusShipped}).
+			Select("COALESCE(SUM(total_amount), 0)").Scan(&sales)
+		dailyStats = append(dailyStats, DayStat{Date: day, Orders: cnt, Sales: sales})
+	}
+
+	// 热销商品 Top 5
+	type TopProduct struct {
+		ID         uint    `json:"id"`
+		Name       string  `json:"name"`
+		SalesCount int     `json:"sales_count"`
+		Price      float64 `json:"price"`
+		Image      string  `json:"image"`
+	}
+	var topProducts []TopProduct
+	db.Model(&models.Product{}).
+		Select("id, name, sales_count, price, image").
+		Where("is_active = ?", true).
+		Order("sales_count desc").
+		Limit(5).Scan(&topProducts)
+
 	c.JSON(http.StatusOK, gin.H{
 		"stats": gin.H{
-			"users":      userCount,
-			"products":   productCount,
-			"orders":     orderCount,
-			"categories": categoryCount,
+			"users":               userCount,
+			"products":            productCount,
+			"orders":              orderCount,
+			"categories":          categoryCount,
+			"pending_orders":      pendingOrders,
+			"completed_orders":    completedOrders,
+			"cancelled_orders":    cancelledOrders,
+			"total_sales":         totalSales,
+			"today_sales":         todaySales,
+			"today_users":         todayUsers,
+			"today_orders":        todayOrders,
+			"pending_shops":       pendingShops,
+			"pending_withdrawals": pendingWithdrawals,
 		},
+		"recent_orders": recentOrders,
+		"daily_stats":   dailyStats,
+		"top_products":  topProducts,
 	})
 }

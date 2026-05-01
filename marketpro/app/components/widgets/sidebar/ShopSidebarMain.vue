@@ -9,7 +9,7 @@
     </button>
 
     <!-- Category filter -->
-    <div class="shop-sidebar__box border border-gray-100 rounded-8 p-32 mb-32">
+    <div class="shop-sidebar__box border border-gray-100 rounded-8 p-32">
       <h6 class="text-xl border-bottom border-gray-100 pb-24 mb-24">商品分类</h6>
       <ul class="max-h-540 overflow-y-auto scroll-sm">
         <li class="mb-16">
@@ -20,8 +20,7 @@
               selectedCategoryId === 0 ? 'text-main-600 fw-semibold' : 'text-gray-900',
             ]"
             @click.prevent="selectCategory(0)"
-            >全部分类</a
-          >
+          >全部分类</a>
         </li>
         <li v-for="cat in categories" :key="cat.id" class="mb-16">
           <a
@@ -31,18 +30,9 @@
               selectedCategoryId === cat.id ? 'text-main-600 fw-semibold' : 'text-gray-900',
             ]"
             @click.prevent="selectCategory(cat.id)"
-            >{{ cat.name }}</a
-          >
+          >{{ cat.name }}</a>
         </li>
       </ul>
-    </div>
-
-    <!-- Price range filter -->
-    <PriceRangeSlider :min="0" :max="9999" :step="10" @filter="onPriceFilter" />
-
-    <!-- Advertise banner -->
-    <div class="shop-sidebar__box rounded-8 mt-32">
-      <NuxtImg src="/images/thumbs/advertise-img1.png" alt="Image" />
     </div>
   </div>
   <div
@@ -57,7 +47,6 @@
 import { computed } from "vue";
 import { useSidebar } from "~/composables/useSidebar";
 import { useSiteStore } from "~/stores/site";
-import PriceRangeSlider from "../vendor/PriceRangeSlider.vue";
 
 const props = defineProps<{
   selectedCategoryId?: number;
@@ -72,17 +61,8 @@ const site = useSiteStore();
 
 const categories = computed(() => site.categories);
 
-const currentCategoryId = computed(() => props.selectedCategoryId ?? 0);
-
-let priceRange = { minPrice: 0, maxPrice: 0 };
-
 function selectCategory(id: number) {
-  emit("filter", { categoryId: id, ...priceRange });
+  emit("filter", { categoryId: id, minPrice: 0, maxPrice: 0 });
   closeSidebar();
-}
-
-function onPriceFilter(range: { low: number; high: number }) {
-  priceRange = { minPrice: range.low, maxPrice: range.high === 9999 ? 0 : range.high };
-  emit("filter", { categoryId: currentCategoryId.value, ...priceRange });
 }
 </script>

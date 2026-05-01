@@ -6,6 +6,8 @@ export interface ApiProduct {
   image: string;
   stock_count: number;
   sales_count: number;
+  avg_rating?: number;
+  review_count?: number;
   category?: { id: number; name: string };
   shop?: { id: number; name: string };
 }
@@ -35,8 +37,9 @@ export function toHotDeal(p: ApiProduct) {
     image: p.image || "/images/thumbs/product-img26.png",
     price: p.price,
     oldPrice: p.orig_price > p.price ? p.orig_price : +(p.price * 1.25).toFixed(2),
-    rating: 4.8,
+    rating: p.avg_rating ?? 0,
     reviews: String(p.sales_count || 0),
+    reviewCount: p.review_count ?? 0,
     sold: { current: p.sales_count || 0, total: total || 20 },
   };
 }
@@ -49,8 +52,9 @@ export function toBestSell(p: ApiProduct) {
     image: p.image || "/images/thumbs/product-img26.png",
     price: p.price,
     oldPrice: p.orig_price > p.price ? p.orig_price : +(p.price * 1.25).toFixed(2),
-    rating: 4.8,
+    rating: p.avg_rating ?? 0,
     reviews: String(p.sales_count || 0),
+    reviewCount: p.review_count ?? 0,
     sold: { current: p.sales_count || 0, total: (p.sales_count || 0) + (p.stock_count || 20) },
     countdownTarget: "2027-12-31T23:59:59",
   };
@@ -65,8 +69,9 @@ export function toFlashSale(p: ApiProduct) {
     image: p.image || "/images/thumbs/product-img26.png",
     price: `¥${p.price.toFixed(2)}`,
     oldPrice: `¥${oldPrice.toFixed(2)}`,
-    rating: "4.8",
+    rating: p.avg_rating ?? 0,
     reviews: `${p.sales_count || 0}`,
+    reviewCount: p.review_count ?? 0,
     name: p.name,
     sold: p.sales_count || 0,
     total: total || 20,
@@ -83,8 +88,8 @@ export function toRecommended(p: ApiProduct) {
     imageSrc: p.image || "/images/thumbs/product-img26.png",
     price: p.price,
     oldPrice: p.orig_price > p.price ? p.orig_price : undefined,
-    rating: 4.8,
-    reviewsCount: String(p.sales_count || 0),
+    rating: p.avg_rating ?? 0,
+    reviewsCount: String(p.review_count ?? 0),
   };
 }
 

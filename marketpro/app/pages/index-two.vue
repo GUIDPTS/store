@@ -47,7 +47,7 @@ useHead({
 
 useSeo({
   title: "Home Two",
-  description: "eCommerce Multivendor Vue JS 3, Nuxt JS 4, Bootstrap 5 Template",
+  
   keywords: ["ecommerce", "fashion", "electronics", "grocery", "shop", "store", "multipurpose"],
 });
 </script>

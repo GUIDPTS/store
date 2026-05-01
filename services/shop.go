@@ -62,10 +62,13 @@ func (s *ShopService) FindByID(id uint) (*models.Shop, error) {
 // Update 更新店铺信息（店主可调用，仅可改名称/描述/联系方式/Logo）
 func (s *ShopService) Update(shop *models.Shop) error {
 	return database.GetDB().Model(&models.Shop{}).Where("id = ?", shop.ID).Updates(map[string]interface{}{
-		"name":        shop.Name,
-		"description": shop.Description,
-		"contact":     shop.Contact,
-		"logo":        shop.Logo,
+		"name":          shop.Name,
+		"description":   shop.Description,
+		"contact":       shop.Contact,
+		"logo":          shop.Logo,
+		"features":      shop.Features,
+		"status":        shop.Status,
+		"reject_reason": shop.RejectReason,
 	}).Error
 }
 

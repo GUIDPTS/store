@@ -31,22 +31,21 @@
             <div class="d-flex flex-column gap-44">
               <div v-for="product in group" :key="product.id" class="flex-align gap-16">
                 <div class="w-90 h-90 rounded-12 border border-gray-100 flex-shrink-0">
-                  <NuxtLink to="/product-details" class="link">
+                  <NuxtLink :to="`/product/${product.id}`" class="link">
                     <img :src="product.imgSrc" :alt="product.imgAlt" />
                   </NuxtLink>
                 </div>
                 <div class="product-card__content mt-12">
                   <div class="flex-align gap-6">
-                    <span class="text-xs fw-bold text-gray-500">{{ product.rating }}</span>
-                    <span class="text-15 fw-bold text-warning-600 d-flex">
-                      <i class="ph-fill ph-star"></i>
-                    </span>
-                    <span class="text-xs fw-bold text-gray-500">
-                      {{ product.ratingCount }}
-                    </span>
+                    <template v-if="product.rating > 0">
+                      <span class="text-xs fw-bold text-gray-500">{{ product.rating.toFixed(1) }}</span>
+                      <span class="text-15 fw-bold text-warning-600 d-flex"><i class="ph-fill ph-star"></i></span>
+                      <span class="text-xs fw-bold text-gray-500">({{ product.ratingCount }})</span>
+                    </template>
+                    <span v-else class="text-xs fw-bold text-gray-500">{{ product.ratingCount }} Sold</span>
                   </div>
                   <h6 class="title text-lg fw-semibold mt-8 mb-8">
-                    <NuxtLink to="/product-details" class="link text-line-1">
+                    <NuxtLink :to="`/product/${product.id}`" class="link text-line-1">
                       {{ product.title }}
                     </NuxtLink>
                   </h6>

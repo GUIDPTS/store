@@ -4,7 +4,7 @@
       <nav class="header-inner flex-between gap-8">
         <div class="logo">
           <NuxtLink to="/" class="link">
-            <img src="/images/logo/logo.png" alt="Logo" />
+            <img :src="site.settings.site_logo || '/images/logo/logo.png'" :alt="site.settings.site_name || 'Logo'" style="max-height:48px;object-fit:contain" />
           </NuxtLink>
         </div>
 
@@ -142,6 +142,13 @@ const onSearchSubmit = (event: Event) => {
     searchError.value = true;
     return;
   }
+
+  const params = new URLSearchParams();
+  params.set("keyword", searchQuery.value.trim());
+  if (selectedCategory.value?.value) {
+    params.set("category_id", selectedCategory.value.value);
+  }
+  navigateTo(`/shop?${params.toString()}`);
 };
 
 const searchPopupRef = ref<InstanceType<typeof SearchBox> | null>(null);

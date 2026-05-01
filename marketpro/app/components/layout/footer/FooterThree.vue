@@ -5,13 +5,11 @@
         <div class="footer-item max-w-275" data-aos="fade-up" data-aos-duration="200">
           <div class="footer-item__logo">
             <NuxtLink to="/">
-              <img src="/images/logo/logo-two-black.png" alt="Marketpro Logo" />
+              <img :src="site.settings.site_logo || '/images/logo/logo-two-black.png'" :alt="site.settings.site_name || 'Logo'" style="max-height:48px;object-fit:contain" />
             </NuxtLink>
           </div>
-          <p class="mb-24">
-            Marketpro become the largest computer parts, gaming pc parts, and other IT related
-            products.
-          </p>
+          <p v-if="site.settings.site_description" class="mb-24">{{ site.settings.site_description }}</p>
+          <p v-else class="mb-24">{{ site.settings.site_name || 'Marketpro' }}</p>
 
           <div class="flex-align gap-16 mb-16">
             <span
@@ -106,12 +104,13 @@
 </template>
 
 <script setup lang="ts">
-import {
-  phone,
-  email,
-  address,
-  footerSections,
-  storeLinks,
-  socialLinks,
-} from "~/data/footer-three";
+import { footerSections, storeLinks, socialLinks } from "~/data/footer-three";
+import { useSiteStore } from "~/stores/site";
+
+const site = useSiteStore();
+site.ensureLoaded();
+
+const phone   = computed(() => site.settings.contact_tel     || "+00 123 456 789");
+const email   = computed(() => site.settings.contact_email   || "support@example.com");
+const address = computed(() => site.settings.contact_address || "789 Inner Lane, California, USA");
 </script>

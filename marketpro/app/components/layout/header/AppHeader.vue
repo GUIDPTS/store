@@ -8,15 +8,13 @@
         </div>
 
         <div class="header-right flex-align gap-20">
-          <a href="tel:+(2)871382023" class="d-sm-flex align-items-center gap-16 d-none">
+          <a v-if="contactTel" :href="`tel:${contactTel}`" class="d-sm-flex align-items-center gap-16 d-none">
             <span class="d-flex text-32">
               <NuxtImg src="/images/icon/mobile.png" alt="Mobile Icon" />
             </span>
-            <span class="">
-              <span class="d-block text-heading fw-medium">Need any Help! call Us</span>
-              <span class="d-block fw-bold text-main-600 hover-text-decoration-underline"
-                >+(2) 871 382 023</span
-              >
+            <span>
+              <span class="d-block text-heading fw-medium">{{ contactTelLabel || 'Need any Help! call Us' }}</span>
+              <span class="d-block fw-bold text-main-600 hover-text-decoration-underline">{{ contactTel }}</span>
             </span>
           </a>
           <button
@@ -39,11 +37,23 @@ import CategoryDropdown from "~/components/widgets/dropdown/CategoryDropdown.vue
 import { useFixedHeader } from "~/composables/useFixedHeader";
 import Navbar from "./Navbar.vue";
 import MobileMenu from "./MobileMenu.vue";
+
 const isMobileMenuOpen = ref(false);
+const contactTel = ref("");
+const contactTelLabel = ref("");
 
 function openMenu() {
   isMobileMenuOpen.value = true;
 }
 
 useFixedHeader();
+
+// 从全局 settings 读取联系电话和提示文字
+const { data } = await useFetch<Record<string, string>>("/api/settings");
+if (data.value?.contact_tel) {
+  contactTel.value = data.value.contact_tel;
+}
+if (data.value?.contact_tel_label) {
+  contactTelLabel.value = data.value.contact_tel_label;
+}
 </script>

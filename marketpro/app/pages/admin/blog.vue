@@ -55,7 +55,23 @@
           <el-input v-model="form.title" placeholder="文章标题" />
         </el-form-item>
         <el-form-item label="分类">
-          <el-input v-model="form.category" placeholder="如：公告、教程、活动" />
+          <el-select
+            v-model="form.category"
+            filterable
+            allow-create
+            default-first-option
+            placeholder="选择或输入新分类"
+            style="width:100%"
+            @focus="loadCategories"
+          >
+            <el-option
+              v-for="cat in categoryOptions"
+              :key="cat"
+              :label="cat"
+              :value="cat"
+            />
+          </el-select>
+          <div style="font-size:12px;color:#86909c;margin-top:4px">可从已有分类中选择，或直接输入新分类名称</div>
         </el-form-item>
         <el-form-item label="封面图">
           <AdminImageUpload v-model="form.cover_image" />
@@ -93,6 +109,18 @@ const total = ref(0);
 const dialogVisible = ref(false);
 const editingId = ref<number | null>(null);
 
+// 分类选项
+const categoryOptions = ref<string[]>([]);
+let categoriesLoaded = false;
+async function loadCategories() {
+  if (categoriesLoaded) return;
+  try {
+    const res = await get<{ name: string; count: number }[]>("/api/blog/categories");
+    categoryOptions.value = (Array.isArray(res) ? res : []).map((c: any) => c.name).filter(Boolean);
+    categoriesLoaded = true;
+  } catch { /* ignore */ }
+}
+
 const emptyForm = () => ({ title: "", category: "", cover_image: "", excerpt: "", content: "", is_published: false });
 const form = ref(emptyForm());
 
@@ -109,12 +137,14 @@ function openCreate() {
   editingId.value = null;
   form.value = emptyForm();
   dialogVisible.value = true;
+  loadCategories();
 }
 
 function openEdit(row: any) {
   editingId.value = row.id;
   form.value = { title: row.title, category: row.category ?? "", cover_image: row.cover_image ?? "", excerpt: row.excerpt ?? "", content: row.content ?? "", is_published: row.is_published };
   dialogVisible.value = true;
+  loadCategories();
 }
 
 async function save() {

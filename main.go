@@ -71,6 +71,8 @@ func main() {
 	uploadHandler := handler.NewUploadHandler()
 	blogHandler := api.NewBlogHandler()
 	blogAdminHandler := admin.NewBlogAdminHandler()
+	couponHandler := api.NewCouponHandler()
+	couponAdminHandler := admin.NewCouponAdminHandler()
 
 	// 设置 Gin
 	router := gin.Default()
@@ -95,6 +97,8 @@ func main() {
 		apiGroup.GET("/shops", shopHandler.ListShops)
 		apiGroup.GET("/shops/:id", shopHandler.GetShop)
 		apiGroup.GET("/shops/:id/products", shopHandler.GetShopProducts)
+		apiGroup.GET("/deals-of-week", apiHandler.GetDealsOfWeek)
+		apiGroup.POST("/newsletter/subscribe", apiHandler.SubscribeNewsletter)
 		apiGroup.GET("/health", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"status": "ok"})
 		})
@@ -117,11 +121,33 @@ func main() {
 		// 评价
 		apiAuthGroup.POST("/products/:id/reviews", apiHandler.CreateProductReview)
 
+		// 已登录用户通用上传
+		apiAuthGroup.POST("/upload/image", uploadHandler.UploadImage)
+
 		// 店铺：申请 / 管理自己的店铺
 		apiAuthGroup.POST("/shop/apply", shopHandler.Apply)
 		apiAuthGroup.GET("/shop/me", shopHandler.MyShop)
 		apiAuthGroup.PUT("/shop/me", shopHandler.UpdateMyShop)
 		apiAuthGroup.GET("/shop/me/products", shopHandler.MyShopProducts)
+		apiAuthGroup.POST("/shop/me/products", shopHandler.MyShopCreateProduct)
+		apiAuthGroup.PUT("/shop/me/products/:pid", shopHandler.MyShopUpdateProduct)
+		apiAuthGroup.DELETE("/shop/me/products/:pid", shopHandler.MyShopDeleteProduct)
+		apiAuthGroup.GET("/shop/me/products/:pid/cardkeys", shopHandler.MyShopGetCardKeys)
+		apiAuthGroup.POST("/shop/me/products/:pid/cardkeys", shopHandler.MyShopAddCardKeys)
+		apiAuthGroup.DELETE("/shop/me/cardkeys/:kid", shopHandler.MyShopDeleteCardKey)
+		apiAuthGroup.GET("/shop/me/orders", shopHandler.MyShopOrders)
+		apiAuthGroup.POST("/shop/me/orders/:oid/ship", shopHandler.MyShopShipOrder)
+		apiAuthGroup.GET("/shop/me/dashboard", shopHandler.MyShopDashboard)
+		apiAuthGroup.GET("/shop/me/reviews", shopHandler.MyShopReviews)
+		apiAuthGroup.POST("/orders/:orderNo/confirm", apiHandler.ConfirmReceipt)
+
+		// 优惠券：校验（需登录）
+		apiAuthGroup.POST("/coupons/validate", couponHandler.ValidateCoupon)
+		// 店主：管理自己的优惠券
+		apiAuthGroup.GET("/shop/me/coupons", couponHandler.MyShopCoupons)
+		apiAuthGroup.POST("/shop/me/coupons", couponHandler.MyShopCreateCoupon)
+		apiAuthGroup.PUT("/shop/me/coupons/:id", couponHandler.MyShopUpdateCoupon)
+		apiAuthGroup.DELETE("/shop/me/coupons/:id", couponHandler.MyShopDeleteCoupon)
 
 		// 余额 & 提现
 		apiAuthGroup.GET("/balance", shopHandler.Balance)
@@ -190,6 +216,16 @@ func main() {
 		adminAPIGroup.POST("/blog/posts", blogAdminHandler.Create)
 		adminAPIGroup.PUT("/blog/posts/:id", blogAdminHandler.Update)
 		adminAPIGroup.DELETE("/blog/posts/:id", blogAdminHandler.Delete)
+
+		// 邮件订阅管理
+		adminAPIGroup.GET("/newsletter/subscribers", adminHandler.GetNewsletterSubscribers)
+		adminAPIGroup.DELETE("/newsletter/subscribers/:id", adminHandler.DeleteNewsletterSubscriber)
+
+		// 优惠券管理
+		adminAPIGroup.GET("/coupons", couponAdminHandler.List)
+		adminAPIGroup.POST("/coupons", couponAdminHandler.Create)
+		adminAPIGroup.PUT("/coupons/:id", couponAdminHandler.Update)
+		adminAPIGroup.DELETE("/coupons/:id", couponAdminHandler.Delete)
 	}
 
 	// ========================================

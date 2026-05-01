@@ -53,6 +53,14 @@
             <el-icon><Document /></el-icon>
             <template #title>博客管理</template>
           </el-menu-item>
+          <el-menu-item index="/admin/newsletter">
+            <el-icon><Message /></el-icon>
+            <template #title>邮件订阅</template>
+          </el-menu-item>
+          <el-menu-item index="/admin/coupons">
+            <el-icon><Ticket /></el-icon>
+            <template #title>优惠券</template>
+          </el-menu-item>
           <el-menu-item index="/admin/settings">
             <el-icon><Setting /></el-icon>
             <template #title>系统设置</template>
@@ -95,7 +103,7 @@ const activeMenu = computed(() => {
   const subs = [
     "/admin/categories", "/admin/products", "/admin/card-keys",
     "/admin/orders", "/admin/users", "/admin/shops",
-    "/admin/withdrawals", "/admin/blog", "/admin/settings",
+    "/admin/withdrawals", "/admin/blog", "/admin/newsletter", "/admin/coupons", "/admin/settings",
   ];
   return subs.find(s => p.startsWith(s)) ?? "/admin";
 });

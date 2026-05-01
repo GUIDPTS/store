@@ -32,8 +32,8 @@ useHead({
 });
 
 useSeo({
-  title: "Become A Seller",
-  description: "eCommerce Multivendor Vue JS 3, Nuxt JS 4, Bootstrap 5 Template",
+  title: "申请开店",
+  
   keywords: ["ecommerce", "fashion", "electronics", "grocery", "shop", "store", "multipurpose"],
 });
 </script>

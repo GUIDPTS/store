@@ -53,7 +53,7 @@ func (s *PaymentService) IsConfigured() bool {
 
 // CreatePaymentRequest 发起支付请求
 type CreatePaymentRequest struct {
-	Amount      int    `json:"amount"`      // 支付金额（积分）
+	Amount      int    `json:"amount"`      // 支付金额（能量）
 	Description string `json:"description"` // 交易描述
 	OrderID     string `json:"order_id"`    // 订单号
 }
@@ -322,7 +322,7 @@ func (s *PaymentService) ProcessPaymentCallback(callback *PaymentCallback) error
 	}
 
 	// 4. 验证金额
-	expectedAmount := int(order.TotalAmount) // 假设1积分=1元
+	expectedAmount := int(order.TotalAmount) // 假设1能量=1元
 	if callback.Amount != expectedAmount {
 		return fmt.Errorf("金额不匹配: 期望 %d, 实际 %d", expectedAmount, callback.Amount)
 	}

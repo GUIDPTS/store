@@ -2,13 +2,29 @@ package services
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/nodeloc-faka/database"
 	"github.com/nodeloc-faka/models"
-	"github.com/nodeloc-faka/oauth"
+	"github.com/nodeloc-faka/payment"
 	"gorm.io/gorm"
 )
+
+// getAppConfig 辅助：从环境变量读取 payment 配置（fallback）
+type appPaymentCfg struct {
+	PaymentID     string
+	PaymentSecret string
+	NodeLocURL    string
+}
+
+func getAppConfig() *appPaymentCfg {
+	return &appPaymentCfg{
+		PaymentID:     os.Getenv("PAYMENT_ID"),
+		PaymentSecret: os.Getenv("PAYMENT_SECRET"),
+		NodeLocURL:    os.Getenv("NODELOC_URL"),
+	}
+}
 
 // WithdrawalService 提现服务
 type WithdrawalService struct {
@@ -102,10 +118,14 @@ func (s *WithdrawalService) Apply(userID, shopID uint, amount float64, remark st
 	if err != nil {
 		return nil, err
 	}
+
+	// 通知管理员有新提现申请
+	NewEmailService().SendWithdrawalNotify(req)
+
 	return req, nil
 }
 
-// Approve 管理员批准提现（标记完成 + 触发 NodeLoc 转账）
+// Approve 管理员批准提现（标记完成 + 自动调用 NodeLoc Payment 转账）
 func (s *WithdrawalService) Approve(id uint, transferTxID string) error {
 	var req models.WithdrawalRequest
 	if err := database.GetDB().Preload("User").First(&req, id).Error; err != nil {
@@ -115,27 +135,50 @@ func (s *WithdrawalService) Approve(id uint, transferTxID string) error {
 		return ErrWithdrawalNotPending
 	}
 
-	// 自动调用 NodeLoc 转账 API（如果开启自动模式且配置了 API URL）
-	autoMode := s.settingService.Get(SettingWithdrawalAutoMode) == "true"
-	apiURL := s.settingService.Get(SettingNodelocTransferAPI)
-	if autoMode && apiURL != "" {
-		client := oauth.NewTransferClient(apiURL, s.settingService.Get(SettingNodeLocClientSecret))
-		username := ""
-		if req.User.ID > 0 {
-			username = req.User.Username
+	// 自动转账：使用 NodeLoc Payment Transfer API
+	// payment_id / payment_secret 优先从 settings 读，fallback 到 AppConfig（环境变量）
+	paymentID := s.settingService.Get(SettingPaymentID)
+	paymentSecret := s.settingService.Get(SettingPaymentSecret)
+	nodeLoc_URL := s.settingService.Get(SettingNodeLocURL)
+
+	// fallback 到 AppConfig（环境变量）
+	if paymentID == "" || paymentSecret == "" {
+		cfg := getAppConfig()
+		if cfg != nil {
+			if paymentID == "" {
+				paymentID = cfg.PaymentID
+			}
+			if paymentSecret == "" {
+				paymentSecret = cfg.PaymentSecret
+			}
+			if nodeLoc_URL == "" {
+				nodeLoc_URL = cfg.NodeLocURL
+			}
 		}
-		tr, err := client.Transfer(&oauth.TransferRequest{
-			UserID:     req.UserID,
-			Username:   username,
-			Amount:     req.ActualAmount,
-			OutTradeNo: fmt.Sprintf("withdrawal_%d", req.ID),
-			Remark:     "店铺余额提现",
+	}
+	if nodeLoc_URL == "" {
+		nodeLoc_URL = "https://www.nodeloc.com"
+	}
+
+	if paymentID != "" && paymentSecret != "" && req.User.ID > 0 {
+		client := payment.NewClient(nodeLoc_URL, paymentID, paymentSecret)
+		orderID := fmt.Sprintf("withdrawal_%d", req.ID)
+		// ActualAmount 是扣除手续费后的到账金额（整数能量）
+		amount := int(req.ActualAmount)
+		if amount <= 0 {
+			amount = int(req.Amount)
+		}
+		tr, err := client.Transfer(&payment.TransferRequest{
+			ToUserID:   req.User.NodeLocID,
+			ToUsername: req.User.Username,
+			Amount:     amount,
+			OrderID:    orderID,
 		})
 		if err != nil {
-			return fmt.Errorf("调用 NodeLoc 转账 API 失败: %v", err)
+			return fmt.Errorf("NodeLoc 转账失败: %v", err)
 		}
 		if transferTxID == "" {
-			transferTxID = tr.TxID
+			transferTxID = tr.TransactionID
 		}
 	}
 

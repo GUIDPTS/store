@@ -117,6 +117,22 @@ async function load(slug: string) {
 
 watch(() => route.params.slug, (slug) => { if (slug) load(slug as string); }, { immediate: true });
 
+// 动态 SEO
+const site = useSiteStore();
+watch(post, (p) => {
+  if (!p) return;
+  useHead({
+    title: `${p.title} | ${(site.settings.site_name as string) || 'NodeLoc'}`,
+    meta: [
+      { name: "description", content: p.excerpt || p.title },
+      { property: "og:title", content: p.title },
+      { property: "og:description", content: p.excerpt || p.title },
+      ...(p.cover_image ? [{ property: "og:image", content: p.cover_image }] : []),
+      { property: "og:type", content: "article" },
+    ],
+  });
+});
+
 function formatDate(d: string) {
   if (!d) return "";
   return new Date(d).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" });

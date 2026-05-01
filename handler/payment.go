@@ -107,7 +107,7 @@ func (h *PaymentHandler) CreateOrder(c *gin.Context) {
 
 	// 发起支付请求
 	payResp, err := h.paymentService.CreatePayment(&services.CreatePaymentRequest{
-		Amount:      int(totalAmount), // 假设1积分=1元
+		Amount:      int(totalAmount), // 假设1能量=1元
 		Description: fmt.Sprintf("购买 %s x%d", product.Name, quantity),
 		OrderID:     order.OrderNo,
 	})

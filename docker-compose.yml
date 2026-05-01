@@ -22,13 +22,16 @@ services:
       - PAYMENT_SECRET=${PAYMENT_SECRET}
       - PAYMENT_CALLBACK_URI=${PAYMENT_CALLBACK_URI}
       - SERVER_PORT=8080
+    volumes:
+      - uploads_data:/app/uploads
     networks:
       - faka-network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/api/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "-O", "/dev/null", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 30s
   
   # Frontend - Nuxt 4 + MarketPro template
   frontend:
@@ -49,3 +52,6 @@ services:
 networks:
   faka-network:
     driver: bridge
+
+volumes:
+  uploads_data:

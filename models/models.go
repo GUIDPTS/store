@@ -94,6 +94,7 @@ type Product struct {
 	SalesCount  int        `gorm:"default:0" json:"sales_count"`
 	Sort        int        `gorm:"default:0" json:"sort"`
 	IsActive    bool       `gorm:"default:true" json:"is_active"`
+	DeliveryType int       `gorm:"default:0" json:"delivery_type"` // 0=卡密自动发货 1=手动发货
 	// 限时促销
 	PromoPrice  float64    `gorm:"default:0" json:"promo_price"`   // 0 = 无促销
 	PromoStart  *time.Time `json:"promo_start"`
@@ -180,7 +181,11 @@ type Order struct {
 	// 店主结算字段
 	ShopSettled bool    `gorm:"default:false;index" json:"shop_settled"` // 是否已结算给店主
 	ShopIncome  float64 `gorm:"default:0" json:"shop_income"`            // 店主实际所得（扣除平台抽成）
-	
+
+	// 手动发货字段
+	DeliverContent string `gorm:"type:text" json:"deliver_content"` // 发货内容（TG号/快递单号等）
+	DeliverNote    string `gorm:"type:text" json:"deliver_note"`    // 发货备注
+
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
 	CardKeys  []CardKey  `gorm:"foreignKey:OrderID" json:"card_keys,omitempty"`
@@ -189,9 +194,16 @@ type Order struct {
 // OrderStatus 订单状态
 const (
 	OrderStatusPending   = 0 // 待支付
-	OrderStatusPaid      = 1 // 已支付
+	OrderStatusPaid      = 1 // 已支付/待发货（手动发货商品）
 	OrderStatusCompleted = 2 // 已完成
 	OrderStatusCancelled = 3 // 已取消
+	OrderStatusShipped   = 4 // 已发货/待确认收货
+)
+
+// 发货类型
+const (
+	DeliveryTypeCardKey = 0 // 卡密自动发货
+	DeliveryTypeManual  = 1 // 手动发货
 )
 
 // 支付方式
@@ -210,6 +222,7 @@ type Shop struct {
 	Description string     `gorm:"type:text" json:"description"`
 	Logo        string     `gorm:"size:500" json:"logo"`
 	Contact     string     `gorm:"size:200" json:"contact"`
+	Features    string     `gorm:"type:text" json:"features"` // JSON: [{icon,title,text}]
 	Status      int        `gorm:"default:0;index" json:"status"` // 0: 待审核, 1: 已批准, 2: 已拒绝, 3: 已封禁
 	IsOfficial  bool       `gorm:"default:false;index" json:"is_official"`  // 平台官方店
 	RejectReason string    `gorm:"type:text" json:"reject_reason"`
@@ -292,6 +305,32 @@ type ProductReview struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+// NewsletterSubscriber 邮件订阅
+type NewsletterSubscriber struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	Email     string    `gorm:"uniqueIndex;size:200" json:"email"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// Coupon 优惠券
+type Coupon struct {
+	ID            uint       `gorm:"primaryKey" json:"id"`
+	Code          string     `gorm:"uniqueIndex;size:50" json:"code"`
+	Type          string     `gorm:"size:20;index" json:"type"`           // platform / shop
+	ShopID        uint       `gorm:"index;default:0" json:"shop_id"`      // 0=平台券
+	Shop          *Shop      `gorm:"foreignKey:ShopID" json:"shop,omitempty"`
+	DiscountType  string     `gorm:"size:20" json:"discount_type"`        // percent / fixed
+	DiscountValue float64    `json:"discount_value"`                      // 折扣值：percent=百分比(如10=9折), fixed=固定减免积分
+	MinAmount     float64    `gorm:"default:0" json:"min_amount"`         // 最低使用金额
+	MaxUses       int        `gorm:"default:0" json:"max_uses"`           // 0=不限
+	UsedCount     int        `gorm:"default:0" json:"used_count"`
+	IsActive      bool       `gorm:"default:true" json:"is_active"`
+	ExpiresAt     *time.Time `json:"expires_at"`
+	Description   string     `gorm:"size:200" json:"description"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
+}
+
 // BlogPost 博客文章
 type BlogPost struct {
 	ID          uint       `gorm:"primaryKey" json:"id"`
@@ -324,5 +363,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&BalanceTx{},
 		&ProductReview{},
 		&BlogPost{},
+		&NewsletterSubscriber{},
+		&Coupon{},
 	)
 }

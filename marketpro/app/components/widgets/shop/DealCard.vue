@@ -1,73 +1,55 @@
 <template>
-  <div
-    class="product-card h-100 p-16 border border-gray-100 hover-border-main-600 rounded-16 position-relative transition-2"
-  >
-    <NuxtLink
-      to="/product-details-two"
-      class="product-card__thumb flex-center rounded-8 position-relative"
-    >
-      <span
-        v-if="product.badge"
-        :class="`product-card__badge bg-${product.badge.type}-600 px-8 py-4 text-sm text-white position-absolute inset-inline-start-0 inset-block-start-0`"
-      >
-        {{ product.badge.label }}
-      </span>
-      <NuxtImg :src="product.image" alt="" class="w-auto max-w-unset" />
+  <div class="product-card h-100 p-16 border border-gray-100 hover-border-main-600 rounded-16 position-relative transition-2">
+    <NuxtLink :to="`/product/${product.id}`"
+      class="product-card__thumb flex-center rounded-8 position-relative">
+      <img :src="product.image || '/images/thumbs/product-two-img1.png'" :alt="product.name"
+        style="max-height:140px;object-fit:contain;width:100%" />
     </NuxtLink>
 
     <div class="product-card__content mt-16">
       <h6 class="title text-lg fw-semibold mt-12 mb-8">
-        <NuxtLink to="/product-details-two" class="link text-line-2">
-          {{ product.title }}
+        <NuxtLink :to="`/product/${product.id}`" class="link text-line-2">
+          {{ product.name }}
         </NuxtLink>
       </h6>
 
-      <div class="flex-align gap-6">
-        <span class="text-xs fw-medium text-gray-500">{{ product.rating }}</span>
-        <span class="text-xs fw-medium text-warning-600 d-flex">
-          <i class="ph-fill ph-star"></i>
-        </span>
-        <span class="text-xs fw-medium text-gray-500">({{ product.reviews }})</span>
-      </div>
-
       <div class="mt-8">
-        <div
-          class="progress w-100 bg-color-three rounded-pill h-4"
-          role="progressbar"
-          :aria-valuenow="product.progress"
-          aria-valuemin="0"
-          aria-valuemax="100"
-        >
-          <div
-            class="progress-bar bg-tertiary-600 rounded-pill"
-            :style="{ width: `${product.progress}%` }"
-          ></div>
+        <div class="progress w-100 bg-color-three rounded-pill h-4"
+          role="progressbar" :aria-valuenow="soldPct" aria-valuemin="0" aria-valuemax="100">
+          <div class="progress-bar bg-tertiary-600 rounded-pill" :style="{ width: `${soldPct}%` }"></div>
         </div>
-        <span class="text-gray-900 text-xs fw-medium mt-8">Sold: {{ product.sold }}</span>
+        <span class="text-gray-900 text-xs fw-medium mt-8 d-block">
+          Sold: {{ product.sales_count || 0 }}
+        </span>
       </div>
 
       <div class="product-card__price my-20">
-        <span class="text-gray-400 text-md fw-semibold text-decoration-line-through">
-          {{ product.oldPrice }}
+        <span v-if="product.orig_price > product.price"
+          class="text-gray-400 text-md fw-semibold text-decoration-line-through">
+          ¥{{ product.orig_price }}
         </span>
         <span class="text-heading text-md fw-semibold">
-          {{ product.newPrice }}
-          <span class="text-gray-500 fw-normal">/Qty</span>
+          ¥{{ product.is_promo_active ? product.promo_price : product.price }}
+          <span class="text-gray-500 fw-normal">/件</span>
         </span>
       </div>
 
-      <NuxtLink
-        to="/cart"
-        class="product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 px-24 rounded-pill flex-center gap-8 fw-medium"
-      >
-        Add To Cart <i class="ph ph-shopping-cart"></i>
+      <NuxtLink :to="`/product/${product.id}`"
+        class="product-card__cart btn bg-gray-50 text-heading hover-bg-main-600 hover-text-white py-11 px-24 rounded-pill flex-center gap-8 fw-medium">
+        立即购买 <i class="ph ph-arrow-right"></i>
       </NuxtLink>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { DealProduct } from "~/data/deal-week";
+import { computed } from "vue";
 
-defineProps<{ product: DealProduct }>();
+const props = defineProps<{ product: any }>();
+
+const soldPct = computed(() => {
+  const total = (props.product.sales_count || 0) + (props.product.stock_count || 0);
+  if (!total) return 0;
+  return Math.min(Math.round(((props.product.sales_count || 0) / total) * 100), 100);
+});
 </script>

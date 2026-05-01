@@ -92,7 +92,7 @@ const handleSearch = () => {
     searchInput.value?.focus();
     return;
   }
-
   hasError.value = false;
+  navigateTo(`/shop?keyword=${encodeURIComponent(searchQuery.value)}`);
 };
 </script>

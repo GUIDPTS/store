@@ -9,7 +9,7 @@
       >
         {{ product.badge }}
       </span>
-      <NuxtLink to="product-details-two" class="product-card__thumb flex-center overflow-hidden">
+      <NuxtLink :to="`/product/${product.id}`" class="product-card__thumb flex-center overflow-hidden">
         <NuxtImg :src="product.image" :alt="product.title" />
       </NuxtLink>
       <div :id="`countdown-${product.id}`" class="countdown">
@@ -41,13 +41,16 @@
       </div>
 
       <div class="flex-align gap-6">
-        <span class="text-xs fw-bold text-gray-600">{{ product.rating.toFixed(1) }}</span>
-        <span class="text-15 fw-bold text-warning-600 d-flex"><i class="ph-fill ph-star"></i></span>
-        <span class="text-xs fw-bold text-gray-600">({{ product.reviews }})</span>
+        <template v-if="product.rating > 0">
+          <span class="text-xs fw-bold text-gray-600">{{ product.rating.toFixed(1) }}</span>
+          <span class="text-15 fw-bold text-warning-600 d-flex"><i class="ph-fill ph-star"></i></span>
+          <span class="text-xs fw-bold text-gray-600">({{ product.reviewCount }})</span>
+        </template>
+        <span v-else class="text-xs fw-bold text-gray-600">{{ product.reviews }} Sold</span>
       </div>
 
       <h6 class="title text-lg fw-semibold mt-12 mb-8">
-        <NuxtLink to="product-details-two" class="link text-line-2">
+        <NuxtLink :to="`/product/${product.id}`" class="link text-line-2">
           {{ product.title }}
         </NuxtLink>
       </h6>

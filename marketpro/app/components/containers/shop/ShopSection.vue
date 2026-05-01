@@ -142,7 +142,7 @@
                 <div v-if="product.sales_count" class="flex-align mb-8 gap-6">
                   <span class="text-xs fw-bold text-gray-600">{{ product.sales_count }}</span>
                   <span class="text-warning-600 d-flex"><i class="ph-fill ph-fire"></i></span>
-                  <span class="text-xs text-gray-500">已售</span>
+                  <span class="text-xs text-gray-500">Sold</span>
                 </div>
 
                 <div class="product-card__price my-20">
@@ -232,6 +232,7 @@ interface ProductsResponse {
 
 const { toggleSidebar } = useSidebar();
 
+const route = useRoute();
 const isListView = ref(false);
 const loading = ref(true);
 const products = ref<Product[]>([]);
@@ -248,6 +249,16 @@ const filters = reactive({
   page: 1,
   pageSize: 20,
 });
+
+// 从 URL query 参数初始化搜索条件
+if (route.query.keyword) {
+  const kw = String(route.query.keyword);
+  keyword.value = kw;
+  filters.keyword = kw;
+}
+if (route.query.category_id) {
+  filters.categoryId = Number(route.query.category_id);
+}
 
 const paginationPages = computed(() => {
   const pages: number[] = [];
