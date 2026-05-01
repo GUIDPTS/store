@@ -1,17 +1,51 @@
 # ╔════════════════════════════════════════════════════════════╗
-# ║   Docker Compose 生产环境配置 - 使用 Docker Hub 镜像        ║
+# ║   Docker Compose 生产环境配置 - 含自动 SSL                  ║
 # ╚════════════════════════════════════════════════════════════╝
-# 
+#
 # 使用方式：
 # 1. 复制 .env.production 为 .env 并修改配置
-# 2. 运行: docker-compose -f docker-compose.prod.yml up -d
-#
-# 注意：此配置文件使用预构建的 Docker Hub 镜像，无需本地构建
+# 2. 确保域名 DNS 已解析到本服务器
+# 3. 运行: docker compose -f docker-compose.prod.yml up -d
 
 version: '3.8'
 
 services:
-  # MySQL Database
+  # ── Nginx 反向代理（自动处理 HTTP→HTTPS 跳转）──────────────
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy:latest
+    container_name: nginx-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - nginx_certs:/etc/nginx/certs:ro
+      - nginx_vhost:/etc/nginx/vhost.d
+      - nginx_html:/usr/share/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    networks:
+      - faka-network
+
+  # ── Let's Encrypt 自动申请/续期 SSL 证书 ──────────────────
+  acme-companion:
+    image: nginxproxy/acme-companion:latest
+    container_name: nginx-acme
+    restart: unless-stopped
+    volumes:
+      - nginx_certs:/etc/nginx/certs
+      - nginx_vhost:/etc/nginx/vhost.d
+      - nginx_html:/usr/share/nginx/html
+      - nginx_acme:/etc/acme.sh
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - NGINX_PROXY_CONTAINER=nginx-proxy
+      - DEFAULT_EMAIL=${SSL_EMAIL}
+    depends_on:
+      - nginx-proxy
+    networks:
+      - faka-network
+
+  # ── MySQL 数据库 ───────────────────────────────────────────
   mysql:
     image: mysql:8.0
     container_name: nodeloc-faka-mysql
@@ -23,10 +57,10 @@ services:
       - MYSQL_PASSWORD=${DB_PASSWORD}
       - TZ=Asia/Shanghai
     ports:
-      - "127.0.0.1:${DB_PORT:-3306}:3306"  # 仅本地访问
+      - "127.0.0.1:${DB_PORT:-3306}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-    command: 
+    command:
       - --default-authentication-plugin=mysql_native_password
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
@@ -41,7 +75,7 @@ services:
       retries: 5
       start_period: 30s
 
-  # Backend API - 使用 Docker Hub 镜像
+  # ── 后端 API ───────────────────────────────────────────────
   backend:
     image: ${DOCKER_IMAGE_BACKEND:-nodeloc/faka-backend:latest}
     container_name: nodeloc-faka-backend
@@ -60,6 +94,12 @@ services:
       - PAYMENT_ID=${PAYMENT_ID}
       - PAYMENT_SECRET=${PAYMENT_SECRET}
       - PAYMENT_CALLBACK_URI=${PAYMENT_CALLBACK_URI}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT:-465}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_FROM}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
       - SERVER_PORT=8080
       - GIN_MODE=release
       - TZ=Asia/Shanghai
@@ -76,34 +116,32 @@ services:
       timeout: 10s
       retries: 5
       start_period: 120s
-  
-  # Frontend - 使用 Docker Hub 镜像
+
+  # ── 前端（Nuxt）────────────────────────────────────────────
   frontend:
     image: ${DOCKER_IMAGE_FRONTEND:-nodeloc/faka-frontend:latest}
     container_name: nodeloc-faka-frontend
     restart: unless-stopped
-    ports:
-      - "${PORT:-3000}:3000"
     environment:
       - BACKEND_URL=http://backend:8080
       - TZ=Asia/Shanghai
+      # nginx-proxy 通过这两个环境变量自动配置反向代理和 SSL
+      - VIRTUAL_HOST=${DOMAIN}
+      - VIRTUAL_PORT=3000
+      - LETSENCRYPT_HOST=${DOMAIN}
     depends_on:
-      backend:
-        condition: service_started
+      - backend
+      - nginx-proxy
     networks:
       - faka-network
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "-O", "/dev/null", "http://localhost:3000"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
 
 volumes:
   mysql_data:
-    driver: local
   uploads:
-    driver: local
+  nginx_certs:
+  nginx_vhost:
+  nginx_html:
+  nginx_acme:
 
 networks:
   faka-network:
