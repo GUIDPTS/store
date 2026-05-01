@@ -74,8 +74,8 @@ services:
       test: ["CMD", "wget", "--quiet", "--tries=1", "-O", "/dev/null", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 60s
+      retries: 5
+      start_period: 120s
   
   # Frontend - 使用 Docker Hub 镜像
   frontend:
@@ -89,7 +89,7 @@ services:
       - TZ=Asia/Shanghai
     depends_on:
       backend:
-        condition: service_healthy
+        condition: service_started
     networks:
       - faka-network
     healthcheck:
