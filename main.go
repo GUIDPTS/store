@@ -47,8 +47,10 @@ func main() {
 	// 初始化系统（简化版 - 只初始化基础设置）
 	initSystemSimple()
 
-	// 插入演示数据（仅在数据库为空时）
-	services.SeedDemoData()
+	// 插入演示数据（仅在数据库为空时，且未禁用时）
+	if os.Getenv("DISABLE_DEMO_DATA") != "true" {
+		services.SeedDemoData()
+	}
 
 	// 创建 OAuth 客户端
 	oauthClient := oauth.NewClient(
