@@ -21,6 +21,7 @@ type AdminHandler struct {
 	userService     *services.UserService
 	settingService  *services.SettingService
 	balanceService  *services.BalanceService
+	shopService     *services.ShopService
 }
 
 // NewAdminHandler 创建管理员处理器
@@ -33,6 +34,7 @@ func NewAdminHandler() *AdminHandler {
 		userService:     services.NewUserService(),
 		settingService:  services.NewSettingService(),
 		balanceService:  services.NewBalanceService(),
+		shopService:     services.NewShopService(),
 	}
 }
 
@@ -209,7 +211,16 @@ func (h *AdminHandler) CreateProduct(c *gin.Context) {
 	if req.Images == "" {
 		req.Images = "[]"
 	}
+
+	// 确保官方店存在，并获取其 ID
+	officialShop, err := h.shopService.EnsureOfficialShop()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取官方店铺失败"})
+		return
+	}
+
 	product := &models.Product{
+		ShopID:      officialShop.ID,
 		CategoryID:  req.CategoryID,
 		Name:        req.Name,
 		Description: req.Description,
