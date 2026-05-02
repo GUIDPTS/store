@@ -136,16 +136,7 @@ func (s *ShopService) EnsureOfficialShop() (*models.Shop, error) {
 	db := database.GetDB()
 	settingService := NewSettingService()
 
-	// 检查 setting 中是否已记录官方店ID
-	idStr := settingService.Get(SettingOfficialShopID)
-	if idStr != "" {
-		var shop models.Shop
-		if err := db.Where("is_official = ?", true).First(&shop).Error; err == nil {
-			return &shop, nil
-		}
-	}
-
-	// 查找已有的 official 店
+	// 查找或创建官方店
 	var shop models.Shop
 	err := db.Where("is_official = ?", true).First(&shop).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -166,18 +157,13 @@ func (s *ShopService) EnsureOfficialShop() (*models.Shop, error) {
 		return nil, err
 	}
 
-	// 把所有 shop_id=0 的现有商品归到官方店
-	if err := db.Model(&models.Product{}).
+	// 每次都迁移 shop_id=0 的商品和订单到官方店（幂等操作）
+	db.Model(&models.Product{}).
 		Where("shop_id = 0 OR shop_id IS NULL").
-		Update("shop_id", shop.ID).Error; err != nil {
-		return nil, err
-	}
-	// 把所有 shop_id=0 的现有订单归到官方店
-	if err := db.Model(&models.Order{}).
+		Update("shop_id", shop.ID)
+	db.Model(&models.Order{}).
 		Where("shop_id = 0 OR shop_id IS NULL").
-		Update("shop_id", shop.ID).Error; err != nil {
-		return nil, err
-	}
+		Update("shop_id", shop.ID)
 
 	// 写入 setting
 	settingService.Set(SettingOfficialShopID, IntToString(int(shop.ID)))
