@@ -7,7 +7,7 @@
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column label="头像" width="70">
           <template #default="{ row }">
-            <el-avatar :size="36" :src="row.avatar">{{ row.username?.[0] }}</el-avatar>
+            <el-avatar :size="36" :src="row.avatar_url">{{ row.username?.[0] }}</el-avatar>
           </template>
         </el-table-column>
         <el-table-column prop="username" label="用户名" />

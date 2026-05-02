@@ -1,6 +1,16 @@
 <template>
   <div class="border border-gray-100 rounded-8 overflow-hidden">
     <div class="bg-main-600 p-24 text-center">
+      <div class="mb-12">
+        <img v-if="auth.user?.avatar_url" :src="auth.user.avatar_url"
+          class="rounded-circle mx-auto d-block"
+          style="width:64px;height:64px;object-fit:cover;border:3px solid rgba(255,255,255,0.3)"
+          :alt="auth.user?.username" />
+        <div v-else class="rounded-circle bg-white bg-opacity-25 d-flex align-items-center justify-content-center mx-auto"
+          style="width:64px;height:64px;font-size:28px;color:rgba(255,255,255,0.8)">
+          <i class="ph ph-user"></i>
+        </div>
+      </div>
       <div class="text-white fw-semibold text-lg">{{ auth.user?.username || "用户" }}</div>
     </div>
     <nav class="p-16">

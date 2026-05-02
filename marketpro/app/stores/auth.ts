@@ -3,9 +3,13 @@ import { defineStore } from "pinia";
 interface User {
   id: number;
   username: string;
-  avatar?: string;
+  name?: string;
+  email?: string;
+  avatar_url?: string;
+  avatar?: string;       // 兼容旧字段
   is_admin: boolean;
   balance?: number;
+  nodeloc_id?: number;
 }
 
 export const useAuthStore = defineStore("auth", () => {

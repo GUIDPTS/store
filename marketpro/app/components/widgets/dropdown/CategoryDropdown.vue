@@ -35,7 +35,13 @@
           tabindex="0"
         >
           <span>
-            <NuxtImg :src="category.icon" :alt="category.name" class="w-40" />
+            <img v-if="category.image" :src="category.image" :alt="category.name" class="w-40" style="object-fit:contain" />
+            <span v-else-if="category.icon" class="w-40 h-40 d-flex align-items-center justify-content-center">
+              <i :class="category.icon" style="font-size:28px"></i>
+            </span>
+            <span v-else class="w-40 h-40 d-flex align-items-center justify-content-center">
+              <i class="ph ph-squares-four" style="font-size:28px"></i>
+            </span>
           </span>
           <span class="fw-semibold text-heading mt-16 text-sm">{{ category.name }}</span>
         </NuxtLink>
@@ -54,7 +60,8 @@ const categories = computed(() =>
   siteStore.categories.map(c => ({
     id: c.id,
     name: c.name,
-    icon: "/images/icon/category-1.png",
+    image: (c as any).image || "",
+    icon: (c as any).icon || "",
     link: `/category/${c.id}`,
   }))
 );
