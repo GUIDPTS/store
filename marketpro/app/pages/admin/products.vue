@@ -33,6 +33,13 @@
             <span style="color:#86909c;font-size:12px"> / {{ row.sales_count }}</span>
           </template>
         </el-table-column>
+        <el-table-column label="发货方式" width="110">
+          <template #default="{ row }">
+            <el-tag :type="row.delivery_type === 1 ? 'warning' : 'primary'" size="small">
+              {{ row.delivery_type === 1 ? '手动发货' : '卡密自动' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="sort" label="排序" width="70" />
         <el-table-column label="状态" width="90">
           <template #default="{ row }">
@@ -179,6 +186,17 @@
           </div>
         </el-form-item>
 
+        <el-form-item label="发货方式">
+          <el-radio-group v-model="form.delivery_type">
+            <el-radio :value="0">
+              <span><i class="ph ph-key" style="margin-right:4px"></i>卡密自动发货</span>
+            </el-radio>
+            <el-radio :value="1">
+              <span><i class="ph ph-hand-coins" style="margin-right:4px"></i>手动发货（TG 号 / 实物 / 其他）</span>
+            </el-radio>
+          </el-radio-group>
+        </el-form-item>
+
         <el-form-item label="状态">
           <el-switch v-model="form.is_active" active-text="上架" inactive-text="下架" />
         </el-form-item>
@@ -224,6 +242,7 @@ const defaultForm = () => ({
   sales_count: 0,
   sort: 0,
   is_active: true,
+  delivery_type: 0,
   promo_price: 0,
   promo_start: null as string | null,
   promo_end: null as string | null,
@@ -273,6 +292,7 @@ function openEdit(row: any) {
     sales_count: row.sales_count ?? 0,
     sort: row.sort,
     is_active: row.is_active,
+    delivery_type: row.delivery_type ?? 0,
     promo_price: row.promo_price ?? 0,
     promo_start: row.promo_start ? row.promo_start.slice(0, 19) : null,
     promo_end: row.promo_end ? row.promo_end.slice(0, 19) : null,

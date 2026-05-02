@@ -200,6 +200,7 @@ func (h *AdminHandler) CreateProduct(c *gin.Context) {
 		StockCount  int        `json:"stock_count"`
 		Sort        int        `json:"sort"`
 		IsActive    bool       `json:"is_active"`
+		DeliveryType int       `json:"delivery_type"`
 		PromoPrice  float64    `json:"promo_price"`
 		PromoStart  *time.Time `json:"promo_start"`
 		PromoEnd    *time.Time `json:"promo_end"`
@@ -220,20 +221,21 @@ func (h *AdminHandler) CreateProduct(c *gin.Context) {
 	}
 
 	product := &models.Product{
-		ShopID:      officialShop.ID,
-		CategoryID:  req.CategoryID,
-		Name:        req.Name,
-		Description: req.Description,
-		Price:       req.Price,
-		OrigPrice:   req.OrigPrice,
-		Image:       req.Image,
-		Images:      req.Images,
-		StockCount:  req.StockCount,
-		Sort:        req.Sort,
-		IsActive:    req.IsActive,
-		PromoPrice:  req.PromoPrice,
-		PromoStart:  req.PromoStart,
-		PromoEnd:    req.PromoEnd,
+		ShopID:       officialShop.ID,
+		CategoryID:   req.CategoryID,
+		Name:         req.Name,
+		Description:  req.Description,
+		Price:        req.Price,
+		OrigPrice:    req.OrigPrice,
+		Image:        req.Image,
+		Images:       req.Images,
+		StockCount:   req.StockCount,
+		Sort:         req.Sort,
+		IsActive:     req.IsActive,
+		DeliveryType: req.DeliveryType,
+		PromoPrice:   req.PromoPrice,
+		PromoStart:   req.PromoStart,
+		PromoEnd:     req.PromoEnd,
 	}
 	if err := h.productService.Create(product); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "创建商品失败"})
@@ -254,19 +256,20 @@ func (h *AdminHandler) UpdateProduct(c *gin.Context) {
 	}
 
 	var req struct {
-		CategoryID  *uint      `json:"category_id"`
-		Name        string     `json:"name"`
-		Description string     `json:"description"`
-		Price       *float64   `json:"price"`
-		OrigPrice   *float64   `json:"orig_price"`
-		Image       string     `json:"image"`
-		Images      *string    `json:"images"`
-		StockCount  *int       `json:"stock_count"`
-		Sort        *int       `json:"sort"`
-		IsActive    *bool      `json:"is_active"`
-		PromoPrice  *float64   `json:"promo_price"`
-		PromoStart  *time.Time `json:"promo_start"`
-		PromoEnd    *time.Time `json:"promo_end"`
+		CategoryID   *uint      `json:"category_id"`
+		Name         string     `json:"name"`
+		Description  string     `json:"description"`
+		Price        *float64   `json:"price"`
+		OrigPrice    *float64   `json:"orig_price"`
+		Image        string     `json:"image"`
+		Images       *string    `json:"images"`
+		StockCount   *int       `json:"stock_count"`
+		Sort         *int       `json:"sort"`
+		IsActive     *bool      `json:"is_active"`
+		DeliveryType *int       `json:"delivery_type"`
+		PromoPrice   *float64   `json:"promo_price"`
+		PromoStart   *time.Time `json:"promo_start"`
+		PromoEnd     *time.Time `json:"promo_end"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
@@ -284,6 +287,7 @@ func (h *AdminHandler) UpdateProduct(c *gin.Context) {
 	if req.StockCount != nil { product.StockCount = *req.StockCount }
 	if req.Sort != nil { product.Sort = *req.Sort }
 	if req.IsActive != nil { product.IsActive = *req.IsActive }
+	if req.DeliveryType != nil { product.DeliveryType = *req.DeliveryType }
 	if req.PromoPrice != nil { product.PromoPrice = *req.PromoPrice }
 	product.PromoStart = req.PromoStart
 	product.PromoEnd = req.PromoEnd
