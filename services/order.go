@@ -474,6 +474,20 @@ func (s *OrderService) ShipOrder(orderID uint, shopUserID uint, content, note st
 	}).Error; err != nil {
 		return err
 	}
+
+	// 如果订单关联了卡密（卡密商品走了手动发货流程），发货时同步标记卡密为已售出
+	cardKeyService := NewCardKeyService()
+	var cardKeys []models.CardKey
+	database.GetDB().Where("product_id = ? AND status = ? AND order_id IS NULL", order.ProductID, models.CardKeyStatusAvailable).
+		Limit(order.Quantity).Find(&cardKeys)
+	if len(cardKeys) > 0 {
+		ids := make([]uint, len(cardKeys))
+		for i, ck := range cardKeys {
+			ids[i] = ck.ID
+		}
+		cardKeyService.MarkAsSold(ids, orderID)
+	}
+
 	// 发货通知邮件
 	order.DeliverContent = content
 	order.DeliverNote = note
