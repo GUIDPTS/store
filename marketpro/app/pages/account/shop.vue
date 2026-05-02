@@ -336,8 +336,8 @@
                           </div>
                         </td>
                         <td class="py-12 px-16">
-                          <div class="text-danger-600 fw-semibold">¥{{ p.is_promo_active ? p.promo_price : p.price }}</div>
-                          <div v-if="p.is_promo_active" class="text-gray-400 text-xs text-decoration-line-through">¥{{ p.price }}</div>
+                          <div class="text-danger-600 fw-semibold"><i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ p.is_promo_active ? p.promo_price : p.price }}</div>
+                          <div v-if="p.is_promo_active" class="text-gray-400 text-xs text-decoration-line-through"><i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ p.price }}</div>
                         </td>
                         <td class="py-12 px-16 text-sm">{{ p.stock_count }} / {{ p.sales_count }}</td>
                         <td class="py-12 px-16">
@@ -388,7 +388,7 @@
                         <td class="py-12 px-16 text-sm font-monospace">{{ o.order_no }}</td>
                         <td class="py-12 px-16 text-sm" style="max-width:140px">{{ o.product?.name }}</td>
                         <td class="py-12 px-16 text-sm text-gray-500">{{ o.contact || o.user?.username || "-" }}</td>
-                        <td class="py-12 px-16 fw-semibold text-danger-600">¥{{ o.total_amount }}</td>
+                        <td class="py-12 px-16 fw-semibold text-danger-600"><i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ o.total_amount }}</td>
                         <td class="py-12 px-16">
                           <span class="badge" :class="orderStatusClass(o.status)">{{ orderStatusText(o.status) }}</span>
                         </td>

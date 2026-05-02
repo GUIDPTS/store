@@ -71,7 +71,7 @@
               <h6 class="text-lg mb-8 fw-medium">
                 <NuxtLink :to="`/product/${product.id}`" class="link text-line-2">{{ product.name }}</NuxtLink>
               </h6>
-              <h6 class="text-md mb-0 mt-4 text-main-600">¥{{ Number(product.price).toFixed(2) }}</h6>
+              <h6 class="text-md mb-0 mt-4 text-main-600"><i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ Number(product.price).toFixed(2) }}</h6>
             </div>
           </div>
           <div v-if="topProducts.length === 0" class="text-gray-400 text-sm text-center py-8">暂无商品</div>

@@ -50,15 +50,12 @@
                     </NuxtLink>
                   </h6>
                   <div class="product-card__price flex-align gap-8">
-                    <span class="text-heading text-md fw-semibold d-block">
-                      {{ product.priceCurrent }}
-                    </span>
+                    <span class="text-heading text-md fw-semibold d-block" v-html="product.priceCurrent"></span>
                     <span
                       v-if="product.priceOld"
                       class="text-gray-400 text-md fw-semibold d-block line-through"
-                    >
-                      {{ product.priceOld }}
-                    </span>
+                      v-html="product.priceOld"
+                    ></span>
                   </div>
                 </div>
               </div>

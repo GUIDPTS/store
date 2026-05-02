@@ -150,10 +150,10 @@
                     v-if="product.orig_price && product.orig_price > product.price"
                     class="text-gray-400 text-md fw-semibold text-decoration-line-through"
                   >
-                    ¥{{ Number(product.orig_price).toFixed(2) }}
+                    <i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ Number(product.orig_price).toFixed(2) }}
                   </span>
                   <span class="text-heading text-md fw-semibold">
-                    ¥{{ Number(product.price || 0).toFixed(2) }}
+                    <i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ Number(product.price || 0).toFixed(2) }}
                   </span>
                 </div>
 

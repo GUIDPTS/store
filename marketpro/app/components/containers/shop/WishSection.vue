@@ -56,7 +56,7 @@
                       </div>
                     </td>
                     <td class="px-40 py-32 border-end border-neutral-100">
-                      <span class="text-lg h6 mb-0 fw-semibold">¥{{ item.price.toFixed(2) }}</span>
+                      <span class="text-lg h6 mb-0 fw-semibold"><i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ item.price.toFixed(2) }}</span>
                     </td>
                     <td class="px-40 py-32 border-end border-neutral-100">
                       <span class="text-lg h6 mb-0 fw-semibold">{{

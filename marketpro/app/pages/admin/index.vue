@@ -132,7 +132,7 @@
             <div v-else class="top-img-placeholder"><el-icon><Goods /></el-icon></div>
             <div class="top-info">
               <div class="top-name">{{ p.name }}</div>
-              <div class="top-meta">¥{{ p.price }} · 已售 {{ p.sales_count }}</div>
+              <div class="top-meta"><i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ p.price }} · 已售 {{ p.sales_count }}</div>
             </div>
           </div>
           <div v-if="!topProducts.length" style="color:#86909c;font-size:13px;text-align:center;padding:16px 0">暂无数据</div>

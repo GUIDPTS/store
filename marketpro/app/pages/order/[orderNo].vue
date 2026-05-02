@@ -40,7 +40,7 @@
               <div class="col-sm-6 col-md-4">
                 <div class="text-gray-500 text-sm mb-4">总金额</div>
                 <div class="fw-bold text-main-600 text-xl">
-                  ¥{{ order.total_amount?.toFixed(2) }}
+                  <i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ order.total_amount?.toFixed(2) }}
                 </div>
               </div>
               <div v-if="order.contact" class="col-sm-6 col-md-4">

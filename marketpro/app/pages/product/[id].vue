@@ -110,14 +110,14 @@
                   <!-- Price -->
                   <div class="mt-32 flex-align flex-wrap gap-32">
                     <div class="flex-align gap-8">
-                      <h4 class="mb-0 text-main-600">¥{{ Number(product.effective_price || product.price || 0).toFixed(2) }}</h4>
+                      <h4 class="mb-0 text-main-600"><i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ Number(product.effective_price || product.price || 0).toFixed(2) }}</h4>
                       <!-- 促销时划掉原售价，非促销时划掉原价 -->
                       <span v-if="product.is_promo_active"
                         class="text-md text-gray-500 text-decoration-line-through"
-                      >¥{{ Number(product.price).toFixed(2) }}</span>
+                      ><i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ Number(product.price).toFixed(2) }}</span>
                       <span v-else-if="product.orig_price && product.orig_price > product.price"
                         class="text-md text-gray-500 text-decoration-line-through"
-                      >¥{{ Number(product.orig_price).toFixed(2) }}</span>
+                      ><i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ Number(product.orig_price).toFixed(2) }}</span>
                       <el-tag v-if="product.is_promo_active" type="danger" size="small" class="ms-8">限时特惠</el-tag>
                     </div>
                   </div>
@@ -207,7 +207,7 @@
                     <!-- Total -->
                     <div class="flex-between gap-16 p-12 bg-main-50 rounded-8">
                       <span class="text-sm text-gray-600">合计金额</span>
-                      <span class="fw-bold text-main-600 text-xl">¥{{ (qty * product.price).toFixed(2) }}</span>
+                      <span class="fw-bold text-main-600 text-xl"><i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ (qty * product.price).toFixed(2) }}</span>
                     </div>
                   </template>
                 </div>
@@ -261,7 +261,7 @@
                     </NuxtLink>
                     <div style="min-width:0;flex:1">
                       <NuxtLink :to="`/product/${r.id}`" class="text-heading text-sm fw-semibold text-line-2 hover-text-main-600 d-block">{{ r.name }}</NuxtLink>
-                      <span class="text-main-600 fw-bold text-sm">¥{{ Number(r.price || 0).toFixed(2) }}</span>
+                      <span class="text-main-600 fw-bold text-sm"><i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ Number(r.price || 0).toFixed(2) }}</span>
                     </div>
                   </div>
                 </div>
@@ -292,9 +292,9 @@
                   <NuxtLink :to="`/product/${p.id}`" class="link text-line-2">{{ p.name }}</NuxtLink>
                 </h6>
                 <div class="product-card__price mb-8">
-                  <span class="text-heading text-md fw-semibold">¥{{ Number(p.price).toFixed(2) }}</span>
+                  <span class="text-heading text-md fw-semibold"><i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ Number(p.price).toFixed(2) }}</span>
                   <span v-if="p.orig_price && p.orig_price > p.price" class="text-gray-400 text-md fw-semibold text-decoration-line-through ms-8">
-                    ¥{{ Number(p.orig_price).toFixed(2) }}
+                    <i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ Number(p.orig_price).toFixed(2) }}
                   </span>
                 </div>
               </div>

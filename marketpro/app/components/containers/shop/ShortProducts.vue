@@ -41,11 +41,11 @@
                 <!-- 价格 -->
                 <div class="d-flex align-items-center gap-12 mt-6">
                   <h6 class="text-danger-600 mb-0 text-lg">
-                    ¥{{ dealsProduct.is_promo_active ? dealsProduct.promo_price : dealsProduct.price }}
+                    <i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ dealsProduct.is_promo_active ? dealsProduct.promo_price : dealsProduct.price }}
                   </h6>
                   <h6 v-if="dealsProduct.orig_price > dealsProduct.price"
                     class="text-neutral-300 fw-medium mb-0 text-lg text-decoration-line-through">
-                    ¥{{ dealsProduct.orig_price }}
+                    <i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ dealsProduct.orig_price }}
                   </h6>
                 </div>
 
@@ -129,8 +129,8 @@ function toShortProduct(p: ReturnType<typeof apiProducts.value[number]>) {
     rating: op.avg_rating ?? 0,
     ratingCount: op.review_count ?? op.sales_count ?? 0,
     title: op.name,
-    priceCurrent: `¥${Number(op.price).toFixed(2)}`,
-    priceOld: op.orig_price > op.price ? `¥${Number(op.orig_price).toFixed(2)}` : undefined,
+    priceCurrent: `<i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>${Number(op.price).toFixed(2)}`,
+    priceOld: op.orig_price > op.price ? `<i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>${Number(op.orig_price).toFixed(2)}` : undefined,
   };
 }
 

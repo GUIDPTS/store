@@ -99,10 +99,10 @@
                 <div class="product-card__price my-20">
                   <span v-if="product.orig_price > product.price"
                     class="text-gray-400 text-md fw-semibold text-decoration-line-through">
-                    ¥{{ product.orig_price }}
+                    <i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ product.orig_price }}
                   </span>
                   <span class="text-heading text-md fw-semibold">
-                    ¥{{ product.is_promo_active ? product.promo_price : product.price }}
+                    <i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ product.is_promo_active ? product.promo_price : product.price }}
                     <span class="text-gray-500 fw-normal">/件</span>
                   </span>
                 </div>

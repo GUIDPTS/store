@@ -18,10 +18,10 @@
         <el-table-column label="价格" width="140">
           <template #default="{ row }">
             <div>
-              <span v-if="row.is_promo_active" style="color:#e6162d;font-weight:600">¥{{ row.promo_price }}</span>
-              <span v-else style="color:#e6162d;font-weight:600">¥{{ row.price }}</span>
+              <span v-if="row.is_promo_active" style="color:#e6162d;font-weight:600"><i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ row.promo_price }}</span>
+              <span v-else style="color:#e6162d;font-weight:600"><i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ row.price }}</span>
               <span v-if="row.orig_price || row.is_promo_active" style="color:#86909c;text-decoration:line-through;font-size:12px;margin-left:4px">
-                ¥{{ row.is_promo_active ? row.price : row.orig_price }}
+                <i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ row.is_promo_active ? row.price : row.orig_price }}
               </span>
             </div>
             <el-tag v-if="row.is_promo_active" type="danger" size="small" style="margin-top:2px">限时促销</el-tag>

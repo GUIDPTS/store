@@ -13,7 +13,7 @@
         <el-table-column prop="username" label="用户名" />
         <el-table-column prop="nodeloc_id" label="NodeLoc ID" width="120" />
         <el-table-column label="余额" width="120">
-          <template #default="{ row }"><span style="color:#e6162d">¥{{ row.balance ?? 0 }}</span></template>
+          <template #default="{ row }"><span style="color:#e6162d"><i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ row.balance ?? 0 }}</span></template>
         </el-table-column>
         <el-table-column label="角色" width="100">
           <template #default="{ row }">
@@ -51,7 +51,7 @@
     <el-dialog v-model="balanceDialogVisible" title="调整余额" width="420px" @closed="resetBalanceForm">
       <div class="balance-user-info">
         <span>用户：<b>{{ balanceTarget?.username }}</b></span>
-        <span style="margin-left:16px">当前余额：<b style="color:#e6162d">¥{{ balanceTarget?.balance ?? 0 }}</b></span>
+        <span style="margin-left:16px">当前余额：<b style="color:#e6162d"><i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ balanceTarget?.balance ?? 0 }}</b></span>
       </div>
       <el-form :model="balanceForm" label-width="80px" style="margin-top:16px">
         <el-form-item label="调整类型">
@@ -67,7 +67,7 @@
           <el-input v-model="balanceForm.description" placeholder="请填写调整原因（必填）" maxlength="100" show-word-limit />
         </el-form-item>
         <div class="balance-preview" v-if="balanceForm.amount > 0">
-          调整后余额：<b style="color:#409eff">¥{{ adjustedBalance }}</b>
+          调整后余额：<b style="color:#409eff"><i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ adjustedBalance }}</b>
         </div>
       </el-form>
       <template #footer>

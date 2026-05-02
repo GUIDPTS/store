@@ -80,12 +80,12 @@
                 </h6>
                 <div class="product-card__price mb-8">
                   <span class="text-heading text-md fw-semibold"
-                    >¥{{ Number(p.price || 0).toFixed(2) }}</span
+                    ><i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ Number(p.price || 0).toFixed(2) }}</span
                   >
                   <span
                     v-if="p.orig_price && p.orig_price > p.price"
                     class="text-gray-400 text-md fw-semibold text-decoration-line-through ms-4"
-                    >¥{{ Number(p.orig_price).toFixed(2) }}</span
+                    ><i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ Number(p.orig_price).toFixed(2) }}</span
                   >
                 </div>
                 <div v-if="p.sales_count" class="flex-align gap-6 mb-8">

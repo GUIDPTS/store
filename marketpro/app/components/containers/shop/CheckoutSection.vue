@@ -112,7 +112,7 @@
                   }}</span>
                 </div>
                 <span class="text-gray-900 fw-bold text-md font-heading-two"
-                  >¥{{ (item.price * item.qty).toFixed(2) }}</span
+                  ><i class="ph-fill ph-lightning-a" style="font-size:0.85em;vertical-align:middle;margin-right:1px"></i>{{ (item.price * item.qty).toFixed(2) }}</span
                 >
               </div>
 
