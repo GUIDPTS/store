@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -174,18 +175,34 @@ func (h *PaymentHandler) PaymentCallback(c *gin.Context) {
 	callback.PlatformFee, _ = strconv.Atoi(c.Query("platform_fee"))
 	callback.MerchantPoints, _ = strconv.Atoi(c.Query("merchant_points"))
 
+	// 获取前端基础 URL（从 NODELOC_REDIRECT_URI 推断，或使用 Host header）
+	frontendBase := ""
+	redirectURI := os.Getenv("NODELOC_REDIRECT_URI")
+	if redirectURI != "" {
+		// 从 https://domain.com/auth/callback 提取 https://domain.com
+		if idx := len(redirectURI) - len("/auth/callback"); idx > 0 && redirectURI[idx:] == "/auth/callback" {
+			frontendBase = redirectURI[:idx]
+		}
+	}
+	if frontendBase == "" {
+		// fallback: 用请求的 Host
+		scheme := "https"
+		if c.Request.TLS == nil && c.GetHeader("X-Forwarded-Proto") != "https" {
+			scheme = "http"
+		}
+		frontendBase = scheme + "://" + c.Request.Host
+	}
+
 	// 处理回调
 	err := h.paymentService.ProcessPaymentCallback(callback)
 	if err != nil {
-		// 记录错误日志
 		fmt.Printf("支付回调处理失败: %v\n", err)
-		// 仍然重定向到订单页面，但显示错误
-		c.Redirect(http.StatusFound, "/order/"+callback.ExternalReference+"?error="+err.Error())
+		c.Redirect(http.StatusFound, frontendBase+"/order/"+callback.ExternalReference+"?error=payment_failed")
 		return
 	}
 
-	// 重定向到订单详情页
-	c.Redirect(http.StatusFound, "/order/"+callback.ExternalReference+"?success=支付成功")
+	// 重定向到订单详情页（使用完整 URL 避免代理跟随问题）
+	c.Redirect(http.StatusFound, frontendBase+"/order/"+callback.ExternalReference+"?success=1")
 }
 
 // QueryOrder 查询订单支付状态
